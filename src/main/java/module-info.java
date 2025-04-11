@@ -11,6 +11,6 @@ module com.example.smallbusinessbuddycrm {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
 
-    opens com.example.smallbusinessbuddycrm to javafx.fxml;
-    exports com.example.smallbusinessbuddycrm;
+    opens smallbusinessbuddycrm to javafx.fxml;
+    exports smallbusinessbuddycrm;
 }

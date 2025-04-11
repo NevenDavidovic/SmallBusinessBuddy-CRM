@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.geometry.*?>
+
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="smallbusinessbuddycrm.MainController"
+            prefHeight="700.0" prefWidth="1200.0" stylesheets="/styles/main-style.css">
+
+    <!-- Top Navigation Bar -->
+    <top>
+        <HBox styleClass="top-bar">
+            <!-- Plus Button on Left -->
+            <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                <Button styleClass="icon-button">
+                    <text>+</text>
+                </Button>
+            </HBox>
+
+            <!-- Right-side navigation icons -->
+            <HBox alignment="CENTER_RIGHT" spacing="15.0">
+                <padding>
+                    <Insets right="10.0"/>
+                </padding>
+                <!-- Table Icon -->
+                <Button styleClass="icon-button">
+                    <text>⊞</text>
+                </Button>
+                <!-- Notification Bell -->
+                <Button styleClass="icon-button">
+                    <text>🔔</text>
+                </Button>
+                <!-- Settings Gear -->
+                <Button styleClass="icon-button">
+                    <text>⚙</text>
+                </Button>
+                <!-- User Profile -->
+                <MenuButton text="Developer test account 1 ▼" styleClass="user-profile-button">
+                    <graphic>
+                        <Circle fx:id="userAvatar" radius="10" styleClass="user-avatar"/>
+                    </graphic>
+                    <items>
+                        <MenuItem text="Profile"/>
+                        <MenuItem text="Settings"/>
+                        <MenuItem text="Logout"/>
+                    </items>
+                </MenuButton>
+            </HBox>
+        </HBox>
+    </top>
+
+    <!-- Left Sidebar Navigation -->
+    <left>
+        <VBox styleClass="sidebar">
+            <padding>
+                <Insets top="15.0" bottom="15.0" left="10.0" right="10.0"/>
+            </padding>
+
+            <!-- Small Business Buddy Logo at the top -->
+            <Button styleClass="logo-button">
+                <graphic>
+                    <Text text="🔶" styleClass="logo-icon"/>
+                </graphic>
+                <text>Small Business Buddy</text>
+            </Button>
+
+            <!-- Main Navigation Items with Dropdowns -->
+            <Accordion>
+                <panes>
+                    <TitledPane text="CRM" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="16.0" fitWidth="16.0" preserveRatio="true">
+                                <Image url="@images/icons/crm-icon.png" backgroundLoading="true"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Contacts" styleClass="sidebar-sub-item"/>
+                            <Button text="Companies" styleClass="sidebar-sub-item"/>
+                            <Button text="Deals" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Marketing" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="16.0" fitWidth="16.0">
+                                <Image url="@images/icons/marketing-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Campaigns" styleClass="sidebar-sub-item"/>
+                            <Button text="Email" styleClass="sidebar-sub-item"/>
+                            <Button text="Social Media" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Content" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="16.0" fitWidth="16.0">
+                                <Image url="@images/icons/content-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Blog Posts" styleClass="sidebar-sub-item"/>
+                            <Button text="Landing Pages" styleClass="sidebar-sub-item"/>
+                            <Button text="Website" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Commerce" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="16.0" fitWidth="16.0">
+                                <Image url="@images/icons/commerce-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Products" styleClass="sidebar-sub-item"/>
+                            <Button text="Orders" styleClass="sidebar-sub-item"/>
+                            <Button text="Payments" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Automations" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="16.0" fitWidth="16.0">
+                                <Image url="@images/icons/automations-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Workflows" styleClass="sidebar-sub-item"/>
+                            <Button text="Sequences" styleClass="sidebar-sub-item"/>
+                            <Button text="Tasks" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Reporting" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="16.0" fitWidth="16.0">
+                                <Image url="@images/icons/reporting-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Analytics" styleClass="sidebar-sub-item"/>
+                            <Button text="Dashboards" styleClass="sidebar-sub-item"/>
+                            <Button text="Custom Reports" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Data Management" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="16.0" fitWidth="16.0">
+                                <Image url="@images/icons/data-managment-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Properties" styleClass="sidebar-sub-item"/>
+                            <Button text="Imports" styleClass="sidebar-sub-item"/>
+                            <Button text="Export" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Library" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="16.0" fitWidth="16.0">
+                                <Image url="@images/icons/library-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Documents" styleClass="sidebar-sub-item"/>
+                            <Button text="Templates" styleClass="sidebar-sub-item"/>
+                            <Button text="Resources" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+                </panes>
+            </Accordion>
+        </VBox>
+    </left>
+
+    <!-- Main Content Area with Small Business Buddy Logo -->
+    <center>
+        <StackPane fx:id="contentArea">
+            <!-- Default/Home content -->
+            <AnchorPane styleClass="main-content">
+                <VBox alignment="CENTER" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+                      AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0">
+                    <!-- Logo representation using shapes -->
+                    <StackPane minHeight="200" minWidth="200">
+                        <Rectangle width="140" height="140" arcWidth="20" arcHeight="20" styleClass="logo-background"/>
+                        <Text text="👤✓" styleClass="logo-text"/>
+                    </StackPane>
+                    <Text text="Small Business" styleClass="logo-title"/>
+                    <Text text="Buddy" styleClass="logo-title"/>
+                </VBox>
+            </AnchorPane>
+        </StackPane>
+    </center>
+
+</BorderPane>

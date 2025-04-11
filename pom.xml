@@ -134,7 +134,7 @@
                         <id>default-cli</id>
                         <configuration>
                             <mainClass>
-                                com.example.smallbusinessbuddycrm/com.example.smallbusinessbuddycrm.HelloApplication
+                                com.example.smallbusinessbuddycrm/smallbusinessbuddycrm.MainApplication
                             </mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
