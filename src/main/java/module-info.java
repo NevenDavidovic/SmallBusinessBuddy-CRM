@@ -1,4 +1,4 @@
-module com.example.smallbusinessbuddycrm {
+module smallbusinessbuddycrm {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
@@ -10,7 +10,11 @@ module com.example.smallbusinessbuddycrm {
     requires org.kordamp.bootstrapfx.core;
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
+    requires java.sql;
 
     opens smallbusinessbuddycrm to javafx.fxml;
     exports smallbusinessbuddycrm;
+
+    opens smallbusinessbuddycrm.controllers to javafx.fxml;
+    exports smallbusinessbuddycrm.controllers;
 }

@@ -1,12 +1,13 @@
 /* Base styles */
 .root {
     -fx-font-family: "Segoe UI", Helvetica, Arial, sans-serif;
-    -fx-font-size: 14px;
+    -fx-font-size: 18px;
     -sbb-primary-color: #e67e22;
     -sbb-dark-blue: #1e293b;
     -sbb-light-blue: #2c3e50;
     -sbb-bg-color: #ffefd5;
     -sbb-text-color: #DFE3EB;
+    -fx-background-color: -sbb-dark-blue;
 }
 
 /* Top Navigation Bar */
@@ -18,7 +19,7 @@
 .icon-button {
     -fx-background-color: transparent;
     -fx-text-fill: white;
-    -fx-font-size: 14px;
+    -fx-font-size: 18px;
 }
 
 .icon-button:hover {
@@ -28,6 +29,8 @@
 .user-profile-button {
     -fx-background-color: transparent;
     -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -sbb-text-color: white;
 }
 
 .user-profile-button:hover {
@@ -36,6 +39,7 @@
 
 .user-avatar {
     -fx-fill: white;
+    -sbb-text-color: white;
 }
 
 /* Sidebar Styling */
@@ -50,7 +54,7 @@
     -fx-text-fill: -sbb-primary-color;
     -fx-font-weight: bold;
     -fx-font-size: 16px;
-    -fx-padding: 5px 0 10px 0;
+    -fx-padding: 10px 0 10px 10px;
 }
 
 .logo-icon {
@@ -64,6 +68,7 @@
 .sidebar-accordion {
     -fx-background-color: transparent;
     -fx-text-fill: -sbb-text-color;
+    -fx-padding: 0 0 10 0;
 }
 
 .sidebar-accordion > .title {
@@ -108,16 +113,6 @@
     -fx-fill: -sbb-primary-color;
 }
 
-.logo-text {
-    -fx-fill: white;
-    -fx-font-size: 60px;
-}
-
-.logo-title {
-    -fx-font-size: 48px;
-    -fx-fill: -sbb-primary-color;
-}
-
 /* Accordion styling tweaks */
 .accordion {
     -fx-background-color: transparent;
@@ -145,4 +140,20 @@
 .titled-pane > *.content {
     -fx-border-color: transparent;
     -fx-border-insets: 0;
-}
+}/* Content Area Styling */
+ .content-area {
+     -fx-background-color: white;
+     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);
+     -fx-background-radius: 40px 0 0 0;
+ }
+
+ .welcome-text {
+     -fx-font-size: 24px;
+     -fx-font-weight: bold;
+     -fx-fill: #333333;
+ }
+
+ .welcome-subtext {
+     -fx-font-size: 16px;
+     -fx-fill: #666666;
+ }

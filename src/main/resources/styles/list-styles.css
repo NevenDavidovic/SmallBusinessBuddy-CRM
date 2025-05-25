@@ -1,0 +1,154 @@
+
+/* Heading styles */
+.heading-large {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2e475d;
+}
+
+.heading-sub {
+    -fx-font-size: 12px;
+    -fx-text-fill: #71757a;
+}
+
+/* Button styles */
+.button {
+    -fx-cursor: hand;
+    -fx-padding: 6px 12px;
+}
+
+.primary-button {
+    -fx-background-color: #ff7a59;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-radius: 4px;
+}
+
+.secondary-button {
+    -fx-background-color: white;
+    -fx-border-color: #dfe3eb;
+    -fx-border-radius: 4px;
+}
+
+.link-button {
+    -fx-background-color: white;
+    -fx-text-fill: #0099cc;
+    -fx-border-width: 0;
+}
+
+/* Tab buttons */
+.tab-button {
+    -fx-background-color: white;
+    -fx-border-color: #dfe3eb;
+    -fx-border-width: 1px;
+    -fx-border-radius: 0;
+}
+
+.tab-button-selected {
+    -fx-background-color: #f5f8fa;
+}
+
+/* Add view button */
+.add-view-button {
+    -fx-background-color: white;
+    -fx-border-color: #0099cc;
+    -fx-border-radius: 4px;
+    -fx-text-fill: #0099cc;
+}
+
+.add-icon {
+    -fx-text-fill: #0099cc;
+}
+
+.info-icon {
+    -fx-text-fill: #0099cc;
+}
+
+/* Toolbar */
+.filter-toolbar {
+    -fx-background-color: white;
+    -fx-border-color: #dfe3eb;
+    -fx-padding: 8px;
+    -fx-spacing: 10px;
+}
+
+/* Search field */
+.search-field {
+    -fx-border-color: #dfe3eb;
+    -fx-border-radius: 4px;
+    -fx-background-color: white;
+    -fx-padding: 6px;
+}
+
+/* Table styles */
+.lists-table {
+    -fx-background-color: white;
+    -fx-border-color: #dfe3eb;
+    -fx-border-width: 1px;
+}
+
+.lists-table .column-header {
+    -fx-background-color: #f5f8fa;
+    -fx-padding: 8px;
+    -fx-border-color: #dfe3eb;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.lists-table .table-cell {
+    -fx-padding: 10px;
+    -fx-border-color: #dfe3eb;
+    -fx-border-width: 0 0 1px 0;
+}
+
+.table-row-cell {
+    -fx-background-color: white;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: white;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #eaf0f6;
+    -fx-table-cell-border-color: #dfe3eb;
+}
+
+/* Status indicators */
+.status-active {
+    -fx-min-width: 12px;
+    -fx-min-height: 12px;
+    -fx-max-width: 12px;
+    -fx-max-height: 12px;
+    -fx-background-radius: 6px;
+    -fx-background-color: #00a4bd;
+}
+
+.status-static {
+    -fx-min-width: 12px;
+    -fx-min-height: 12px;
+    -fx-max-width: 12px;
+    -fx-max-height: 12px;
+    -fx-background-radius: 6px;
+    -fx-background-color: #b0b0b0;
+}
+
+/* ComboBox styling */
+.combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #dfe3eb;
+    -fx-border-radius: 4px;
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.combo-box .arrow {
+    -fx-background-color: #71757a;
+}
+
+/* Focus styles */
+.button:focused, .text-field:focused, .combo-box:focused {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,153,204,0.4), 3, 0, 0, 0);
+    -fx-border-color: #0099cc;
+}

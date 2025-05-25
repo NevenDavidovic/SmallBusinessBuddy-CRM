@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.geometry.*?>
+
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="smallbusinessbuddycrm.MainController"
+            prefHeight="700.0" prefWidth="1200.0" stylesheets="../styles/main-style.css">
+
+    <!-- Top Navigation Bar -->
+    <top>
+        <HBox styleClass="top-bar">
+
+            <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                <!-- Small Business Buddy Logo at the top -->
+                <Button styleClass="logo-button">
+                    <graphic>
+                        <ImageView fitHeight="50.0" fitWidth="120.0">
+                            <Image url="@../images/logo/SBB-logo.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <!-- Right-side navigation icons -->
+            <HBox alignment="CENTER_RIGHT" spacing="15.0">
+                <padding>
+                    <Insets right="10.0"/>
+                </padding>
+                <!-- Table Icon -->
+                <Button styleClass="icon-button">
+                    <graphic>
+                        <ImageView fitHeight="24.0" fitWidth="24.0">
+                            <Image url="@../images/icons/support-icon.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <!-- Notification Bell -->
+                <Button styleClass="icon-button">
+                    <graphic>
+                        <ImageView fitHeight="24.0" fitWidth="24.0">
+                            <Image url="@../images/icons/notification-icon.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <!-- Settings Gear -->
+                <Button styleClass="icon-button">
+                    <graphic>
+                        <ImageView fitHeight="24.0" fitWidth="24.0">
+                            <Image url="@../images/icons/settings-icon.png"/>
+                        </ImageView>
+                    </graphic>
+                </Button>
+                <!-- User Profile -->
+                <MenuButton text="Neven Davidović" styleClass="user-profile-button">
+                    <graphic>
+                        <Circle fx:id="userAvatar" radius="15" styleClass="user-avatar"/>
+                    </graphic>
+                    <items>
+                        <MenuItem text="Profile"/>
+                        <MenuItem text="Settings"/>
+                        <MenuItem text="Logout"/>
+                    </items>
+                </MenuButton>
+            </HBox>
+        </HBox>
+    </top>
+
+    <!-- Left Sidebar Navigation -->
+    <left>
+        <VBox styleClass="sidebar">
+            <padding>
+                <Insets top="15.0" bottom="15.0" left="10.0" right="10.0"/>
+            </padding>
+
+            <!-- Main Navigation Items with Dropdowns -->
+            <Accordion>
+                <panes>
+                    <TitledPane text="CRM" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
+                                <Image url="@../images/icons/crm-icon.png" backgroundLoading="true"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Contacts" styleClass="sidebar-sub-item" onAction="#handleContactsAction"/>
+                            <Button text="Lists" styleClass="sidebar-sub-item" onAction="#handleListsAction"/>
+                            <Button text="Workshops" styleClass="sidebar-sub-item" onAction="#handleWorkshopsAction"/>
+                        </VBox>
+                    </TitledPane>
+
+                     <TitledPane text="Marketing" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="24.0" fitWidth="24.0">
+                                <Image url="@../images/icons/marketing-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+
+                            <Button text="Email" styleClass="sidebar-sub-item" onAction="#handleEmailAction"/>
+                            <Button text="Email Statistics" styleClass="sidebar-sub-item" onAction="#handleEmailStatisticsAction"/>
+
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Commerce" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="24.0" fitWidth="24.0">
+                                <Image url="@../images/icons/commerce-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Barcode generator app" styleClass="sidebar-sub-item" onAction="#handleBarcodeAppAction"/>
+                            <Button text="Send payment slips" styleClass="sidebar-sub-item" onAction="#handlePaymentSlipsAction"/>
+                            <Button text="Payment history" styleClass="sidebar-sub-item" onAction="#handlePaymentHistoryAction"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Automations" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="24.0" fitWidth="24.0">
+                                <Image url="@../images/icons/automations-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Workflows" styleClass="sidebar-sub-item"/>
+                            <Button text="Sequences" styleClass="sidebar-sub-item"/>
+                            <Button text="Tasks" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Reporting" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="24.0" fitWidth="24.0">
+                                <Image url="@../images/icons/reporting-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Contact statistics" styleClass="sidebar-sub-item" onAction="#handleContactStatisticsAction"/>
+                            <Button text="Workshop statistics" styleClass="sidebar-sub-item" onAction="#handleWorkshopsStatisticsAction"/>
+                            <Button text="Email Statistics" styleClass="sidebar-sub-item" onAction="#handleEStatisticsAction"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Data Management" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="24.0" fitWidth="24.0">
+                                <Image url="@../images/icons/data-managment-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Properties" styleClass="sidebar-sub-item"/>
+                            <Button text="Imports" styleClass="sidebar-sub-item"/>
+                            <Button text="Export" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+
+                    <TitledPane text="Library" styleClass="sidebar-accordion">
+                        <graphic>
+                            <ImageView fitHeight="24.0" fitWidth="24.0">
+                                <Image url="@../images/icons/library-icon.png"/>
+                            </ImageView>
+                        </graphic>
+                        <VBox spacing="5">
+                            <Button text="Documents" styleClass="sidebar-sub-item"/>
+                            <Button text="Tasks" styleClass="sidebar-sub-item"/>
+                            <Button text="Resources" styleClass="sidebar-sub-item"/>
+                        </VBox>
+                    </TitledPane>
+                </panes>
+            </Accordion>
+        </VBox>
+    </left>
+
+
+    <center>
+        <StackPane fx:id="contentArea" styleClass="content-area"/>
+    </center>
+
+</BorderPane>

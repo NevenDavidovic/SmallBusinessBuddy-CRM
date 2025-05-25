@@ -51,19 +51,59 @@ public class MainController {
 
     // Handler methods for sidebar buttons
 
-    @FXML
+      @FXML
     private void handleContactsAction() {
-        navigateTo("/com/example/smallbusinessbuddy_crm/views/contacts_view.fxml");
+        navigateTo("/views/crm/contacts-view.fxml");
     }
 
     @FXML
-    private void handleCompaniesAction() {
-        navigateTo("/com/example/smallbusinessbuddy_crm/views/companies_view.fxml");
+    private void handleListsAction() {
+        navigateTo("/views/crm/lists-view.fxml");
     }
 
     @FXML
-    private void handleDealsAction() {
-        navigateTo("/com/example/smallbusinessbuddy_crm/views/deals_view.fxml");
+    private void handleWorkshopsAction() {
+        navigateTo("/views/crm/workshops-view.fxml");
+    }
+
+    @FXML
+    private void handleEmailAction() {
+        navigateTo("/views/marketing/email-view.fxml");
+    }
+
+    @FXML
+    private void handleEmailStatisticsAction() {
+        navigateTo("/views/marketing/email-statistics-view.fxml");
+    }
+
+    @FXML
+    private void handleBarcodeAppAction() {
+        navigateTo("/views/commerce/barcode-app-view.fxml");
+    }
+
+    @FXML
+    private void handlePaymentSlipsAction() {
+        navigateTo("/views/commerce/payment-slips-view.fxml");
+    }
+
+    @FXML
+    private void handlePaymentHistoryAction() {
+        navigateTo("/views/commerce/payment-history-view.fxml");
+    }
+
+    @FXML
+    private void handleContactStatisticsAction() {
+        navigateTo("/views/reporting/contact-statistics-view.fxml");
+    }
+
+    @FXML
+    private void handleWorkshopsStatisticsAction() {
+        navigateTo("/views/reporting/workshop-statistics-view.fxml");
+    }
+
+    @FXML
+    private void handleEStatisticsAction() {
+        navigateTo("/views/reporting/email-statistics-view.fxml");
     }
 
     // Add more handlers for other menu items
