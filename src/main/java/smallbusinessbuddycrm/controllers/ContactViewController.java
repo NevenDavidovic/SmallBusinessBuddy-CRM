@@ -2,219 +2,582 @@ package smallbusinessbuddycrm.controllers;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.HBox;
-import javafx.util.Callback;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.stage.FileChooser;
+import smallbusinessbuddycrm.model.Contact;
+import smallbusinessbuddycrm.database.ContactDAO;
+import smallbusinessbuddycrm.database.DatabaseConnection;
+import javafx.stage.Stage;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ContactViewController {
 
+    @FXML private TableView<Contact> contactsTable;
 
+    // All table columns
+    @FXML private TableColumn<Contact, Boolean> selectColumn;
+    @FXML private TableColumn<Contact, Void> editColumn;
+    @FXML private TableColumn<Contact, String> firstNameColumn;
+    @FXML private TableColumn<Contact, String> lastNameColumn;
+    @FXML private TableColumn<Contact, String> emailColumn;
+    @FXML private TableColumn<Contact, String> phoneColumn;
+    @FXML private TableColumn<Contact, String> streetNameColumn;
+    @FXML private TableColumn<Contact, String> streetNumColumn;
+    @FXML private TableColumn<Contact, String> postalCodeColumn;
+    @FXML private TableColumn<Contact, String> cityColumn;
+    @FXML private TableColumn<Contact, String> memberStatusColumn;
+    @FXML private TableColumn<Contact, String> memberSinceColumn;
+    @FXML private TableColumn<Contact, String> memberUntilColumn;
+    @FXML private TableColumn<Contact, String> createdAtColumn;
+    @FXML private TableColumn<Contact, String> updatedAtColumn;
 
-    @FXML
-    private ComboBox<String> actionsComboBox;
+    // UI Controls - MAKE SURE THESE ARE DECLARED
+    @FXML private Button createContactButton;
+    @FXML private Button deleteSelectedButton;
+    @FXML private Button allContactsButton;
+    @FXML private Button membersButton;
+    @FXML private Button nonMembersButton;
+    @FXML private Button exportButton;
+    @FXML private Button editColumnsButton; // THIS MUST BE HERE
+    @FXML private TextField searchField;
+    @FXML private Label recordCountLabel;
 
-    @FXML
-    private Button importButton;
+    // Data lists
+    private ObservableList<Contact> allContactsList = FXCollections.observableArrayList();
+    private FilteredList<Contact> filteredContactsList;
 
-    @FXML
-    private Button createContactButton;
-
-    @FXML
-    private TextField searchField;
-
-    @FXML
-    private TableView<Contact> contactsTable;
-
-    @FXML
-    private TableColumn<Contact, Boolean> selectColumn;
-
-    @FXML
-    private TableColumn<Contact, String> nameColumn;
-
-    @FXML
-    private TableColumn<Contact, String> emailColumn;
-
-    @FXML
-    private TableColumn<Contact, String> phoneColumn;
-
-    @FXML
-    private TableColumn<Contact, String> statusColumn;
-
-    @FXML
-    private TableColumn<Contact, String> contentColumn;
-
-    @FXML
-    private TableColumn<Contact, String> preferenceColumn;
-
-    @FXML
-    private Pagination contactsPagination;
-
-    @FXML
-    private ComboBox<String> perPageComboBox;
-
-    @FXML
-    private ComboBox<String> contactOwnerComboBox;
-
-    @FXML
-    private ComboBox<String> createDateComboBox;
-
-    @FXML
-    private ComboBox<String> lastActivityComboBox;
-
-    @FXML
-    private ComboBox<String> leadStatusComboBox;
-
-    private ObservableList<Contact> contactsList = FXCollections.observableArrayList();
+    // Column visibility management
+    private Map<String, TableColumn<Contact, String>> columnMap = new HashMap<>();
+    private Map<String, Boolean> columnVisibility = new HashMap<>();
 
     @FXML
     public void initialize() {
+        System.out.println("ContactViewController.initialize() called");
+
+        // Initialize database first
+        DatabaseConnection.initializeDatabase();
+
+        initializeColumnMapping();
         setupTable();
-        loadSampleData();
-        setupComboBoxes();
-        setupButtons();
-        setupSearch();
-        setupPagination();
+        setupSearchAndFilters();
+        loadContacts();
+        setupEventHandlers();
+        applyDefaultColumnVisibility();
+
+        System.out.println("ContactViewController initialized successfully");
+    }
+
+    private void initializeColumnMapping() {
+        System.out.println("Initializing column mapping...");
+
+        // EXACT mapping - column names must match exactly with dialog
+        columnMap.put("First Name", firstNameColumn);
+        columnMap.put("Last Name", lastNameColumn);
+        columnMap.put("Email", emailColumn);
+        columnMap.put("Phone Number", phoneColumn);
+        columnMap.put("Street Name", streetNameColumn);
+        columnMap.put("Street Number", streetNumColumn);
+        columnMap.put("Postal Code", postalCodeColumn);
+        columnMap.put("City", cityColumn);
+        columnMap.put("Member Status", memberStatusColumn);
+        columnMap.put("Member Since", memberSinceColumn);
+        columnMap.put("Member Until", memberUntilColumn);
+        columnMap.put("Created", createdAtColumn);
+        columnMap.put("Updated", updatedAtColumn);
+
+        System.out.println("Column mapping completed. Mapped " + columnMap.size() + " columns");
+    }
+
+    private void applyDefaultColumnVisibility() {
+        System.out.println("Setting default column visibility...");
+
+        // Set default visibility
+        columnVisibility.put("First Name", true);
+        columnVisibility.put("Last Name", true);
+        columnVisibility.put("Email", true);
+        columnVisibility.put("Phone Number", true);
+        columnVisibility.put("Street Name", true);
+        columnVisibility.put("Street Number", false); // Hidden by default
+        columnVisibility.put("Postal Code", true);
+        columnVisibility.put("City", true);
+        columnVisibility.put("Member Status", true);
+        columnVisibility.put("Member Since", false); // Hidden by default
+        columnVisibility.put("Member Until", false); // Hidden by default
+        columnVisibility.put("Created", false); // Hidden by default
+        columnVisibility.put("Updated", false); // Hidden by default
+
+        // Apply visibility
+        applyColumnVisibility();
+    }
+
+    private void applyColumnVisibility() {
+        System.out.println("Applying column visibility...");
+
+        for (Map.Entry<String, Boolean> entry : columnVisibility.entrySet()) {
+            String columnName = entry.getKey();
+            boolean visible = entry.getValue();
+            TableColumn<Contact, String> column = columnMap.get(columnName);
+
+            if (column != null) {
+                column.setVisible(visible);
+                System.out.println("Set " + columnName + " visibility to: " + visible);
+            } else {
+                System.out.println("WARNING: Column not found in map: " + columnName);
+            }
+        }
     }
 
     private void setupTable() {
-        selectColumn.setCellValueFactory(new PropertyValueFactory<>("selected"));
-        selectColumn.setCellFactory(createCheckBoxCellFactory());
+        // Set up checkbox column
+        selectColumn.setCellFactory(tc -> new TableCell<Contact, Boolean>() {
+            private final CheckBox checkBox = new CheckBox();
 
-        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        emailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
-        phoneColumn.setCellValueFactory(new PropertyValueFactory<>("phone"));
-        statusColumn.setCellValueFactory(new PropertyValueFactory<>("status"));
-        contentColumn.setCellValueFactory(new PropertyValueFactory<>("contentTopic"));
-        preferenceColumn.setCellValueFactory(new PropertyValueFactory<>("preference"));
-
-        contactsTable.setItems(contactsList);
-    }
-
-    private Callback<TableColumn<Contact, Boolean>, TableCell<Contact, Boolean>> createCheckBoxCellFactory() {
-        return new Callback<>() {
             @Override
-            public TableCell<Contact, Boolean> call(TableColumn<Contact, Boolean> param) {
-                return new TableCell<>() {
-                    private final CheckBox checkBox = new CheckBox();
-
-                    @Override
-                    protected void updateItem(Boolean item, boolean empty) {
-                        super.updateItem(item, empty);
-
-                        if (empty) {
-                            setGraphic(null);
-                        } else {
-                            Contact contact = getTableView().getItems().get(getIndex());
-                            checkBox.setSelected(contact.isSelected());
-                            checkBox.setOnAction(event -> contact.setSelected(checkBox.isSelected()));
-                            setGraphic(checkBox);
-                        }
-                    }
-                };
+            protected void updateItem(Boolean selected, boolean empty) {
+                super.updateItem(selected, empty);
+                if (empty || getIndex() >= contactsTable.getItems().size()) {
+                    setGraphic(null);
+                } else {
+                    Contact contact = contactsTable.getItems().get(getIndex());
+                    checkBox.setSelected(contact.isSelected());
+                    checkBox.setOnAction(event -> contact.setSelected(checkBox.isSelected()));
+                    setGraphic(checkBox);
+                }
             }
-        };
+        });
+
+        // Set up edit button column
+        editColumn.setCellFactory(tc -> new TableCell<Contact, Void>() {
+            private final Button editButton = new Button("Edit");
+
+            {
+                editButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 3; -fx-font-size: 10px;");
+                editButton.setPrefWidth(50);
+                editButton.setOnAction(event -> {
+                    Contact contact = getTableView().getItems().get(getIndex());
+                    handleEditContact(contact);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(editButton);
+                }
+            }
+        });
+
+        // Set up all column bindings
+        firstNameColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getFirstName()));
+        lastNameColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getLastName()));
+        emailColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getEmail()));
+        phoneColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getPhoneNum()));
+        streetNameColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getStreetName()));
+        streetNumColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getStreetNum()));
+        postalCodeColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getPostalCode()));
+        cityColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getCity()));
+        memberStatusColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().isMember() ? "Member" : "Non-member"));
+        memberSinceColumn.setCellValueFactory(cellData -> {
+            Contact contact = cellData.getValue();
+            return new SimpleStringProperty(contact.getMemberSince() != null ?
+                    contact.getMemberSince().toString() : "");
+        });
+        memberUntilColumn.setCellValueFactory(cellData -> {
+            Contact contact = cellData.getValue();
+            return new SimpleStringProperty(contact.getMemberUntil() != null ?
+                    contact.getMemberUntil().toString() : "");
+        });
+        createdAtColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getCreatedAt()));
+        updatedAtColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getUpdatedAt()));
     }
 
-    private void loadSampleData() {
-        contactsList.addAll(
-                new Contact("ŠK Skalice", "bozo.miskovic@sszsd.hr", "--", "--", "--", "--"),
-                new Contact("ŠK Knez Mislav", "ured@sk-knez-mislav.hrsk-knez.hr", "--", "--", "--", "--"),
-                new Contact("ŠK Trilj", "tadinacsasa@gmail.com", "--", "--", "--", "--"),
-                new Contact("ŠK Student Split", "igor.vukovic@hotmail.com", "--", "--", "--", "--"),
-                new Contact("ŠK Sinj", "sahovskiklubsinj@gmail.com", "--", "--", "--", "--"),
-                new Contact("ŠK Mornar Split", "skmornar@gmail.com", "--", "--", "--", "--"),
-                new Contact("ŠK Brda", "mateo.ivic@24sata.hr", "--", "New", "--", "--"),
-                new Contact("ŠK popovača", "danijel.markesic@gmail.com", "--", "New", "--", "--")
-        );
-    }
+    private void setupSearchAndFilters() {
+        // Create filtered list wrapping the original list
+        filteredContactsList = new FilteredList<>(allContactsList, p -> true);
 
-    private void setupComboBoxes() {
-        perPageComboBox.getItems().addAll("10 per page", "25 per page", "50 per page", "100 per page");
-        perPageComboBox.setValue("25 per page");
+        // Set the table to use the filtered list
+        contactsTable.setItems(filteredContactsList);
 
-        actionsComboBox.getItems().addAll("Delete", "Export", "Edit");
-
-        contactOwnerComboBox.getItems().addAll("Any owner", "Me", "Unassigned");
-        createDateComboBox.getItems().addAll("Any time", "Today", "Yesterday", "Last 7 days", "Last 30 days");
-        lastActivityComboBox.getItems().addAll("Any time", "Today", "Yesterday", "Last 7 days", "Last 30 days");
-        leadStatusComboBox.getItems().addAll("Any status", "New", "Open", "In progress", "Qualified");
-    }
-
-    private void setupButtons() {
-        createContactButton.setOnAction(event -> System.out.println("Create contact clicked"));
-        importButton.setOnAction(event -> System.out.println("Import clicked"));
-
-    }
-
-    private void setupSearch() {
+        // Set up search functionality
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            System.out.println("Searching: " + newValue);
-            // Implement search functionality here
+            updateFilters();
         });
     }
 
-    private void setupPagination() {
-        contactsPagination.setPageCount(4);
-        contactsPagination.setCurrentPageIndex(0);
-        contactsPagination.setPageFactory(pageIndex -> {
-            System.out.println("Loading page: " + pageIndex);
-            // Implement pagination logic here
-            return new HBox(); // Placeholder
+    private void updateFilters() {
+        String searchText = searchField.getText().toLowerCase().trim();
+
+        filteredContactsList.setPredicate(contact -> {
+            // If no search text, show all contacts based on current filter
+            if (searchText.isEmpty()) {
+                return matchesMembershipFilter(contact);
+            }
+
+            // Check if search text matches name, phone, or email
+            boolean matchesSearch = false;
+
+            if (contact.getFirstName() != null && contact.getFirstName().toLowerCase().contains(searchText)) {
+                matchesSearch = true;
+            } else if (contact.getLastName() != null && contact.getLastName().toLowerCase().contains(searchText)) {
+                matchesSearch = true;
+            } else if (contact.getEmail() != null && contact.getEmail().toLowerCase().contains(searchText)) {
+                matchesSearch = true;
+            } else if (contact.getPhoneNum() != null && contact.getPhoneNum().toLowerCase().contains(searchText)) {
+                matchesSearch = true;
+            }
+
+            // Return true only if matches both search and membership filter
+            return matchesSearch && matchesMembershipFilter(contact);
         });
+
+        updateRecordCount();
     }
 
-    // Model class for contacts
-    public static class Contact {
-        private boolean selected;
-        private final String name;
-        private final String email;
-        private final String phone;
-        private final String status;
-        private final String contentTopic;
-        private final String preference;
+    private boolean matchesMembershipFilter(Contact contact) {
+        // Check which filter button is active based on their style
+        String allContactsStyle = allContactsButton.getStyle();
+        String membersStyle = membersButton.getStyle();
+        String nonMembersStyle = nonMembersButton.getStyle();
 
-        public Contact(String name, String email, String phone, String status, String contentTopic, String preference) {
-            this.selected = false;
-            this.name = name;
-            this.email = email;
-            this.phone = phone;
-            this.status = status;
-            this.contentTopic = contentTopic;
-            this.preference = preference;
+        // If "All contacts" is active (has #f5f8fa background)
+        if (allContactsStyle.contains("#f5f8fa")) {
+            return true; // Show all contacts
+        }
+        // If "Members" is active
+        else if (membersStyle.contains("#f5f8fa")) {
+            return contact.isMember();
+        }
+        // If "Non-members" is active
+        else if (nonMembersStyle.contains("#f5f8fa")) {
+            return !contact.isMember();
         }
 
-        public boolean isSelected() {
-            return selected;
+        return true; // Default: show all
+    }
+
+    private void loadContacts() {
+        try {
+            ContactDAO dao = new ContactDAO();
+            List<Contact> contacts = dao.getAllContacts();
+
+            System.out.println("DAO returned " + contacts.size() + " contacts");
+
+            allContactsList.setAll(contacts);
+            updateRecordCount();
+
+        } catch (Exception e) {
+            System.err.println("Error loading contacts: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void updateRecordCount() {
+        int count = filteredContactsList.size();
+        recordCountLabel.setText(count + " record" + (count != 1 ? "s" : ""));
+    }
+
+    private void setupEventHandlers() {
+        System.out.println("Setting up event handlers...");
+
+        createContactButton.setOnAction(e -> handleCreateContact());
+        deleteSelectedButton.setOnAction(e -> handleDeleteSelected());
+        exportButton.setOnAction(e -> handleExportContacts());
+
+        // IMPORTANT: Make sure edit columns button handler is set
+        if (editColumnsButton != null) {
+            editColumnsButton.setOnAction(e -> handleEditColumns());
+            System.out.println("Edit columns button handler set successfully");
+        } else {
+            System.err.println("ERROR: editColumnsButton is null! Check FXML fx:id");
         }
 
-        public void setSelected(boolean selected) {
-            this.selected = selected;
+        // Filter buttons
+        allContactsButton.setOnAction(e -> handleFilterButton(allContactsButton));
+        membersButton.setOnAction(e -> handleFilterButton(membersButton));
+        nonMembersButton.setOnAction(e -> handleFilterButton(nonMembersButton));
+
+        System.out.println("Event handlers setup completed");
+    }
+
+    private void handleEditColumns() {
+        System.out.println("handleEditColumns() called");
+
+        try {
+            Stage currentStage = (Stage) editColumnsButton.getScene().getWindow();
+            System.out.println("Creating EditColumnsDialog...");
+
+            // Create a copy of current visibility settings
+            Map<String, Boolean> currentVisibility = new HashMap<>(columnVisibility);
+            EditColumnsDialog dialog = new EditColumnsDialog(currentStage, currentVisibility);
+
+            System.out.println("Showing dialog...");
+            if (dialog.showAndWait()) {
+                System.out.println("Dialog returned OK, updating columns...");
+
+                Map<String, Boolean> newVisibility = dialog.getColumnVisibility();
+
+                // Update our internal map
+                columnVisibility.putAll(newVisibility);
+
+                // Apply the new visibility
+                applyColumnVisibility();
+
+                System.out.println("Columns updated successfully");
+
+                // Show confirmation
+                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                successAlert.setTitle("Success");
+                successAlert.setHeaderText("Columns Updated");
+                successAlert.setContentText("Column visibility has been updated successfully.");
+                successAlert.showAndWait();
+            } else {
+                System.out.println("Dialog was cancelled");
+            }
+        } catch (Exception e) {
+            System.err.println("Error in handleEditColumns: " + e.getMessage());
+            e.printStackTrace();
+
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Error");
+            errorAlert.setHeaderText("Edit Columns Failed");
+            errorAlert.setContentText("An error occurred: " + e.getMessage());
+            errorAlert.showAndWait();
+        }
+    }
+
+    private void handleFilterButton(Button clickedButton) {
+        // Reset all button styles to inactive
+        allContactsButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
+        membersButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
+        nonMembersButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
+
+        // Set clicked button to active style
+        clickedButton.setStyle("-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;");
+
+        // Update the filter
+        updateFilters();
+    }
+
+    private void handleExportContacts() {
+        try {
+            // Get currently visible contacts (filtered/searched)
+            List<Contact> contactsToExport = new ArrayList<>(filteredContactsList);
+
+            if (contactsToExport.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("No Data");
+                alert.setHeaderText("No contacts to export");
+                alert.setContentText("There are no contacts visible to export. Please check your filters or add some contacts first.");
+                alert.showAndWait();
+                return;
+            }
+
+            // File chooser for save location
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Export Contacts to CSV");
+            fileChooser.getExtensionFilters().add(
+                    new FileChooser.ExtensionFilter("CSV Files", "*.csv")
+            );
+
+            // Set default filename with timestamp
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+            fileChooser.setInitialFileName("contacts_export_" + timestamp + ".csv");
+
+            Stage currentStage = (Stage) exportButton.getScene().getWindow();
+            File file = fileChooser.showSaveDialog(currentStage);
+
+            if (file != null) {
+                exportContactsToCSV(contactsToExport, file);
+
+                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                successAlert.setTitle("Export Successful");
+                successAlert.setHeaderText("Contacts exported successfully");
+                successAlert.setContentText("Exported " + contactsToExport.size() + " contact(s) to:\n" + file.getAbsolutePath());
+                successAlert.showAndWait();
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error exporting contacts: " + e.getMessage());
+            e.printStackTrace();
+
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Export Failed");
+            errorAlert.setHeaderText("Failed to export contacts");
+            errorAlert.setContentText("An error occurred while exporting: " + e.getMessage());
+            errorAlert.showAndWait();
+        }
+    }
+
+    private void exportContactsToCSV(List<Contact> contacts, File file) throws IOException {
+        // Use UTF-8 encoding with BOM for proper Croatian character support
+        try (BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+
+            // Write UTF-8 BOM (Byte Order Mark) so Excel recognizes UTF-8 encoding
+            writer.write('\ufeff');
+
+            // Write CSV header in Croatian
+            writer.write("Ime,Prezime,Email,Telefon,Ulica,Broj,Poštanski kod,Grad,Status članstva,Član od,Član do,Kreiran,Ažuriran");
+            writer.newLine();
+
+            // Write contact data
+            for (Contact contact : contacts) {
+                StringBuilder line = new StringBuilder();
+
+                // Helper method to escape CSV values
+                line.append(escapeCsvValue(contact.getFirstName())).append(",");
+                line.append(escapeCsvValue(contact.getLastName())).append(",");
+                line.append(escapeCsvValue(contact.getEmail())).append(",");
+                line.append(escapeCsvValue(contact.getPhoneNum())).append(",");
+                line.append(escapeCsvValue(contact.getStreetName())).append(",");
+                line.append(escapeCsvValue(contact.getStreetNum())).append(",");
+                line.append(escapeCsvValue(contact.getPostalCode())).append(",");
+                line.append(escapeCsvValue(contact.getCity())).append(",");
+                line.append(escapeCsvValue(contact.isMember() ? "Član" : "Nije član")).append(","); // Croatian labels
+                line.append(escapeCsvValue(contact.getMemberSince() != null ? contact.getMemberSince().toString() : "")).append(",");
+                line.append(escapeCsvValue(contact.getMemberUntil() != null ? contact.getMemberUntil().toString() : "")).append(",");
+                line.append(escapeCsvValue(contact.getCreatedAt())).append(",");
+                line.append(escapeCsvValue(contact.getUpdatedAt()));
+
+                writer.write(line.toString());
+                writer.newLine();
+            }
+        }
+    }
+
+    private String escapeCsvValue(String value) {
+        if (value == null) {
+            return "";
         }
 
-        public String getName() {
-            return name;
+        // If value contains comma, quote, or newline, wrap in quotes and escape internal quotes
+        if (value.contains(",") || value.contains("\"") || value.contains("\n")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
         }
 
-        public String getEmail() {
-            return email;
+        return value;
+    }
+
+    private void handleCreateContact() {
+        try {
+            Stage currentStage = (Stage) createContactButton.getScene().getWindow();
+            CreateContactDialog dialog = new CreateContactDialog(currentStage);
+
+            if (dialog.showAndWait()) {
+                Contact newContact = dialog.getResult();
+                if (newContact != null) {
+                    allContactsList.add(newContact);
+                    updateRecordCount();
+                    contactsTable.getSelectionModel().select(newContact);
+                    contactsTable.scrollTo(newContact);
+                    System.out.println("New contact added: " + newContact.getFirstName() + " " + newContact.getLastName());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error opening create contact dialog: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void handleDeleteSelected() {
+        // Get all selected contacts from the filtered list
+        List<Contact> selectedContacts = filteredContactsList.stream()
+                .filter(Contact::isSelected)
+                .collect(Collectors.toList());
+
+        if (selectedContacts.isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("No Selection");
+            alert.setHeaderText("No contacts selected");
+            alert.setContentText("Please select one or more contacts to delete using the checkboxes.");
+            alert.showAndWait();
+            return;
         }
 
-        public String getPhone() {
-            return phone;
-        }
+        // Confirm deletion
+        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmAlert.setTitle("Confirm Deletion");
+        confirmAlert.setHeaderText("Delete selected contacts?");
+        confirmAlert.setContentText("Are you sure you want to delete " + selectedContacts.size() +
+                " contact" + (selectedContacts.size() > 1 ? "s" : "") + "? This action cannot be undone.");
 
-        public String getStatus() {
-            return status;
-        }
+        if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            try {
+                ContactDAO dao = new ContactDAO();
+                List<Integer> contactIds = selectedContacts.stream()
+                        .map(Contact::getId)
+                        .collect(Collectors.toList());
 
-        public String getContentTopic() {
-            return contentTopic;
-        }
+                boolean success = dao.deleteContacts(contactIds);
 
-        public String getPreference() {
-            return preference;
+                if (success) {
+                    // Remove from the original list (filtered list will update automatically)
+                    allContactsList.removeAll(selectedContacts);
+                    updateRecordCount();
+
+                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                    successAlert.setTitle("Success");
+                    successAlert.setHeaderText("Contacts deleted");
+                    successAlert.setContentText("Successfully deleted " + selectedContacts.size() + " contact(s).");
+                    successAlert.showAndWait();
+                } else {
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Error");
+                    errorAlert.setHeaderText("Delete Failed");
+                    errorAlert.setContentText("Failed to delete the selected contacts from the database.");
+                    errorAlert.showAndWait();
+                }
+
+            } catch (Exception e) {
+                System.err.println("Error deleting contacts: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void handleEditContact(Contact contact) {
+        try {
+            Stage currentStage = (Stage) createContactButton.getScene().getWindow();
+            EditContactDialog dialog = new EditContactDialog(currentStage, contact);
+
+            if (dialog.showAndWait()) {
+                // Refresh the table to show updated data
+                contactsTable.refresh();
+                updateFilters(); // Re-apply filters in case membership status changed
+                System.out.println("Contact updated: " + contact.getFirstName() + " " + contact.getLastName());
+
+                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                successAlert.setTitle("Success");
+                successAlert.setHeaderText("Contact Updated");
+                successAlert.setContentText("Contact has been successfully updated.");
+                successAlert.showAndWait();
+            }
+        } catch (Exception e) {
+            System.err.println("Error opening edit contact dialog: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

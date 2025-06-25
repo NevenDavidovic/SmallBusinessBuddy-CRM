@@ -10,6 +10,9 @@ public class MainApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        // Inicijaliziraj bazu i tablicu prije učitavanja GUI-a
+        smallbusinessbuddycrm.database.DatabaseConnection.initializeDatabase();
+
         // Load the main FXML file
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/main-view.fxml"));
         Parent root = loader.load();
@@ -25,11 +28,7 @@ public class MainApplication extends Application {
         primaryStage.setTitle("Small Business Buddy");
         primaryStage.setScene(scene);
         primaryStage.show();
-        // Add this to your MainApplication.start() method
-
-
     }
-
     public static void main(String[] args) {
         launch(args);
     }
