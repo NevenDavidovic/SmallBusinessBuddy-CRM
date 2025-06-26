@@ -2,11 +2,13 @@
 CREATE TABLE IF NOT EXISTS organization (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    IBAN TEXT NOT NULL,
     street_name TEXT,
     street_num TEXT,
     postal_code TEXT,
     city TEXT,
     email TEXT,
+    image BLOB,
     phone_num TEXT,
     created_at TEXT,
     updated_at TEXT

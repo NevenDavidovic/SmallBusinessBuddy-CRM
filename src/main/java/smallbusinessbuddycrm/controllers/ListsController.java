@@ -1,447 +1,615 @@
-package smallbusinessbuddycrm.controller;
+package smallbusinessbuddycrm.controllers;
 
+import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.CheckBoxTableCell;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import smallbusinessbuddycrm.dao.ListsDAO;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import org.jetbrains.annotations.NotNull;
+import smallbusinessbuddycrm.database.ListsDAO;
+import smallbusinessbuddycrm.database.ContactDAO;
+import smallbusinessbuddycrm.model.Contact;
 import smallbusinessbuddycrm.model.List;
 
 import java.net.URL;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class ListsController implements Initializable {
 
-    // Top section controls
-    @FXML private Button whatsNewButton;
-    @FXML private ComboBox<String> adminSettingsComboBox;
-    @FXML private Button importButton;
-    @FXML private ComboBox<String> quickCreateComboBox;
+    // FXML Controls
+    @FXML private Label listsTitle;
+    @FXML private Label listsCount;
     @FXML private Button createListButton;
-
-    // Tab buttons
-    @FXML private Button allListsButton;
-    @FXML private Button unusedListsButton;
-    @FXML private Button recentlyDeletedButton;
-
-    // Filter controls
-    @FXML private ComboBox<String> creatorsComboBox;
-    @FXML private ComboBox<String> typesComboBox;
-    @FXML private ComboBox<String> objectsComboBox;
     @FXML private TextField searchField;
-    @FXML private ComboBox<String> actionsComboBox;
-
-    // Table
-    @FXML private TableView<ListWrapper> listsTable;
-    @FXML private TableColumn<ListWrapper, Boolean> selectColumn;
-    @FXML private TableColumn<ListWrapper, String> nameColumn;
-    @FXML private TableColumn<ListWrapper, Integer> listSizeColumn;
-    @FXML private TableColumn<ListWrapper, String> typeColumn;
-    @FXML private TableColumn<ListWrapper, String> objectColumn;
-    @FXML private TableColumn<ListWrapper, String> lastUpdatedColumn;
-    @FXML private TableColumn<ListWrapper, String> creatorColumn;
-    @FXML private TableColumn<ListWrapper, String> folderColumn;
-    @FXML private TableColumn<ListWrapper, String> usedInColumn;
+    @FXML private Button refreshButton;
+    @FXML private TableView<ListRow> listsTable;
+    @FXML private TableColumn<ListRow, String> nameColumn;
+    @FXML private TableColumn<ListRow, Integer> listSizeColumn;
+    @FXML private TableColumn<ListRow, String> typeColumn;
+    @FXML private TableColumn<ListRow, String> creatorColumn;
+    @FXML private TableColumn<ListRow, String> lastUpdatedColumn;
+    @FXML private TableColumn<ListRow, HBox> actionsColumn;
 
     private ListsDAO listsDAO;
-    private ObservableList<ListWrapper> listsData;
-    private String currentView = "ALL"; // ALL, UNUSED, DELETED
+    private ContactDAO contactDAO;
+    private ObservableList<ListRow> listsData;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        listsDAO = new ListsDAO();
-        listsData = FXCollections.observableArrayList();
+        System.out.println("Initializing Lists Controller...");
 
-        initializeTable();
-        initializeComboBoxes();
-        initializeEventHandlers();
+        try {
+            listsDAO = new ListsDAO();
+            contactDAO = new ContactDAO();
+            listsData = FXCollections.observableArrayList();
 
-        loadLists();
+            setupTable();
+            setupEventHandlers();
+            loadLists();
+
+            System.out.println("Lists Controller initialized successfully");
+        } catch (Exception e) {
+            System.err.println("Error initializing Lists Controller: " + e.getMessage());
+            e.printStackTrace();
+
+            // Show error dialog to user
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Initialization Error");
+                alert.setHeaderText("Failed to initialize Lists");
+                alert.setContentText("Error: " + e.getMessage() + "\n\nPlease check the console for details.");
+                alert.showAndWait();
+            });
+        }
     }
 
-    private void initializeTable() {
+    private void setupTable() {
         // Setup table columns
-        selectColumn.setCellValueFactory(cellData -> cellData.getValue().selectedProperty());
-        selectColumn.setCellFactory(CheckBoxTableCell.forTableColumn(selectColumn));
-        selectColumn.setEditable(true);
-
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
-        listSizeColumn.setCellValueFactory(new PropertyValueFactory<>("listSize"));
+        listSizeColumn.setCellValueFactory(new PropertyValueFactory<>("contactCount"));
         typeColumn.setCellValueFactory(new PropertyValueFactory<>("type"));
-        objectColumn.setCellValueFactory(new PropertyValueFactory<>("objectType"));
-        lastUpdatedColumn.setCellValueFactory(new PropertyValueFactory<>("formattedUpdatedAt"));
         creatorColumn.setCellValueFactory(new PropertyValueFactory<>("creator"));
-        folderColumn.setCellValueFactory(new PropertyValueFactory<>("folder"));
-        usedInColumn.setCellValueFactory(new PropertyValueFactory<>("usedIn"));
+        lastUpdatedColumn.setCellValueFactory(new PropertyValueFactory<>("lastUpdated"));
+        actionsColumn.setCellValueFactory(new PropertyValueFactory<>("actions"));
 
         listsTable.setItems(listsData);
-        listsTable.setEditable(true);
 
-        // Add context menu for right-click actions
-        setupContextMenu();
+        // Set placeholder text
+        listsTable.setPlaceholder(new Label("No lists found. Click 'Create List' to get started!"));
+
+        System.out.println("Table setup completed");
     }
 
-    private void setupContextMenu() {
-        ContextMenu contextMenu = new ContextMenu();
+    private void setupEventHandlers() {
+        if (createListButton != null) {
+            createListButton.setOnAction(e -> createNewList());
+            System.out.println("Create button handler set");
+        } else {
+            System.err.println("Create button is null!");
+        }
 
-        MenuItem editItem = new MenuItem("Edit");
-        editItem.setOnAction(e -> editSelectedList());
+        if (refreshButton != null) {
+            refreshButton.setOnAction(e -> loadLists());
+            System.out.println("Refresh button handler set");
+        } else {
+            System.err.println("Refresh button is null!");
+        }
 
-        MenuItem deleteItem = new MenuItem("Delete");
-        deleteItem.setOnAction(e -> deleteSelectedLists());
-
-        MenuItem duplicateItem = new MenuItem("Duplicate");
-        duplicateItem.setOnAction(e -> duplicateSelectedList());
-
-        contextMenu.getItems().addAll(editItem, deleteItem, duplicateItem);
-        listsTable.setContextMenu(contextMenu);
-    }
-
-    private void initializeComboBoxes() {
-        // Admin settings
-        adminSettingsComboBox.setItems(FXCollections.observableArrayList(
-                "List Settings", "User Permissions", "Export Settings"
-        ));
-
-        // Quick create
-        quickCreateComboBox.setItems(FXCollections.observableArrayList(
-                "Contact List", "Custom List", "Import from CSV"
-        ));
-
-        // Filter comboboxes
-        creatorsComboBox.setItems(FXCollections.observableArrayList(
-                "All creators", "Me", "Team Members"
-        ));
-
-        typesComboBox.setItems(FXCollections.observableArrayList(
-                "All types", "Custom", "Smart", "Import"
-        ));
-
-        objectsComboBox.setItems(FXCollections.observableArrayList(
-                "All objects", "Contact", "Lead", "Account"
-        ));
-
-        // Actions
-        actionsComboBox.setItems(FXCollections.observableArrayList(
-                "Actions", "Export Selected", "Delete Selected", "Move to Folder"
-        ));
-    }
-
-    private void initializeEventHandlers() {
-        // Tab buttons
-        allListsButton.setOnAction(e -> switchToAllLists());
-        unusedListsButton.setOnAction(e -> switchToUnusedLists());
-        recentlyDeletedButton.setOnAction(e -> switchToRecentlyDeleted());
-
-        // Main action buttons
-        createListButton.setOnAction(e -> createNewList());
-        importButton.setOnAction(e -> importList());
-
-        // Search functionality
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.trim().isEmpty()) {
-                loadLists();
-            } else {
-                searchLists(newValue.trim());
-            }
-        });
-
-        // Combo box actions
-        quickCreateComboBox.setOnAction(e -> handleQuickCreate());
-        actionsComboBox.setOnAction(e -> handleActions());
-    }
-
-    private void switchToAllLists() {
-        currentView = "ALL";
-        updateTabButtonStyles();
-        loadLists();
-    }
-
-    private void switchToUnusedLists() {
-        currentView = "UNUSED";
-        updateTabButtonStyles();
-        loadLists();
-    }
-
-    private void switchToRecentlyDeleted() {
-        currentView = "DELETED";
-        updateTabButtonStyles();
-        loadLists();
-    }
-
-    private void updateTabButtonStyles() {
-        // Remove selected style from all buttons
-        allListsButton.getStyleClass().remove("tab-button-selected");
-        unusedListsButton.getStyleClass().remove("tab-button-selected");
-        recentlyDeletedButton.getStyleClass().remove("tab-button-selected");
-
-        // Add selected style to current button
-        switch (currentView) {
-            case "ALL":
-                allListsButton.getStyleClass().add("tab-button-selected");
-                break;
-            case "UNUSED":
-                unusedListsButton.getStyleClass().add("tab-button-selected");
-                break;
-            case "DELETED":
-                recentlyDeletedButton.getStyleClass().add("tab-button-selected");
-                break;
+        if (searchField != null) {
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue == null || newValue.trim().isEmpty()) {
+                    loadLists();
+                } else {
+                    searchLists(newValue.trim());
+                }
+            });
+            System.out.println("Search field handler set");
+        } else {
+            System.err.println("Search field is null!");
         }
     }
 
     private void loadLists() {
-        listsData.clear();
-        ArrayList<List> lists = new ArrayList<>();
+        try {
+            System.out.println("=== ListsController.loadLists() Debug ===");
+            System.out.println("Clearing existing table data...");
+            listsData.clear();
 
-        switch (currentView) {
-            case "ALL":
-                lists = listsDAO.getAllActiveLists();
-                break;
-            case "UNUSED":
-                lists = listsDAO.getUnusedLists();
-                break;
-            case "DELETED":
-                lists = listsDAO.getRecentlyDeletedLists();
-                break;
-        }
+            System.out.println("Calling ListsDAO.getAllActiveLists()...");
+            ArrayList<List> lists = listsDAO.getAllActiveLists();
+            System.out.println("DAO returned " + lists.size() + " lists");
 
-        for (List list : lists) {
-            listsData.add(new ListWrapper(list));
+            System.out.println("Processing lists for table display:");
+            for (int i = 0; i < lists.size(); i++) {
+                List list = lists.get(i);
+                System.out.println("  Processing list " + (i+1) + ": " + list.getName() + " (ID: " + list.getId() + ")");
+
+                try {
+                    ListRow row = new ListRow(list, this);
+                    listsData.add(row);
+                    System.out.println("    ✅ Added to table successfully");
+                } catch (Exception e) {
+                    System.err.println("    ❌ Error creating ListRow: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            // Update count label
+            if (listsCount != null) {
+                listsCount.setText(lists.size() + " Lists");
+                System.out.println("Updated count label to: " + lists.size() + " Lists");
+            } else {
+                System.err.println("⚠️ listsCount label is null!");
+            }
+
+            System.out.println("Final table data size: " + listsData.size());
+            System.out.println("Table items property size: " +
+                    (listsTable != null && listsTable.getItems() != null ?
+                            listsTable.getItems().size() : "table is null"));
+
+            // Force table refresh
+            if (listsTable != null) {
+                listsTable.refresh();
+                System.out.println("Table refreshed");
+            }
+
+            System.out.println("=== loadLists() completed ===");
+        } catch (Exception e) {
+            System.err.println("Error loading lists: " + e.getMessage());
+            e.printStackTrace();
+            showErrorAlert("Error loading lists: " + e.getMessage());
         }
     }
 
     private void searchLists(String searchTerm) {
-        if (currentView.equals("ALL")) {
+        try {
+            System.out.println("Searching lists for: " + searchTerm);
             listsData.clear();
             ArrayList<List> lists = listsDAO.searchListsByName(searchTerm);
+
             for (List list : lists) {
-                listsData.add(new ListWrapper(list));
+                ListRow row = new ListRow(list, this);
+                listsData.add(row);
             }
+
+            System.out.println("Search found " + lists.size() + " lists for: " + searchTerm);
+        } catch (Exception e) {
+            System.err.println("Error searching lists: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
+    @FXML
     private void createNewList() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Create New List");
-        dialog.setHeaderText("Create a new contact list");
-        dialog.setContentText("List name:");
-
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent() && !result.get().trim().isEmpty()) {
-            String listName = result.get().trim();
-
-            // Create description dialog
-            TextInputDialog descDialog = new TextInputDialog();
-            descDialog.setTitle("List Description");
-            descDialog.setHeaderText("Add a description for: " + listName);
-            descDialog.setContentText("Description (optional):");
-
-            Optional<String> descResult = descDialog.showAndWait();
-            String description = descResult.orElse("");
-
-            List newList = new List(listName, description, "Current User");
-
-            if (listsDAO.createList(newList)) {
-                showSuccessAlert("List created successfully!");
-                loadLists();
-            } else {
-                showErrorAlert("Failed to create list. Please try again.");
-            }
-        }
-    }
-
-    private void editSelectedList() {
-        ListWrapper selectedWrapper = listsTable.getSelectionModel().getSelectedItem();
-        if (selectedWrapper != null) {
-            List selectedList = selectedWrapper.getList();
-
-            TextInputDialog dialog = new TextInputDialog(selectedList.getName());
-            dialog.setTitle("Edit List");
-            dialog.setHeaderText("Edit list: " + selectedList.getName());
+        try {
+            TextInputDialog dialog = new TextInputDialog();
+            dialog.setTitle("Create New List");
+            dialog.setHeaderText("Create a new contact list");
             dialog.setContentText("List name:");
 
             Optional<String> result = dialog.showAndWait();
             if (result.isPresent() && !result.get().trim().isEmpty()) {
-                selectedList.setName(result.get().trim());
+                String listName = result.get().trim();
 
-                if (listsDAO.updateList(selectedList)) {
-                    showSuccessAlert("List updated successfully!");
+                // Ask for description (optional)
+                TextInputDialog descDialog = new TextInputDialog();
+                descDialog.setTitle("List Description");
+                descDialog.setHeaderText("Add a description for: " + listName);
+                descDialog.setContentText("Description (optional):");
+
+                Optional<String> descResult = descDialog.showAndWait();
+                String description = descResult.orElse("");
+
+                // Create the list
+                List newList = new List(listName, description, "Current User");
+
+                if (listsDAO.createList(newList)) {
+                    showSuccessAlert("List '" + listName + "' created successfully!");
                     loadLists();
                 } else {
-                    showErrorAlert("Failed to update list. Please try again.");
+                    showErrorAlert("Failed to create list. Please try again.");
                 }
             }
-        } else {
-            showWarningAlert("Please select a list to edit.");
+        } catch (Exception e) {
+            System.err.println("Error creating list: " + e.getMessage());
+            e.printStackTrace();
+            showErrorAlert("Error creating list: " + e.getMessage());
         }
     }
 
-    private void deleteSelectedLists() {
-        ArrayList<ListWrapper> selectedLists = new ArrayList<>();
-        for (ListWrapper wrapper : listsData) {
-            if (wrapper.isSelected()) {
-                selectedLists.add(wrapper);
-            }
-        }
+    // ✅ UPDATED METHOD: Shows contacts in beautiful modal WITH REMOVE BUTTONS
+    public void openListDetailModal(List list) {
+        try {
+            System.out.println("🔍 Opening detail modal for list: " + list.getName() + " (ID: " + list.getId() + ")");
 
-        if (selectedLists.isEmpty()) {
-            showWarningAlert("Please select at least one list to delete.");
-            return;
-        }
+            // Get contacts in this list using your existing ContactDAO
+            java.util.List<Contact> contacts = contactDAO.getContactsInList(list.getId());
+            System.out.println("📊 Found " + contacts.size() + " contacts in this list");
 
-        Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmAlert.setTitle("Confirm Delete");
-        confirmAlert.setHeaderText("Delete Selected Lists");
-        confirmAlert.setContentText("Are you sure you want to delete " + selectedLists.size() + " list(s)?");
+            // Create modal dialog
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.setTitle("👥 Contacts in List: " + list.getName());
+            dialog.setWidth(1000); // Made wider for remove button column
+            dialog.setHeight(650);
 
-        Optional<ButtonType> result = confirmAlert.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            int deletedCount = 0;
-            for (ListWrapper wrapper : selectedLists) {
-                if (currentView.equals("DELETED")) {
-                    // Permanently delete if in deleted view
-                    if (listsDAO.permanentlyDeleteList(wrapper.getList().getId())) {
-                        deletedCount++;
-                    }
-                } else {
-                    // Soft delete if in active views
-                    if (listsDAO.deleteList(wrapper.getList().getId())) {
-                        deletedCount++;
-                    }
-                }
-            }
+            VBox dialogVbox = new VBox(15);
+            dialogVbox.setPadding(new Insets(20));
+            dialogVbox.setStyle("-fx-background-color: #f8f9fa;");
 
-            if (deletedCount > 0) {
-                showSuccessAlert(deletedCount + " list(s) deleted successfully!");
-                loadLists();
+            // Header section
+            VBox headerBox = new VBox(5);
+            Label headerLabel = new Label("📋 " + list.getName());
+            headerLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
+
+            Label contactCountLabel = new Label("👥 " + contacts.size() + " contacts");
+            contactCountLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #7f8c8d;");
+
+            Label descLabel = new Label("📄 " + (list.getDescription() != null && !list.getDescription().trim().isEmpty()
+                    ? list.getDescription()
+                    : "No description provided"));
+            descLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #95a5a6;");
+            descLabel.setWrapText(true);
+
+            headerBox.getChildren().addAll(headerLabel, contactCountLabel, descLabel);
+
+            // Separator
+            Separator separator = new Separator();
+            separator.setStyle("-fx-background-color: #bdc3c7;");
+
+            if (contacts.isEmpty()) {
+                // Empty state
+                VBox emptyStateBox = new VBox(20);
+                emptyStateBox.setAlignment(Pos.CENTER);
+                emptyStateBox.setPadding(new Insets(50));
+
+                Label emptyIcon = new Label("📭");
+                emptyIcon.setStyle("-fx-font-size: 48px;");
+
+                Label emptyLabel = new Label("No contacts in this list yet");
+                emptyLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #7f8c8d; -fx-font-weight: bold;");
+
+                Label emptyDesc = new Label("Use the '➕ Add' button to add contacts to this list");
+                emptyDesc.setStyle("-fx-font-size: 14px; -fx-text-fill: #95a5a6;");
+
+                emptyStateBox.getChildren().addAll(emptyIcon, emptyLabel, emptyDesc);
+                dialogVbox.getChildren().addAll(headerBox, separator, emptyStateBox);
             } else {
-                showErrorAlert("Failed to delete lists. Please try again.");
+                // Create contacts table WITH REMOVE BUTTONS
+                TableView<Contact> contactsTable = new TableView<>();
+                contactsTable.setPrefHeight(400);
+                contactsTable.setStyle("-fx-background-color: white; -fx-border-color: #ecf0f1; -fx-border-width: 1px;");
+
+                // Define columns
+                TableColumn<Contact, String> nameCol = new TableColumn<>("👤 Full Name");
+                nameCol.setPrefWidth(160);
+                nameCol.setCellValueFactory(cellData -> {
+                    Contact contact = cellData.getValue();
+                    String fullName = (contact.getFirstName() != null ? contact.getFirstName() : "") +
+                            " " +
+                            (contact.getLastName() != null ? contact.getLastName() : "");
+                    return new SimpleStringProperty(fullName.trim());
+                });
+
+                TableColumn<Contact, String> emailCol = new TableColumn<>("📧 Email");
+                emailCol.setPrefWidth(200);
+                emailCol.setCellValueFactory(new PropertyValueFactory<>("email"));
+
+                TableColumn<Contact, String> phoneCol = new TableColumn<>("📞 Phone");
+                phoneCol.setPrefWidth(130);
+                phoneCol.setCellValueFactory(new PropertyValueFactory<>("phoneNum"));
+
+                TableColumn<Contact, String> addressCol = new TableColumn<>("🏠 Address");
+                addressCol.setPrefWidth(180);
+                addressCol.setCellValueFactory(cellData -> {
+                    Contact contact = cellData.getValue();
+                    String address = "";
+                    if (contact.getStreetNum() != null) address += contact.getStreetNum() + " ";
+                    if (contact.getStreetName() != null) address += contact.getStreetName() + ", ";
+                    if (contact.getCity() != null) address += contact.getCity();
+                    return new SimpleStringProperty(address.trim().replaceAll(",$", ""));
+                });
+
+                TableColumn<Contact, String> memberCol = new TableColumn<>("🏷️ Member");
+                memberCol.setPrefWidth(80);
+                memberCol.setCellValueFactory(cellData -> {
+                    boolean isMember = cellData.getValue().isMember();
+                    return new SimpleStringProperty(isMember ? "✅ Yes" : "❌ No");
+                });
+
+                // 🔥 NEW: Remove button column
+                TableColumn<Contact, Void> removeCol = new TableColumn<>("Remove");
+                removeCol.setPrefWidth(100);
+                removeCol.setSortable(false);
+                removeCol.setCellFactory(column -> new TableCell<Contact, Void>() {
+                    private final Button removeBtn = new Button("❌ Remove");
+
+                    {
+                        removeBtn.setOnAction(e -> {
+                            Contact contact = getTableView().getItems().get(getIndex());
+
+                            // Show confirmation dialog
+                            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                            confirmAlert.setTitle("Remove Contact");
+                            confirmAlert.setHeaderText("Remove from List");
+                            confirmAlert.setContentText("Are you sure you want to remove " +
+                                    contact.getFirstName() + " " + contact.getLastName() + " from the list '" + list.getName() + "'?");
+
+                            ButtonType yesButton = new ButtonType("Yes, Remove", ButtonBar.ButtonData.YES);
+                            ButtonType noButton = new ButtonType("Cancel", ButtonBar.ButtonData.NO);
+                            confirmAlert.getButtonTypes().setAll(yesButton, noButton);
+
+                            confirmAlert.showAndWait().ifPresent(response -> {
+                                if (response == yesButton) {
+                                    try {
+                                        // Remove from database
+                                        if (listsDAO.removeContactFromList(list.getId(), contact.getId())) {
+                                            // Remove from table
+                                            getTableView().getItems().remove(contact);
+
+                                            // Update contact count label
+                                            contactCountLabel.setText("👥 " + getTableView().getItems().size() + " contacts");
+
+                                            // Show success message
+                                            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                                            successAlert.setTitle("Contact Removed");
+                                            successAlert.setHeaderText(null);
+                                            successAlert.setContentText(contact.getFirstName() + " " + contact.getLastName() +
+                                                    " has been removed from the list '" + list.getName() + "'.");
+                                            successAlert.show();
+
+                                            // Refresh the main lists table to update contact counts
+                                            Platform.runLater(() -> loadLists());
+
+                                            System.out.println("✅ Successfully removed " + contact.getFirstName() + " " + contact.getLastName() + " from list");
+                                        } else {
+                                            showErrorAlert("Failed to remove contact from list. Please try again.");
+                                        }
+                                    } catch (Exception ex) {
+                                        System.err.println("❌ Error removing contact from list: " + ex.getMessage());
+                                        ex.printStackTrace();
+                                        showErrorAlert("Error removing contact: " + ex.getMessage());
+                                    }
+                                }
+                            });
+                        });
+
+                        removeBtn.setStyle("-fx-background-color: #e74c3c; -fx-text-fill: white; " +
+                                "-fx-padding: 4px 8px; -fx-font-size: 11px; -fx-border-radius: 4px;");
+
+                        // Hover effects
+                        removeBtn.setOnMouseEntered(e -> removeBtn.setStyle(
+                                "-fx-background-color: #c0392b; -fx-text-fill: white; " +
+                                        "-fx-padding: 4px 8px; -fx-font-size: 11px; -fx-border-radius: 4px;"));
+
+                        removeBtn.setOnMouseExited(e -> removeBtn.setStyle(
+                                "-fx-background-color: #e74c3c; -fx-text-fill: white; " +
+                                        "-fx-padding: 4px 8px; -fx-font-size: 11px; -fx-border-radius: 4px;"));
+                    }
+
+                    @Override
+                    protected void updateItem(Void item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || getIndex() < 0 || getIndex() >= getTableView().getItems().size()) {
+                            setGraphic(null);
+                        } else {
+                            setGraphic(removeBtn);
+                        }
+                    }
+                });
+
+                contactsTable.getColumns().addAll(nameCol, emailCol, phoneCol, addressCol, memberCol, removeCol);
+
+                // Style the table
+                contactsTable.setRowFactory(tv -> {
+                    TableRow<Contact> row = new TableRow<>();
+                    row.setStyle("-fx-background-color: white;");
+                    row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: #ecf0f1;"));
+                    row.setOnMouseExited(e -> row.setStyle("-fx-background-color: white;"));
+                    return row;
+                });
+
+                // Add data to table
+                ObservableList<Contact> contactData = FXCollections.observableArrayList(contacts);
+                contactsTable.setItems(contactData);
+
+                dialogVbox.getChildren().addAll(headerBox, separator, contactsTable);
             }
+
+            // Button section
+            HBox buttonBox = new HBox(10);
+            buttonBox.setAlignment(Pos.CENTER);
+            buttonBox.setPadding(new Insets(20, 0, 0, 0));
+
+            Button addContactsBtn = getButton(list, dialog);
+            Button closeButton = new Button("✖️ Close");
+            closeButton.setStyle("-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 5px;");
+            closeButton.setOnAction(e -> dialog.close());
+
+            buttonBox.getChildren().addAll(addContactsBtn, closeButton);
+            dialogVbox.getChildren().add(buttonBox);
+
+            Scene dialogScene = new Scene(dialogVbox);
+            dialog.setScene(dialogScene);
+            dialog.showAndWait();
+
+        } catch (Exception e) {
+            System.err.println("❌ Error opening list detail modal: " + e.getMessage());
+            e.printStackTrace();
+            showErrorAlert("Failed to load contacts for this list: " + e.getMessage());
         }
     }
 
-    private void duplicateSelectedList() {
-        ListWrapper selectedWrapper = listsTable.getSelectionModel().getSelectedItem();
-        if (selectedWrapper != null) {
-            List originalList = selectedWrapper.getList();
+    @NotNull
+    private Button getButton(List list, Stage dialog) {
+        Button addContactsBtn = new Button("➕ Add Contacts");
 
-            TextInputDialog dialog = new TextInputDialog(originalList.getName() + " (Copy)");
-            dialog.setTitle("Duplicate List");
-            dialog.setHeaderText("Duplicate list: " + originalList.getName());
-            dialog.setContentText("New list name:");
+        addContactsBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 10px 20px; -fx-background-radius: 5px;");
+        addContactsBtn.setOnAction(e -> {
+            System.out.println("🔧 Add Contacts button clicked from modal");
+
+            // FIXED: Close dialog first, then wait for it to fully close before opening ContactSelectionDialog
+            dialog.close();
+
+            // Use Platform.runLater to ensure the modal is fully closed before opening the selection dialog
+            Platform.runLater(() -> {
+                System.out.println("🔧 Modal closed, now opening ContactSelectionDialog");
+                addContactsToList(list);
+            });
+        });
+        return addContactsBtn;
+    }
+
+    // Method to add contacts to a list
+    public void addContactsToList(List list) {
+        try {
+            System.out.println("🔄 Adding contacts to list: " + list.getName());
+
+            // Get all available contacts
+            java.util.List<Contact> allContacts = contactDAO.getAllContacts();
+            System.out.println("📊 Found " + allContacts.size() + " total contacts in database");
+
+            if (allContacts.isEmpty()) {
+                showWarningAlert("No contacts available. Please add contacts first.");
+                return;
+            }
+
+            // Get contacts already in this list to filter them out
+            java.util.List<Contact> contactsInList = contactDAO.getContactsInList(list.getId());
+            System.out.println("📋 " + contactsInList.size() + " contacts already in this list");
+
+            // Filter out contacts that are already in the list
+            java.util.List<Contact> availableContacts = new ArrayList<>();
+            for (Contact contact : allContacts) {
+                boolean alreadyInList = false;
+                for (Contact existingContact : contactsInList) {
+                    if (contact.getId() == existingContact.getId()) {
+                        alreadyInList = true;
+                        break;
+                    }
+                }
+                if (!alreadyInList) {
+                    availableContacts.add(contact);
+                }
+            }
+
+            System.out.println("✅ " + availableContacts.size() + " contacts available to add");
+
+            if (availableContacts.isEmpty()) {
+                showWarningAlert("All contacts are already in this list!");
+                return;
+            }
+
+            // Create selection dialog with your advanced ContactSelectionDialog
+            ContactSelectionDialog dialog = new ContactSelectionDialog(availableContacts);
+            Optional<java.util.List<Contact>> result = dialog.showAndWait();
+
+            if (result.isPresent()) {
+                java.util.List<Contact> selectedContacts = result.get();
+                System.out.println("👤 User selected " + selectedContacts.size() + " contacts");
+
+                if (selectedContacts.isEmpty()) {
+                    showWarningAlert("No contacts were selected.");
+                    return;
+                }
+
+                int addedCount = 0;
+                int failedCount = 0;
+
+                for (Contact contact : selectedContacts) {
+                    try {
+                        if (listsDAO.addContactToList(list.getId(), contact.getId())) {
+                            addedCount++;
+                            System.out.println("✅ Added " + contact.getFirstName() + " " + contact.getLastName() + " to list");
+                        } else {
+                            failedCount++;
+                            System.err.println("❌ Failed to add " + contact.getFirstName() + " " + contact.getLastName() + " to list");
+                        }
+                    } catch (Exception e) {
+                        failedCount++;
+                        System.err.println("❌ Exception adding contact " + contact.getId() + ": " + e.getMessage());
+                    }
+                }
+
+                // Show appropriate message based on results
+                if (addedCount > 0 && failedCount == 0) {
+                    showSuccessAlert("✅ Successfully added " + addedCount + " contact(s) to list '" + list.getName() + "'!");
+                    loadLists(); // Refresh to update contact counts
+                } else if (addedCount > 0 && failedCount > 0) {
+                    showWarningAlert("⚠️ Added " + addedCount + " contact(s) successfully, but " + failedCount + " failed. Please try again for the failed contacts.");
+                    loadLists(); // Still refresh to show successful additions
+                } else {
+                    showErrorAlert("❌ Failed to add any contacts to the list. Please try again.");
+                }
+            } else {
+                System.out.println("🚫 User cancelled contact selection");
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error adding contacts to list: " + e.getMessage());
+            e.printStackTrace();
+            showErrorAlert("Error adding contacts to list: " + e.getMessage());
+        }
+    }
+
+    // Method to edit a list
+    public void editList(List list) {
+        try {
+            TextInputDialog dialog = new TextInputDialog(list.getName());
+            dialog.setTitle("Edit List");
+            dialog.setHeaderText("Edit list: " + list.getName());
+            dialog.setContentText("List name:");
 
             Optional<String> result = dialog.showAndWait();
             if (result.isPresent() && !result.get().trim().isEmpty()) {
-                List duplicateList = new List(
-                        result.get().trim(),
-                        originalList.getDescription(),
-                        originalList.getCreator()
-                );
-                duplicateList.setType(originalList.getType());
-                duplicateList.setObjectType(originalList.getObjectType());
-                duplicateList.setFolder(originalList.getFolder());
+                list.setName(result.get().trim());
 
-                if (listsDAO.createList(duplicateList)) {
-                    showSuccessAlert("List duplicated successfully!");
+                if (listsDAO.updateList(list)) {
+                    showSuccessAlert("List updated successfully!");
                     loadLists();
                 } else {
-                    showErrorAlert("Failed to duplicate list. Please try again.");
+                    showErrorAlert("Failed to update list.");
                 }
             }
-        } else {
-            showWarningAlert("Please select a list to duplicate.");
+        } catch (Exception e) {
+            System.err.println("Error editing list: " + e.getMessage());
+            e.printStackTrace();
+            showErrorAlert("Error editing list: " + e.getMessage());
         }
     }
 
-    private void importList() {
-        showInfoAlert("Import functionality will be implemented in future updates.");
-    }
+    // Method to delete a list
+    public void deleteList(List list) {
+        try {
+            Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmAlert.setTitle("Confirm Delete");
+            confirmAlert.setHeaderText("Delete List");
+            confirmAlert.setContentText("Are you sure you want to delete the list '" + list.getName() + "'?");
 
-    private void handleQuickCreate() {
-        String selected = quickCreateComboBox.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            switch (selected) {
-                case "Contact List":
-                    createNewList();
-                    break;
-                case "Custom List":
-                    createNewList();
-                    break;
-                case "Import from CSV":
-                    importList();
-                    break;
-            }
-            quickCreateComboBox.getSelectionModel().clearSelection();
-        }
-    }
-
-    private void handleActions() {
-        String selected = actionsComboBox.getSelectionModel().getSelectedItem();
-        if (selected != null && !selected.equals("Actions")) {
-            switch (selected) {
-                case "Export Selected":
-                    exportSelectedLists();
-                    break;
-                case "Delete Selected":
-                    deleteSelectedLists();
-                    break;
-                case "Move to Folder":
-                    moveToFolder();
-                    break;
-            }
-            actionsComboBox.getSelectionModel().clearSelection();
-        }
-    }
-
-    private void exportSelectedLists() {
-        showInfoAlert("Export functionality will be implemented in future updates.");
-    }
-
-    private void moveToFolder() {
-        ArrayList<ListWrapper> selectedLists = new ArrayList<>();
-        for (ListWrapper wrapper : listsData) {
-            if (wrapper.isSelected()) {
-                selectedLists.add(wrapper);
-            }
-        }
-
-        if (selectedLists.isEmpty()) {
-            showWarningAlert("Please select at least one list to move.");
-            return;
-        }
-
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Move to Folder");
-        dialog.setHeaderText("Move " + selectedLists.size() + " list(s) to folder");
-        dialog.setContentText("Folder name:");
-
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            String folderName = result.get().trim();
-            int movedCount = 0;
-
-            for (ListWrapper wrapper : selectedLists) {
-                List list = wrapper.getList();
-                list.setFolder(folderName);
-                if (listsDAO.updateList(list)) {
-                    movedCount++;
+            Optional<ButtonType> result = confirmAlert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                if (listsDAO.deleteList(list.getId())) {
+                    showSuccessAlert("List '" + list.getName() + "' deleted successfully!");
+                    loadLists();
+                } else {
+                    showErrorAlert("Failed to delete list.");
                 }
             }
-
-            if (movedCount > 0) {
-                showSuccessAlert(movedCount + " list(s) moved to folder: " + folderName);
-                loadLists();
-            } else {
-                showErrorAlert("Failed to move lists to folder.");
-            }
+        } catch (Exception e) {
+            System.err.println("Error deleting list: " + e.getMessage());
+            e.printStackTrace();
+            showErrorAlert("Error deleting list: " + e.getMessage());
         }
     }
 
@@ -470,73 +638,59 @@ public class ListsController implements Initializable {
         alert.showAndWait();
     }
 
-    private void showInfoAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Information");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    // Inner class to wrap List objects for table display with selection
-    public static class ListWrapper {
+    // Inner class for table rows
+    public static class ListRow {
         private final List list;
-        private final BooleanProperty selected;
+        private final String name;
+        private final Integer contactCount;
+        private final String type;
+        private final String creator;
+        private final String lastUpdated;
+        private final HBox actions;
 
-        public ListWrapper(List list) {
+        public ListRow(List list, ListsController controller) {
             this.list = list;
-            this.selected = new SimpleBooleanProperty(false);
+            this.name = list.getName();
+            this.contactCount = list.getListSize();
+            this.type = list.getType();
+            this.creator = list.getCreator();
+            this.lastUpdated = list.getFormattedUpdatedAt();
+
+            // Create action buttons
+            this.actions = createActionButtons(controller);
         }
 
-        public List getList() {
-            return list;
+        private HBox createActionButtons(ListsController controller) {
+            HBox buttonBox = new HBox(5);
+            buttonBox.setAlignment(Pos.CENTER);
+
+            Button viewBtn = new Button("👁️ View");
+            viewBtn.getStyleClass().add("action-button");
+            viewBtn.setOnAction(e -> controller.openListDetailModal(list));
+
+            Button addContactsBtn = new Button("➕ Add Contacts");
+            addContactsBtn.getStyleClass().add("action-button");
+            addContactsBtn.setOnAction(e -> controller.addContactsToList(list));
+
+            Button editBtn = new Button("✏️ Edit");
+            editBtn.getStyleClass().add("action-button");
+            editBtn.setOnAction(e -> controller.editList(list));
+
+            Button deleteBtn = new Button("🗑️ Delete");
+            deleteBtn.getStyleClass().add("danger-button");
+            deleteBtn.setOnAction(e -> controller.deleteList(list));
+
+            buttonBox.getChildren().addAll(viewBtn, addContactsBtn, editBtn, deleteBtn);
+            return buttonBox;
         }
 
-        public BooleanProperty selectedProperty() {
-            return selected;
-        }
-
-        public boolean isSelected() {
-            return selected.get();
-        }
-
-        public void setSelected(boolean selected) {
-            this.selected.set(selected);
-        }
-
-        // Delegate methods for table columns
-        public String getName() {
-            return list.getName();
-        }
-
-        public int getListSize() {
-            return list.getListSize();
-        }
-
-        public String getType() {
-            return list.getType();
-        }
-
-        public String getObjectType() {
-            return list.getObjectType();
-        }
-
-        public String getFormattedUpdatedAt() {
-            return list.getFormattedUpdatedAt();
-        }
-
-        public String getCreator() {
-            return list.getCreator();
-        }
-
-        public String getFolder() {
-            return list.getFolder() != null ? list.getFolder() : "";
-        }
-
-        public String getUsedIn() {
-            // This would be calculated based on where the list is used
-            // For now, return empty string
-            return "";
-        }
+        // Getters for table columns
+        public String getName() { return name; }
+        public Integer getContactCount() { return contactCount; }
+        public String getType() { return type; }
+        public String getCreator() { return creator; }
+        public String getLastUpdated() { return lastUpdated; }
+        public HBox getActions() { return actions; }
+        public List getList() { return list; }
     }
 }

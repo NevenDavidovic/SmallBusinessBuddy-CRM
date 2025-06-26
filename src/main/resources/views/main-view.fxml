@@ -64,7 +64,7 @@
                         <Circle fx:id="userAvatar" radius="15" styleClass="user-avatar"/>
                     </graphic>
                     <items>
-                        <MenuItem text="Profile"/>
+                        <MenuItem text="Profile" onAction="#handleOrganizationAction"/>
                         <MenuItem text="Settings"/>
                         <MenuItem text="Logout"/>
                     </items>

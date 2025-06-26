@@ -18,6 +18,23 @@ public class DatabaseConnection {
 
     // Metoda za inicijalizaciju baze i tablice
     public static void initializeDatabase() {
+        String createOrganizationTableSQL = """
+            CREATE TABLE IF NOT EXISTS organization (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                IBAN TEXT NOT NULL,
+                street_name TEXT,
+                street_num TEXT,
+                postal_code TEXT,
+                city TEXT,
+                email TEXT,
+                image BLOB,
+                phone_num TEXT,
+                created_at TEXT,
+                updated_at TEXT
+            );
+            """;
+
         String createContactsTableSQL = """
             CREATE TABLE IF NOT EXISTS contacts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,6 +85,7 @@ public class DatabaseConnection {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
+            stmt.execute(createOrganizationTableSQL);
             stmt.execute(createContactsTableSQL);
             stmt.execute(createListsTableSQL);
             stmt.execute(createListContactsTableSQL);

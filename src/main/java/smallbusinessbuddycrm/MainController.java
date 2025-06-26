@@ -57,6 +57,11 @@ public class MainController {
     }
 
     @FXML
+    private void handleOrganizationAction() {
+        navigateTo("/views/general/organization-view.fxml");
+    }
+
+    @FXML
     private void handleListsAction() {
         navigateTo("/views/crm/lists-view.fxml");
     }

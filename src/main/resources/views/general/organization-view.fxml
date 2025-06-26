@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.effect.DropShadow?>
+
+<VBox xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.OrganizationController"
+      style="-fx-background-color: linear-gradient(to bottom, #f8f9fa, #e9ecef); -fx-spacing: 0;">
+    <children>
+        <!-- Header Section -->
+        <VBox style="-fx-background-color: linear-gradient(to right, #4a90e2, #357abd); -fx-padding: 30 40; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 2);">
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="20.0">
+                    <children>
+                        <Label text="🏢" style="-fx-font-size: 32px;">
+                            <font>
+                                <Font size="32.0" />
+                            </font>
+                        </Label>
+                        <Label text="Organization" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 28px; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 2, 0, 0, 1);">
+                            <font>
+                                <Font size="28.0" />
+                            </font>
+                        </Label>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <HBox spacing="15.0" alignment="CENTER_RIGHT">
+                            <children>
+                                <Button fx:id="editButton" mnemonicParsing="false" onAction="#handleEdit" text="✏️ Edit"
+                                        style="-fx-background-color: #ffffff; -fx-text-fill: #4a90e2; -fx-font-weight: bold; -fx-background-radius: 25; -fx-padding: 12 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;" />
+                                <Button fx:id="saveButton" mnemonicParsing="false" onAction="#handleSave" text="💾 Save" visible="false"
+                                        style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 25; -fx-padding: 12 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;" />
+                                <Button fx:id="cancelButton" mnemonicParsing="false" onAction="#handleCancel" text="❌ Cancel" visible="false"
+                                        style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 25; -fx-padding: 12 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;" />
+                            </children>
+                        </HBox>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+
+        <!-- Main Content -->
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background: transparent; -fx-background-color: transparent;">
+            <content>
+                <VBox spacing="30.0" style="-fx-padding: 40;">
+                    <children>
+                        <!-- Organization Image Section -->
+                        <VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);">
+                            <children>
+                                <Label text="📸 Organization Image" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #495057;">
+                                    <font>
+                                        <Font size="18.0" />
+                                    </font>
+                                </Label>
+
+                                <VBox alignment="CENTER" spacing="15.0" style="-fx-border-color: #dee2e6; -fx-border-radius: 10; -fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-padding: 25;">
+                                    <children>
+                                        <ImageView fx:id="organizationImageView" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true"
+                                                   style="-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0, 0, 3); -fx-background-radius: 10;" />
+                                        <Label fx:id="imageStatusLabel" text="No image" style="-fx-text-fill: #6c757d; -fx-font-style: italic; -fx-font-size: 14px;" />
+                                    </children>
+                                </VBox>
+
+                                <HBox spacing="15.0" alignment="CENTER">
+                                    <children>
+                                        <Button fx:id="changeImageButton" mnemonicParsing="false" onAction="#handleChangeImage" text="🖼️ Add/Change Image" visible="false"
+                                                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 10 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;" />
+                                        <Button fx:id="removeImageButton" mnemonicParsing="false" onAction="#handleRemoveImage" text="🗑️ Remove Image" visible="false"
+                                                style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-padding: 10 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0, 0, 2); -fx-cursor: hand;" />
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <!-- Basic Information Section -->
+                        <VBox spacing="20.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                        <Label text="ℹ️" style="-fx-font-size: 20px;">
+                                            <font>
+                                                <Font size="20.0" />
+                                            </font>
+                                        </Label>
+                                        <Label text="Basic Information" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #343a40;">
+                                            <font>
+                                                <Font size="20.0" />
+                                            </font>
+                                        </Label>
+                                    </children>
+                                </HBox>
+
+                                <GridPane hgap="20.0" vgap="15.0" style="-fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-padding: 25;">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="140.0" prefWidth="140.0" />
+                                        <ColumnConstraints hgrow="ALWAYS" />
+                                    </columnConstraints>
+                                    <children>
+                                        <Label text="🏢 Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;" />
+                                        <Label fx:id="nameLabel" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-text-fill: #212529; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5;" />
+                                        <TextField fx:id="nameField" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-background-radius: 8; -fx-border-color: #ced4da; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px;" />
+
+                                        <Label text="🏦 IBAN:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;" />
+                                        <Label fx:id="ibanLabel" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-text-fill: #212529; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5;" />
+                                        <TextField fx:id="ibanField" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-background-radius: 8; -fx-border-color: #ced4da; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px;" />
+
+                                        <Label text="📧 Email:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;" />
+                                        <Label fx:id="emailLabel" GridPane.columnIndex="1" GridPane.rowIndex="2" style="-fx-text-fill: #212529; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5;" />
+                                        <TextField fx:id="emailField" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="2" style="-fx-background-radius: 8; -fx-border-color: #ced4da; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px;" />
+
+                                        <Label text="📞 Phone:" GridPane.columnIndex="0" GridPane.rowIndex="3" style="-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;" />
+                                        <Label fx:id="phoneLabel" GridPane.columnIndex="1" GridPane.rowIndex="3" style="-fx-text-fill: #212529; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5;" />
+                                        <TextField fx:id="phoneField" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="3" style="-fx-background-radius: 8; -fx-border-color: #ced4da; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px;" />
+                                    </children>
+                                </GridPane>
+                            </children>
+                        </VBox>
+
+                        <!-- Address Information Section -->
+                        <VBox spacing="20.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                        <Label text="📍" style="-fx-font-size: 20px;">
+                                            <font>
+                                                <Font size="20.0" />
+                                            </font>
+                                        </Label>
+                                        <Label text="Address" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #343a40;">
+                                            <font>
+                                                <Font size="20.0" />
+                                            </font>
+                                        </Label>
+                                    </children>
+                                </HBox>
+
+                                <GridPane hgap="20.0" vgap="15.0" style="-fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-padding: 25;">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="140.0" prefWidth="140.0" />
+                                        <ColumnConstraints hgrow="ALWAYS" />
+                                    </columnConstraints>
+                                    <children>
+                                        <Label text="🛣️ Street:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;" />
+                                        <HBox spacing="10.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                            <children>
+                                                <Label fx:id="streetNameLabel" HBox.hgrow="ALWAYS" style="-fx-text-fill: #212529; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5;" />
+                                                <Label fx:id="streetNumLabel" style="-fx-text-fill: #212529; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5; -fx-min-width: 60px;" />
+                                                <TextField fx:id="streetNameField" visible="false" HBox.hgrow="ALWAYS" style="-fx-background-radius: 8; -fx-border-color: #ced4da; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px;" />
+                                                <TextField fx:id="streetNumField" visible="false" prefWidth="80.0" style="-fx-background-radius: 8; -fx-border-color: #ced4da; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px;" />
+                                            </children>
+                                        </HBox>
+
+                                        <Label text="📮 Postal Code:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;" />
+                                        <Label fx:id="postalCodeLabel" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-text-fill: #212529; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5;" />
+                                        <TextField fx:id="postalCodeField" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-background-radius: 8; -fx-border-color: #ced4da; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px;" />
+
+                                        <Label text="🏙️ City:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;" />
+                                        <Label fx:id="cityLabel" GridPane.columnIndex="1" GridPane.rowIndex="2" style="-fx-text-fill: #212529; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5;" />
+                                        <TextField fx:id="cityField" visible="false" GridPane.columnIndex="1" GridPane.rowIndex="2" style="-fx-background-radius: 8; -fx-border-color: #ced4da; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px;" />
+                                    </children>
+                                </GridPane>
+                            </children>
+                        </VBox>
+
+                        <!-- Metadata Section -->
+                        <VBox spacing="20.0" style="-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 30; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 15, 0, 0, 5);">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                        <Label text="🕒" style="-fx-font-size: 20px;">
+                                            <font>
+                                                <Font size="20.0" />
+                                            </font>
+                                        </Label>
+                                        <Label text="Record Information" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #343a40;">
+                                            <font>
+                                                <Font size="20.0" />
+                                            </font>
+                                        </Label>
+                                    </children>
+                                </HBox>
+
+                                <GridPane hgap="20.0" vgap="15.0" style="-fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-padding: 25;">
+                                    <columnConstraints>
+                                        <ColumnConstraints minWidth="140.0" prefWidth="140.0" />
+                                        <ColumnConstraints hgrow="ALWAYS" />
+                                    </columnConstraints>
+                                    <children>
+                                        <Label text="📅 Created:" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;" />
+                                        <Label fx:id="createdAtLabel" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-text-fill: #6c757d; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5;" />
+
+                                        <Label text="🔄 Updated:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;" />
+                                        <Label fx:id="updatedAtLabel" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-text-fill: #6c757d; -fx-font-size: 14px; -fx-padding: 8 12; -fx-background-color: white; -fx-background-radius: 5;" />
+                                    </children>
+                                </GridPane>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </children>
+</VBox>
