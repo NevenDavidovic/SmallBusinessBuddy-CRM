@@ -52,48 +52,14 @@ public class ContactDAO {
                 int rowCount = 0;
                 while (rs.next()) {
                     rowCount++;
-                    Contact contact = new Contact();
-
-                    contact.setId(rs.getInt("id"));
-                    contact.setFirstName(rs.getString("first_name"));
-                    contact.setLastName(rs.getString("last_name"));
-                    contact.setStreetName(rs.getString("street_name"));
-                    contact.setStreetNum(rs.getString("street_num"));
-                    contact.setPostalCode(rs.getString("postal_code"));
-                    contact.setCity(rs.getString("city"));
-                    contact.setEmail(rs.getString("email"));
-                    contact.setPhoneNum(rs.getString("phone_num"));
-                    contact.setMember(rs.getInt("is_member") == 1);
-
-                    // *** ADDED: Read member_since and member_until from database ***
-                    String memberSinceStr = rs.getString("member_since");
-                    if (memberSinceStr != null && !memberSinceStr.trim().isEmpty()) {
-                        try {
-                            contact.setMemberSince(LocalDate.parse(memberSinceStr));
-                        } catch (Exception e) {
-                            System.err.println("Error parsing member_since date: " + memberSinceStr);
-                        }
-                    }
-
-                    String memberUntilStr = rs.getString("member_until");
-                    if (memberUntilStr != null && !memberUntilStr.trim().isEmpty()) {
-                        try {
-                            contact.setMemberUntil(LocalDate.parse(memberUntilStr));
-                        } catch (Exception e) {
-                            System.err.println("Error parsing member_until date: " + memberUntilStr);
-                        }
-                    }
-
-                    contact.setCreatedAt(rs.getString("created_at"));
-                    contact.setUpdatedAt(rs.getString("updated_at"));
-
+                    Contact contact = createContactFromResultSet(rs);
                     contacts.add(contact);
 
                     // Debug: Print first contact details
                     if (rowCount == 1) {
                         System.out.println("First contact loaded: " + contact.getFirstName() + " " + contact.getLastName() + " (" + contact.getEmail() + ")");
-                        System.out.println("  Member Since: " + memberSinceStr + " -> " + contact.getMemberSince());
-                        System.out.println("  Member Until: " + memberUntilStr + " -> " + contact.getMemberUntil());
+                        System.out.println("  Member Since: " + contact.getMemberSince());
+                        System.out.println("  Member Until: " + contact.getMemberUntil());
                     }
                 }
 
@@ -107,6 +73,36 @@ public class ContactDAO {
 
         System.out.println("Returning " + contacts.size() + " contacts from DAO");
         System.out.println("===============================");
+
+        return contacts;
+    }
+
+    // *** NEW METHOD: Get contacts that are in a specific list ***
+    public List<Contact> getContactsInList(int listId) {
+        List<Contact> contacts = new ArrayList<>();
+        String query = """
+            SELECT c.* FROM contacts c 
+            INNER JOIN list_contacts lc ON c.id = lc.contact_id 
+            WHERE lc.list_id = ? 
+            ORDER BY c.first_name, c.last_name
+            """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, listId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Contact contact = createContactFromResultSet(rs);
+                contacts.add(contact);
+            }
+
+            System.out.println("Loaded " + contacts.size() + " contacts for list ID: " + listId);
+        } catch (SQLException e) {
+            System.err.println("Error loading contacts for list: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         return contacts;
     }
@@ -257,5 +253,45 @@ public class ContactDAO {
         }
 
         return false;
+    }
+
+    // *** NEW HELPER METHOD: Extract contact creation logic ***
+    private Contact createContactFromResultSet(ResultSet rs) throws SQLException {
+        Contact contact = new Contact();
+
+        contact.setId(rs.getInt("id"));
+        contact.setFirstName(rs.getString("first_name"));
+        contact.setLastName(rs.getString("last_name"));
+        contact.setStreetName(rs.getString("street_name"));
+        contact.setStreetNum(rs.getString("street_num"));
+        contact.setPostalCode(rs.getString("postal_code"));
+        contact.setCity(rs.getString("city"));
+        contact.setEmail(rs.getString("email"));
+        contact.setPhoneNum(rs.getString("phone_num"));
+        contact.setMember(rs.getInt("is_member") == 1);
+
+        // Handle member_since and member_until dates
+        String memberSinceStr = rs.getString("member_since");
+        if (memberSinceStr != null && !memberSinceStr.trim().isEmpty()) {
+            try {
+                contact.setMemberSince(LocalDate.parse(memberSinceStr));
+            } catch (Exception e) {
+                System.err.println("Error parsing member_since date: " + memberSinceStr);
+            }
+        }
+
+        String memberUntilStr = rs.getString("member_until");
+        if (memberUntilStr != null && !memberUntilStr.trim().isEmpty()) {
+            try {
+                contact.setMemberUntil(LocalDate.parse(memberUntilStr));
+            } catch (Exception e) {
+                System.err.println("Error parsing member_until date: " + memberUntilStr);
+            }
+        }
+
+        contact.setCreatedAt(rs.getString("created_at"));
+        contact.setUpdatedAt(rs.getString("updated_at"));
+
+        return contact;
     }
 }

@@ -11,19 +11,20 @@ public class List {
     private String objectType;
     private String creator;
     private String folder;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String createdAt;
+    private String updatedAt;
     private boolean isDeleted;
-    private LocalDateTime deletedAt;
-    private int listSize; // This will be calculated from list_contacts table
+    private String deletedAt;
+    private int listSize;
 
     // Constructors
     public List() {
         this.type = "CUSTOM";
         this.objectType = "CONTACT";
         this.isDeleted = false;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        String currentTime = LocalDateTime.now().toString();
+        this.createdAt = currentTime;
+        this.updatedAt = currentTime;
     }
 
     public List(String name, String description, String creator) {
@@ -34,8 +35,8 @@ public class List {
     }
 
     public List(int id, String name, String description, String type, String objectType,
-                String creator, String folder, LocalDateTime createdAt, LocalDateTime updatedAt,
-                boolean isDeleted, LocalDateTime deletedAt) {
+                String creator, String folder, String createdAt, String updatedAt,
+                boolean isDeleted, String deletedAt) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -64,7 +65,7 @@ public class List {
 
     public void setName(String name) {
         this.name = name;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now().toString();
     }
 
     public String getDescription() {
@@ -73,7 +74,7 @@ public class List {
 
     public void setDescription(String description) {
         this.description = description;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now().toString();
     }
 
     public String getType() {
@@ -82,7 +83,7 @@ public class List {
 
     public void setType(String type) {
         this.type = type;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now().toString();
     }
 
     public String getObjectType() {
@@ -91,7 +92,7 @@ public class List {
 
     public void setObjectType(String objectType) {
         this.objectType = objectType;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now().toString();
     }
 
     public String getCreator() {
@@ -108,22 +109,23 @@ public class List {
 
     public void setFolder(String folder) {
         this.folder = folder;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now().toString();
     }
 
-    public LocalDateTime getCreatedAt() {
+    // ✅ FIXED: Date getters and setters now work with Strings
+    public String getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public String getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
     }
 
@@ -134,16 +136,16 @@ public class List {
     public void setDeleted(boolean deleted) {
         isDeleted = deleted;
         if (deleted) {
-            this.deletedAt = LocalDateTime.now();
+            this.deletedAt = LocalDateTime.now().toString();
         }
-        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now().toString();
     }
 
-    public LocalDateTime getDeletedAt() {
+    public String getDeletedAt() {
         return deletedAt;
     }
 
-    public void setDeletedAt(LocalDateTime deletedAt) {
+    public void setDeletedAt(String deletedAt) {
         this.deletedAt = deletedAt;
     }
 
@@ -155,17 +157,41 @@ public class List {
         this.listSize = listSize;
     }
 
-    // Utility methods
+    // ✅ FIXED: Utility methods that handle String to LocalDateTime conversion
     public String getFormattedCreatedAt() {
-        return createdAt != null ? createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "";
+        if (createdAt == null || createdAt.isEmpty()) {
+            return "Unknown";
+        }
+        try {
+            LocalDateTime dateTime = LocalDateTime.parse(createdAt);
+            return dateTime.format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"));
+        } catch (Exception e) {
+            return createdAt; // Return original if parsing fails
+        }
     }
 
     public String getFormattedUpdatedAt() {
-        return updatedAt != null ? updatedAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "";
+        if (updatedAt == null || updatedAt.isEmpty()) {
+            return "Unknown";
+        }
+        try {
+            LocalDateTime dateTime = LocalDateTime.parse(updatedAt);
+            return dateTime.format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"));
+        } catch (Exception e) {
+            return updatedAt; // Return original if parsing fails
+        }
     }
 
     public String getFormattedDeletedAt() {
-        return deletedAt != null ? deletedAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) : "";
+        if (deletedAt == null || deletedAt.isEmpty()) {
+            return "";
+        }
+        try {
+            LocalDateTime dateTime = LocalDateTime.parse(deletedAt);
+            return dateTime.format(DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm"));
+        } catch (Exception e) {
+            return deletedAt; // Return original if parsing fails
+        }
     }
 
     @Override

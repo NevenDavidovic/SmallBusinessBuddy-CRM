@@ -11,10 +11,13 @@ module smallbusinessbuddycrm {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
     requires java.sql;
+    requires annotations;
+    requires javafx.swing;
 
     opens smallbusinessbuddycrm to javafx.fxml;
     exports smallbusinessbuddycrm;
 
     opens smallbusinessbuddycrm.controllers to javafx.fxml;
     exports smallbusinessbuddycrm.controllers;
+    opens smallbusinessbuddycrm.model to javafx.base;
 }

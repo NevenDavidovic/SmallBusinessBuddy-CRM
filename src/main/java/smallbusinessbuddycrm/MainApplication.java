@@ -5,13 +5,21 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import smallbusinessbuddycrm.database.OrganizationDAO;
+import smallbusinessbuddycrm.model.Organization;
+import smallbusinessbuddycrm.controllers.OrganizationSetupDialog;
+
+import java.util.Optional;
 
 public class MainApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Inicijaliziraj bazu i tablicu prije učitavanja GUI-a
+        // Initialize database and tables before loading GUI
         smallbusinessbuddycrm.database.DatabaseConnection.initializeDatabase();
+
+        // Check if organization exists, if not show setup dialog
+        checkAndSetupOrganization(primaryStage);
 
         // Load the main FXML file
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/main-view.fxml"));
@@ -22,13 +30,47 @@ public class MainApplication extends Application {
 
         // Create and set the scene
         Scene scene = new Scene(root, 1300, 700);
-        scene.getStylesheets().add(getClass().getResource("/styles/main-style.css").toExternalForm());
+
+        // Handle CSS file not found gracefully
+        try {
+            scene.getStylesheets().add(getClass().getResource("/styles/main-style.css").toExternalForm());
+        } catch (Exception e) {
+            System.out.println("CSS file not found, using default styling");
+        }
 
         // Configure and show the stage
-        primaryStage.setTitle("Small Business Buddy");
+        primaryStage.setTitle("Small Business Buddy - CRM");
         primaryStage.setScene(scene);
+        primaryStage.setMinWidth(1000);
+        primaryStage.setMinHeight(600);
         primaryStage.show();
     }
+
+    private void checkAndSetupOrganization(Stage parentStage) {
+        OrganizationDAO organizationDAO = new OrganizationDAO();
+        Optional<Organization> existingOrg = organizationDAO.getFirst();
+
+        if (existingOrg.isEmpty()) {
+            // No organization exists, show setup dialog
+            OrganizationSetupDialog setupDialog = new OrganizationSetupDialog();
+            Optional<Organization> result = setupDialog.showAndWait(parentStage);
+
+            if (result.isPresent()) {
+                // Save the organization to database
+                Organization newOrg = result.get();
+                boolean saved = organizationDAO.save(newOrg);
+
+                if (!saved) {
+                    System.err.println("Failed to save organization to database!");
+                }
+            } else {
+                // User cancelled setup, create a default organization
+                Organization defaultOrg = new Organization("Nova organizacija", "");
+                organizationDAO.save(defaultOrg);
+            }
+        }
+    }
+
     public static void main(String[] args) {
         launch(args);
     }
