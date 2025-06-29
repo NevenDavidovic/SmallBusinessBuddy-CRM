@@ -58,6 +58,9 @@ public class ContactDAO {
                     // Debug: Print first contact details
                     if (rowCount == 1) {
                         System.out.println("First contact loaded: " + contact.getFirstName() + " " + contact.getLastName() + " (" + contact.getEmail() + ")");
+                        System.out.println("  Birthday: " + contact.getBirthday());
+                        System.out.println("  PIN: " + contact.getPin());
+                        System.out.println("  Age: " + contact.getAge());
                         System.out.println("  Member Since: " + contact.getMemberSince());
                         System.out.println("  Member Until: " + contact.getMemberUntil());
                     }
@@ -110,10 +113,10 @@ public class ContactDAO {
     public boolean createContact(Contact contact) {
         String query = """
         INSERT INTO contacts (
-            first_name, last_name, street_name, street_num, postal_code, 
+            first_name, last_name, birthday, pin, street_name, street_num, postal_code, 
             city, email, phone_num, is_member, member_since, member_until, 
             created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -121,20 +124,27 @@ public class ContactDAO {
 
             stmt.setString(1, contact.getFirstName());
             stmt.setString(2, contact.getLastName());
-            stmt.setString(3, contact.getStreetName());
-            stmt.setString(4, contact.getStreetNum());
-            stmt.setString(5, contact.getPostalCode());
-            stmt.setString(6, contact.getCity());
-            stmt.setString(7, contact.getEmail());
-            stmt.setString(8, contact.getPhoneNum());
-            stmt.setInt(9, contact.isMember() ? 1 : 0);
 
-            // Handle dates - convert LocalDate to String
-            stmt.setString(10, contact.getMemberSince() != null ? contact.getMemberSince().toString() : null);
-            stmt.setString(11, contact.getMemberUntil() != null ? contact.getMemberUntil().toString() : null);
+            // Handle birthday - convert LocalDate to String
+            stmt.setString(3, contact.getBirthday() != null ? contact.getBirthday().toString() : null);
 
-            stmt.setString(12, contact.getCreatedAt());
-            stmt.setString(13, contact.getUpdatedAt());
+            // Handle PIN
+            stmt.setString(4, contact.getPin());
+
+            stmt.setString(5, contact.getStreetName());
+            stmt.setString(6, contact.getStreetNum());
+            stmt.setString(7, contact.getPostalCode());
+            stmt.setString(8, contact.getCity());
+            stmt.setString(9, contact.getEmail());
+            stmt.setString(10, contact.getPhoneNum());
+            stmt.setInt(11, contact.isMember() ? 1 : 0);
+
+            // Handle member dates - convert LocalDate to String
+            stmt.setString(12, contact.getMemberSince() != null ? contact.getMemberSince().toString() : null);
+            stmt.setString(13, contact.getMemberUntil() != null ? contact.getMemberUntil().toString() : null);
+
+            stmt.setString(14, contact.getCreatedAt());
+            stmt.setString(15, contact.getUpdatedAt());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -214,7 +224,7 @@ public class ContactDAO {
     public boolean updateContact(Contact contact) {
         String query = """
         UPDATE contacts SET 
-            first_name = ?, last_name = ?, street_name = ?, street_num = ?, 
+            first_name = ?, last_name = ?, birthday = ?, pin = ?, street_name = ?, street_num = ?, 
             postal_code = ?, city = ?, email = ?, phone_num = ?, 
             is_member = ?, member_since = ?, member_until = ?, updated_at = ?
         WHERE id = ?
@@ -225,20 +235,27 @@ public class ContactDAO {
 
             stmt.setString(1, contact.getFirstName());
             stmt.setString(2, contact.getLastName());
-            stmt.setString(3, contact.getStreetName());
-            stmt.setString(4, contact.getStreetNum());
-            stmt.setString(5, contact.getPostalCode());
-            stmt.setString(6, contact.getCity());
-            stmt.setString(7, contact.getEmail());
-            stmt.setString(8, contact.getPhoneNum());
-            stmt.setInt(9, contact.isMember() ? 1 : 0);
 
-            // Handle dates - convert LocalDate to String
-            stmt.setString(10, contact.getMemberSince() != null ? contact.getMemberSince().toString() : null);
-            stmt.setString(11, contact.getMemberUntil() != null ? contact.getMemberUntil().toString() : null);
+            // Handle birthday - convert LocalDate to String
+            stmt.setString(3, contact.getBirthday() != null ? contact.getBirthday().toString() : null);
 
-            stmt.setString(12, java.time.LocalDateTime.now().toString());
-            stmt.setInt(13, contact.getId());
+            // Handle PIN
+            stmt.setString(4, contact.getPin());
+
+            stmt.setString(5, contact.getStreetName());
+            stmt.setString(6, contact.getStreetNum());
+            stmt.setString(7, contact.getPostalCode());
+            stmt.setString(8, contact.getCity());
+            stmt.setString(9, contact.getEmail());
+            stmt.setString(10, contact.getPhoneNum());
+            stmt.setInt(11, contact.isMember() ? 1 : 0);
+
+            // Handle member dates - convert LocalDate to String
+            stmt.setString(12, contact.getMemberSince() != null ? contact.getMemberSince().toString() : null);
+            stmt.setString(13, contact.getMemberUntil() != null ? contact.getMemberUntil().toString() : null);
+
+            stmt.setString(14, java.time.LocalDateTime.now().toString());
+            stmt.setInt(15, contact.getId());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -262,6 +279,20 @@ public class ContactDAO {
         contact.setId(rs.getInt("id"));
         contact.setFirstName(rs.getString("first_name"));
         contact.setLastName(rs.getString("last_name"));
+
+        // Handle birthday
+        String birthdayStr = rs.getString("birthday");
+        if (birthdayStr != null && !birthdayStr.trim().isEmpty()) {
+            try {
+                contact.setBirthday(LocalDate.parse(birthdayStr));
+            } catch (Exception e) {
+                System.err.println("Error parsing birthday: " + birthdayStr);
+            }
+        }
+
+        // Handle PIN
+        contact.setPin(rs.getString("pin"));
+
         contact.setStreetName(rs.getString("street_name"));
         contact.setStreetNum(rs.getString("street_num"));
         contact.setPostalCode(rs.getString("postal_code"));
@@ -293,5 +324,74 @@ public class ContactDAO {
         contact.setUpdatedAt(rs.getString("updated_at"));
 
         return contact;
+    }
+
+    // *** NEW METHOD: Get contacts with upcoming birthdays ***
+    public List<Contact> getContactsWithUpcomingBirthdays(int daysAhead) {
+        List<Contact> contacts = new ArrayList<>();
+        String query = "SELECT * FROM contacts WHERE birthday IS NOT NULL ORDER BY first_name, last_name";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            LocalDate today = LocalDate.now();
+            LocalDate futureDate = today.plusDays(daysAhead);
+
+            while (rs.next()) {
+                Contact contact = createContactFromResultSet(rs);
+
+                if (contact.getBirthday() != null) {
+                    // Calculate this year's birthday
+                    LocalDate thisYearBirthday = contact.getBirthday().withYear(today.getYear());
+
+                    // If birthday already passed this year, check next year's birthday
+                    if (thisYearBirthday.isBefore(today)) {
+                        thisYearBirthday = thisYearBirthday.plusYears(1);
+                    }
+
+                    // Check if birthday falls within the specified range
+                    if (!thisYearBirthday.isBefore(today) && !thisYearBirthday.isAfter(futureDate)) {
+                        contacts.add(contact);
+                    }
+                }
+            }
+
+            System.out.println("Found " + contacts.size() + " contacts with birthdays in the next " + daysAhead + " days");
+        } catch (SQLException e) {
+            System.err.println("Error getting contacts with upcoming birthdays: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return contacts;
+    }
+
+    // *** NEW METHOD: Get contacts by age range ***
+    public List<Contact> getContactsByAgeRange(int minAge, int maxAge) {
+        List<Contact> contacts = new ArrayList<>();
+        String query = "SELECT * FROM contacts WHERE birthday IS NOT NULL ORDER BY first_name, last_name";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                Contact contact = createContactFromResultSet(rs);
+
+                if (contact.getBirthday() != null) {
+                    int age = contact.getAge();
+                    if (age >= minAge && age <= maxAge) {
+                        contacts.add(contact);
+                    }
+                }
+            }
+
+            System.out.println("Found " + contacts.size() + " contacts in age range " + minAge + "-" + maxAge);
+        } catch (SQLException e) {
+            System.err.println("Error getting contacts by age range: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return contacts;
     }
 }

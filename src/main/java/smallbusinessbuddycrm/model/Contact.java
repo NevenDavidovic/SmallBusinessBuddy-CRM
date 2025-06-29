@@ -6,6 +6,8 @@ public class Contact {
     private int id;
     private String firstName;
     private String lastName;
+    private LocalDate birthday; // Added birthday field
+    private String pin; // Personal identification number
     private String streetName;
     private String streetNum;
     private String postalCode;
@@ -30,6 +32,29 @@ public class Contact {
         this.isMember = isMember;
     }
 
+    // Constructor with birthday
+    public Contact(int id, String firstName, String lastName, LocalDate birthday, String email, String phoneNum, boolean isMember) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.birthday = birthday;
+        this.email = email;
+        this.phoneNum = phoneNum;
+        this.isMember = isMember;
+    }
+
+    // Constructor with birthday and PIN
+    public Contact(int id, String firstName, String lastName, LocalDate birthday, String pin, String email, String phoneNum, boolean isMember) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.birthday = birthday;
+        this.pin = pin;
+        this.email = email;
+        this.phoneNum = phoneNum;
+        this.isMember = isMember;
+    }
+
     // Getters and setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -39,6 +64,12 @@ public class Contact {
 
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public LocalDate getBirthday() { return birthday; }
+    public void setBirthday(LocalDate birthday) { this.birthday = birthday; }
+
+    public String getPin() { return pin; }
+    public void setPin(String pin) { this.pin = pin; }
 
     public String getStreetName() { return streetName; }
     public void setStreetName(String streetName) { this.streetName = streetName; }
@@ -78,5 +109,18 @@ public class Contact {
 
     public String getFullName() {
         return (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "");
+    }
+
+    // Helper method to calculate age from birthday
+    public int getAge() {
+        if (birthday == null) {
+            return 0;
+        }
+        LocalDate now = LocalDate.now();
+        int age = now.getYear() - birthday.getYear();
+        if (now.getDayOfYear() < birthday.getDayOfYear()) {
+            age--;
+        }
+        return age;
     }
 }

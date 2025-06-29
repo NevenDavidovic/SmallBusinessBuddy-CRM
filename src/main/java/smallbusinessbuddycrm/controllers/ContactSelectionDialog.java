@@ -1,6 +1,5 @@
 package smallbusinessbuddycrm.controllers;
 
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -10,7 +9,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.util.Callback;
 import smallbusinessbuddycrm.model.Contact;
 
 import java.util.ArrayList;

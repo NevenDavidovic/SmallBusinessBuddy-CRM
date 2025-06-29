@@ -5,13 +5,13 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.WorkshopsViewController">
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.TeachersViewController">
     <top>
         <VBox spacing="10.0" BorderPane.alignment="CENTER">
             <children>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <Label text="Workshops" textFill="#0099cc">
+                        <Label text="Teachers" textFill="#0099cc">
                             <font>
                                 <Font name="System Bold" size="24.0" />
                             </font>
@@ -29,23 +29,15 @@
                                         <Insets right="5.0" />
                                     </HBox.margin>
                                 </Button>
-                                <Button fx:id="createWorkshopButton" text="Create Workshop"
+                                <Button fx:id="createTeacherButton" text="Add Teacher"
                                         style="-fx-background-color: #ff7a59; -fx-text-fill: white; -fx-border-radius: 4;" />
                             </children>
                         </HBox>
                     </children>
                 </HBox>
-                <HBox spacing="5.0">
-                    <children>
-                        <Button fx:id="allWorkshopsButton" text="All workshops" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="activeWorkshopsButton" text="Active" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="upcomingWorkshopsButton" text="Upcoming" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="pastWorkshopsButton" text="Past" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                    </children>
-                </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search workshop name..." style="-fx-border-color: #dfe3eb;" />
+                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search name, email..." style="-fx-border-color: #dfe3eb;" />
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
                                 <Button fx:id="exportButton" text="Export" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
@@ -62,18 +54,16 @@
     </top>
     <center>
         <ScrollPane fitToHeight="true" fitToWidth="true">
-            <TableView fx:id="workshopsTable" prefHeight="400.0">
+            <TableView fx:id="teachersTable" prefHeight="400.0">
                 <columns>
                     <TableColumn fx:id="selectColumn" prefWidth="40.0" text="" />
                     <TableColumn fx:id="editColumn" prefWidth="60.0" text="EDIT" />
-                    <TableColumn fx:id="nameColumn" text="WORKSHOP NAME" prefWidth="200.0" />
-                    <TableColumn fx:id="fromDateColumn" text="FROM DATE" prefWidth="100.0" />
-                    <TableColumn fx:id="toDateColumn" text="TO DATE" prefWidth="100.0" />
-                    <TableColumn fx:id="durationColumn" text="DURATION" prefWidth="80.0" />
-                    <TableColumn fx:id="statusColumn" text="STATUS" prefWidth="100.0" />
-                    <TableColumn fx:id="participantCountColumn" text="PARTICIPANTS" prefWidth="100.0" />
-                    <TableColumn fx:id="manageParticipantsColumn" text="MANAGE" prefWidth="80.0" />
+                    <TableColumn fx:id="firstNameColumn" text="FIRST NAME" prefWidth="120.0" />
+                    <TableColumn fx:id="lastNameColumn" text="LAST NAME" prefWidth="120.0" />
+                    <TableColumn fx:id="emailColumn" text="EMAIL" prefWidth="200.0" />
+                    <TableColumn fx:id="phoneColumn" text="PHONE" prefWidth="140.0" />
                     <TableColumn fx:id="createdAtColumn" text="CREATED" prefWidth="140.0" />
+                    <TableColumn fx:id="updatedAtColumn" text="UPDATED" prefWidth="140.0" />
                 </columns>
             </TableView>
         </ScrollPane>

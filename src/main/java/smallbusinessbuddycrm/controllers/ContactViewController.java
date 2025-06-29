@@ -28,6 +28,9 @@ public class ContactViewController {
     @FXML private TableColumn<Contact, Void> editColumn;
     @FXML private TableColumn<Contact, String> firstNameColumn;
     @FXML private TableColumn<Contact, String> lastNameColumn;
+    @FXML private TableColumn<Contact, String> birthdayColumn; // Added birthday column
+    @FXML private TableColumn<Contact, String> ageColumn; // Added age column
+    @FXML private TableColumn<Contact, String> pinColumn; // Added PIN column
     @FXML private TableColumn<Contact, String> emailColumn;
     @FXML private TableColumn<Contact, String> phoneColumn;
     @FXML private TableColumn<Contact, String> streetNameColumn;
@@ -48,6 +51,7 @@ public class ContactViewController {
     @FXML private Button nonMembersButton;
     @FXML private Button exportButton;
     @FXML private Button editColumnsButton; // THIS MUST BE HERE
+    @FXML private Button upcomingBirthdaysButton; // New button for birthday filter
     @FXML private TextField searchField;
     @FXML private Label recordCountLabel;
 
@@ -82,6 +86,9 @@ public class ContactViewController {
         // EXACT mapping - column names must match exactly with dialog
         columnMap.put("First Name", firstNameColumn);
         columnMap.put("Last Name", lastNameColumn);
+        columnMap.put("Birthday", birthdayColumn); // Added birthday
+        columnMap.put("Age", ageColumn); // Added age
+        columnMap.put("PIN", pinColumn); // Added PIN
         columnMap.put("Email", emailColumn);
         columnMap.put("Phone Number", phoneColumn);
         columnMap.put("Street Name", streetNameColumn);
@@ -103,6 +110,9 @@ public class ContactViewController {
         // Set default visibility
         columnVisibility.put("First Name", true);
         columnVisibility.put("Last Name", true);
+        columnVisibility.put("Birthday", true); // Show birthday by default
+        columnVisibility.put("Age", true); // Show age by default
+        columnVisibility.put("PIN", false); // Hide PIN by default for privacy
         columnVisibility.put("Email", true);
         columnVisibility.put("Phone Number", true);
         columnVisibility.put("Street Name", true);
@@ -184,6 +194,25 @@ public class ContactViewController {
                 new SimpleStringProperty(cellData.getValue().getFirstName()));
         lastNameColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getLastName()));
+
+        // Birthday column with formatted date
+        birthdayColumn.setCellValueFactory(cellData -> {
+            Contact contact = cellData.getValue();
+            return new SimpleStringProperty(contact.getBirthday() != null ?
+                    contact.getBirthday().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "");
+        });
+
+        // Age column
+        ageColumn.setCellValueFactory(cellData -> {
+            Contact contact = cellData.getValue();
+            return new SimpleStringProperty(contact.getBirthday() != null ?
+                    String.valueOf(contact.getAge()) : "");
+        });
+
+        // PIN column
+        pinColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().getPin()));
+
         emailColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getEmail()));
         phoneColumn.setCellValueFactory(cellData ->
@@ -201,12 +230,12 @@ public class ContactViewController {
         memberSinceColumn.setCellValueFactory(cellData -> {
             Contact contact = cellData.getValue();
             return new SimpleStringProperty(contact.getMemberSince() != null ?
-                    contact.getMemberSince().toString() : "");
+                    contact.getMemberSince().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "");
         });
         memberUntilColumn.setCellValueFactory(cellData -> {
             Contact contact = cellData.getValue();
             return new SimpleStringProperty(contact.getMemberUntil() != null ?
-                    contact.getMemberUntil().toString() : "");
+                    contact.getMemberUntil().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "");
         });
         createdAtColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getCreatedAt()));
@@ -233,10 +262,10 @@ public class ContactViewController {
         filteredContactsList.setPredicate(contact -> {
             // If no search text, show all contacts based on current filter
             if (searchText.isEmpty()) {
-                return matchesMembershipFilter(contact);
+                return matchesCurrentFilter(contact);
             }
 
-            // Check if search text matches name, phone, or email
+            // Check if search text matches name, phone, email, PIN, or age
             boolean matchesSearch = false;
 
             if (contact.getFirstName() != null && contact.getFirstName().toLowerCase().contains(searchText)) {
@@ -247,20 +276,25 @@ public class ContactViewController {
                 matchesSearch = true;
             } else if (contact.getPhoneNum() != null && contact.getPhoneNum().toLowerCase().contains(searchText)) {
                 matchesSearch = true;
+            } else if (contact.getPin() != null && contact.getPin().toLowerCase().contains(searchText)) {
+                matchesSearch = true; // Search by PIN
+            } else if (contact.getBirthday() != null && String.valueOf(contact.getAge()).contains(searchText)) {
+                matchesSearch = true; // Search by age
             }
 
-            // Return true only if matches both search and membership filter
-            return matchesSearch && matchesMembershipFilter(contact);
+            // Return true only if matches both search and current filter
+            return matchesSearch && matchesCurrentFilter(contact);
         });
 
         updateRecordCount();
     }
 
-    private boolean matchesMembershipFilter(Contact contact) {
+    private boolean matchesCurrentFilter(Contact contact) {
         // Check which filter button is active based on their style
         String allContactsStyle = allContactsButton.getStyle();
         String membersStyle = membersButton.getStyle();
         String nonMembersStyle = nonMembersButton.getStyle();
+        String birthdaysStyle = upcomingBirthdaysButton != null ? upcomingBirthdaysButton.getStyle() : "";
 
         // If "All contacts" is active (has #f5f8fa background)
         if (allContactsStyle.contains("#f5f8fa")) {
@@ -274,8 +308,32 @@ public class ContactViewController {
         else if (nonMembersStyle.contains("#f5f8fa")) {
             return !contact.isMember();
         }
+        // If "Upcoming Birthdays" is active
+        else if (birthdaysStyle.contains("#f5f8fa")) {
+            return hasUpcomingBirthday(contact, 30); // Next 30 days
+        }
 
         return true; // Default: show all
+    }
+
+    private boolean hasUpcomingBirthday(Contact contact, int daysAhead) {
+        if (contact.getBirthday() == null) {
+            return false;
+        }
+
+        java.time.LocalDate today = java.time.LocalDate.now();
+        java.time.LocalDate futureDate = today.plusDays(daysAhead);
+
+        // Calculate this year's birthday
+        java.time.LocalDate thisYearBirthday = contact.getBirthday().withYear(today.getYear());
+
+        // If birthday already passed this year, check next year's birthday
+        if (thisYearBirthday.isBefore(today)) {
+            thisYearBirthday = thisYearBirthday.plusYears(1);
+        }
+
+        // Check if birthday falls within the specified range
+        return !thisYearBirthday.isBefore(today) && !thisYearBirthday.isAfter(futureDate);
     }
 
     private void loadContacts() {
@@ -318,6 +376,11 @@ public class ContactViewController {
         allContactsButton.setOnAction(e -> handleFilterButton(allContactsButton));
         membersButton.setOnAction(e -> handleFilterButton(membersButton));
         nonMembersButton.setOnAction(e -> handleFilterButton(nonMembersButton));
+
+        // Birthday filter button (if exists)
+        if (upcomingBirthdaysButton != null) {
+            upcomingBirthdaysButton.setOnAction(e -> handleFilterButton(upcomingBirthdaysButton));
+        }
 
         System.out.println("Event handlers setup completed");
     }
@@ -373,6 +436,9 @@ public class ContactViewController {
         allContactsButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
         membersButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
         nonMembersButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
+        if (upcomingBirthdaysButton != null) {
+            upcomingBirthdaysButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
+        }
 
         // Set clicked button to active style
         clickedButton.setStyle("-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;");
@@ -439,8 +505,8 @@ public class ContactViewController {
             // Write UTF-8 BOM (Byte Order Mark) so Excel recognizes UTF-8 encoding
             writer.write('\ufeff');
 
-            // Write CSV header in Croatian
-            writer.write("Ime,Prezime,Email,Telefon,Ulica,Broj,Poštanski kod,Grad,Status članstva,Član od,Član do,Kreiran,Ažuriran");
+            // Write CSV header in Croatian (including birthday, age, and PIN)
+            writer.write("Ime,Prezime,Rođendan,Godine,PIN,Email,Telefon,Ulica,Broj,Poštanski kod,Grad,Status članstva,Član od,Član do,Kreiran,Ažuriran");
             writer.newLine();
 
             // Write contact data
@@ -450,6 +516,9 @@ public class ContactViewController {
                 // Helper method to escape CSV values
                 line.append(escapeCsvValue(contact.getFirstName())).append(",");
                 line.append(escapeCsvValue(contact.getLastName())).append(",");
+                line.append(escapeCsvValue(contact.getBirthday() != null ? contact.getBirthday().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "")).append(",");
+                line.append(escapeCsvValue(contact.getBirthday() != null ? String.valueOf(contact.getAge()) : "")).append(",");
+                line.append(escapeCsvValue(contact.getPin())).append(","); // Added PIN
                 line.append(escapeCsvValue(contact.getEmail())).append(",");
                 line.append(escapeCsvValue(contact.getPhoneNum())).append(",");
                 line.append(escapeCsvValue(contact.getStreetName())).append(",");
@@ -457,8 +526,8 @@ public class ContactViewController {
                 line.append(escapeCsvValue(contact.getPostalCode())).append(",");
                 line.append(escapeCsvValue(contact.getCity())).append(",");
                 line.append(escapeCsvValue(contact.isMember() ? "Član" : "Nije član")).append(","); // Croatian labels
-                line.append(escapeCsvValue(contact.getMemberSince() != null ? contact.getMemberSince().toString() : "")).append(",");
-                line.append(escapeCsvValue(contact.getMemberUntil() != null ? contact.getMemberUntil().toString() : "")).append(",");
+                line.append(escapeCsvValue(contact.getMemberSince() != null ? contact.getMemberSince().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "")).append(",");
+                line.append(escapeCsvValue(contact.getMemberUntil() != null ? contact.getMemberUntil().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "")).append(",");
                 line.append(escapeCsvValue(contact.getCreatedAt())).append(",");
                 line.append(escapeCsvValue(contact.getUpdatedAt()));
 
@@ -577,6 +646,47 @@ public class ContactViewController {
             }
         } catch (Exception e) {
             System.err.println("Error opening edit contact dialog: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // New method to show upcoming birthdays
+    @FXML
+    private void handleUpcomingBirthdays() {
+        try {
+            ContactDAO dao = new ContactDAO();
+            List<Contact> upcomingBirthdays = dao.getContactsWithUpcomingBirthdays(30); // Next 30 days
+
+            if (upcomingBirthdays.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Upcoming Birthdays");
+                alert.setHeaderText("No upcoming birthdays");
+                alert.setContentText("There are no birthdays in the next 30 days.");
+                alert.showAndWait();
+            } else {
+                StringBuilder message = new StringBuilder();
+                message.append("Upcoming birthdays in the next 30 days:\n\n");
+
+                for (Contact contact : upcomingBirthdays) {
+                    java.time.LocalDate today = java.time.LocalDate.now();
+                    java.time.LocalDate thisYearBirthday = contact.getBirthday().withYear(today.getYear());
+                    if (thisYearBirthday.isBefore(today)) {
+                        thisYearBirthday = thisYearBirthday.plusYears(1);
+                    }
+
+                    message.append("• ").append(contact.getFullName())
+                            .append(" - ").append(thisYearBirthday.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")))
+                            .append(" (").append(contact.getAge() + 1).append(" years old)\n");
+                }
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Upcoming Birthdays");
+                alert.setHeaderText("Found " + upcomingBirthdays.size() + " upcoming birthdays");
+                alert.setContentText(message.toString());
+                alert.showAndWait();
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting upcoming birthdays: " + e.getMessage());
             e.printStackTrace();
         }
     }

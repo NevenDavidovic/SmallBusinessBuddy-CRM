@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.WorkshopParticipantsViewController">
+    <top>
+        <VBox spacing="10.0" BorderPane.alignment="CENTER">
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <children>
+                        <Label text="Workshop Participants" textFill="#0099cc">
+                            <font>
+                                <Font name="System Bold" size="24.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="workshopNameLabel" text="No workshop selected" textFill="#71757a">
+                            <font>
+                                <Font name="System Bold" size="14.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" spacing="15.0">
+                    <children>
+                        <Label fx:id="totalParticipantsLabel" text="Total: 0" textFill="#333">
+                            <font>
+                                <Font size="12.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="adultsCountLabel" text="Adults: 0" textFill="#333">
+                            <font>
+                                <Font size="12.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="childrenCountLabel" text="Children: 0" textFill="#333">
+                            <font>
+                                <Font size="12.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="paidCountLabel" text="Paid: 0" textFill="#28a745">
+                            <font>
+                                <Font size="12.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="pendingCountLabel" text="Pending: 0" textFill="#ffc107">
+                            <font>
+                                <Font size="12.0" />
+                            </font>
+                        </Label>
+                        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                            <children>
+                                <Button fx:id="exportParticipantsButton" text="Export List" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                <Button fx:id="refreshButton" text="Refresh" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                            </children>
+                        </HBox>
+                    </children>
+                </HBox>
+            </children>
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10" />
+            </padding>
+        </VBox>
+    </top>
+    <center>
+        <TabPane fx:id="participantsTabPane" tabClosingPolicy="UNAVAILABLE">
+            <!-- Current Participants Tab -->
+            <Tab text="Current Participants">
+                <VBox spacing="10.0">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <children>
+                                <TextField fx:id="searchParticipantsField" prefWidth="250.0" promptText="Search participants..." style="-fx-border-color: #dfe3eb;" />
+                                <ComboBox fx:id="participantTypeFilter" prefWidth="120.0" promptText="All Types" style="-fx-border-color: #dfe3eb;" />
+                                <ComboBox fx:id="paymentStatusFilter" prefWidth="120.0" promptText="All Payments" style="-fx-border-color: #dfe3eb;" />
+                                <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <Button fx:id="removeSelectedButton" text="Remove Selected"
+                                                style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-radius: 4;" />
+                                    </children>
+                                </HBox>
+                            </children>
+                        </HBox>
+                        <ScrollPane fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
+                            <TableView fx:id="participantsTable" prefHeight="400.0">
+                                <columns>
+                                    <TableColumn fx:id="selectParticipantColumn" prefWidth="40.0" text="" />
+                                    <TableColumn fx:id="participantNameColumn" text="PARTICIPANT NAME" prefWidth="150.0" />
+                                    <TableColumn fx:id="participantTypeColumn" text="TYPE" prefWidth="60.0" />
+                                    <TableColumn fx:id="participantAgeColumn" text="AGE" prefWidth="50.0" />
+                                    <TableColumn fx:id="participantEmailColumn" text="EMAIL" prefWidth="150.0" />
+                                    <TableColumn fx:id="participantPhoneColumn" text="PHONE" prefWidth="120.0" />
+                                    <TableColumn fx:id="parentInfoColumn" text="PARENT/GUARDIAN" prefWidth="150.0" />
+                                    <TableColumn fx:id="paymentStatusColumn" text="PAYMENT" prefWidth="80.0" />
+                                    <TableColumn fx:id="notesColumn" text="NOTES" prefWidth="120.0" />
+                                    <TableColumn fx:id="enrollmentDateColumn" text="ENROLLED" prefWidth="100.0" />
+                                    <TableColumn fx:id="actionsColumn" text="ACTIONS" prefWidth="80.0" />
+                                </columns>
+                            </TableView>
+                        </ScrollPane>
+                    </children>
+                    <padding>
+                        <Insets top="10" right="10" bottom="10" left="10" />
+                    </padding>
+                </VBox>
+            </Tab>
+
+            <!-- Add Participants Tab -->
+            <Tab text="Add Participants">
+                <ScrollPane fitToHeight="true" fitToWidth="true">
+                    <VBox spacing="20.0">
+                        <children>
+                            <!-- Add Adults Section -->
+                            <VBox spacing="10.0" style="-fx-border-color: #dfe3eb; -fx-border-radius: 5; -fx-padding: 15;">
+                                <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                        <children>
+                                            <Label text="Add Adult Participants" textFill="#0099cc">
+                                                <font>
+                                                    <Font name="System Bold" size="16.0" />
+                                                </font>
+                                            </Label>
+                                            <Label fx:id="availableAdultsCountLabel" text="(0 available)" textFill="#71757a">
+                                                <font>
+                                                    <Font size="12.0" />
+                                                </font>
+                                            </Label>
+                                        </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                        <children>
+                                            <TextField fx:id="searchAdultsField" prefWidth="250.0" promptText="Search adults by name, email..." style="-fx-border-color: #dfe3eb;" />
+                                            <CheckBox fx:id="membersOnlyAdultsFilter" text="Members only" />
+                                            <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                                                <children>
+                                                    <Button fx:id="selectAllAdultsButton" text="Select All" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                                    <Button fx:id="clearAdultsSelectionButton" text="Clear Selection" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                                </children>
+                                            </HBox>
+                                        </children>
+                                    </HBox>
+                                    <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0">
+                                        <TableView fx:id="availableAdultsTable">
+                                            <columns>
+                                                <TableColumn fx:id="selectAdultColumn" prefWidth="40.0" text="" />
+                                                <TableColumn fx:id="adultNameColumn" text="NAME" prefWidth="150.0" />
+                                                <TableColumn fx:id="adultEmailColumn" text="EMAIL" prefWidth="180.0" />
+                                                <TableColumn fx:id="adultPhoneColumn" text="PHONE" prefWidth="120.0" />
+                                                <TableColumn fx:id="adultMemberStatusColumn" text="MEMBER" prefWidth="80.0" />
+                                                <TableColumn fx:id="adultAgeColumn" text="AGE" prefWidth="50.0" />
+                                            </columns>
+                                        </TableView>
+                                    </ScrollPane>
+                                    <HBox spacing="10.0">
+                                        <children>
+                                            <Label text="Payment Status:" />
+                                            <ComboBox fx:id="adultsPaymentStatusCombo" prefWidth="120.0" />
+                                            <Label text="Notes:" />
+                                            <TextField fx:id="adultsNotesField" prefWidth="200.0" promptText="Optional notes..." />
+                                            <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                                                <children>
+                                                    <Button fx:id="addSelectedAdultsButton" text="Add Selected Adults"
+                                                            style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4;" />
+                                                </children>
+                                            </HBox>
+                                        </children>
+                                    </HBox>
+                                </children>
+                            </VBox>
+
+                            <!-- Add Children Section -->
+                            <VBox spacing="10.0" style="-fx-border-color: #dfe3eb; -fx-border-radius: 5; -fx-padding: 15;">
+                                <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                        <children>
+                                            <Label text="Add Child Participants" textFill="#0099cc">
+                                                <font>
+                                                    <Font name="System Bold" size="16.0" />
+                                                </font>
+                                            </Label>
+                                            <Label fx:id="availableChildrenCountLabel" text="(0 available)" textFill="#71757a">
+                                                <font>
+                                                    <Font size="12.0" />
+                                                </font>
+                                            </Label>
+                                        </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                        <children>
+                                            <TextField fx:id="searchChildrenField" prefWidth="250.0" promptText="Search children by name..." style="-fx-border-color: #dfe3eb;" />
+                                            <ComboBox fx:id="ageRangeFilter" prefWidth="120.0" promptText="All Ages" style="-fx-border-color: #dfe3eb;" />
+                                            <CheckBox fx:id="membersOnlyChildrenFilter" text="Members only" />
+                                            <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                                                <children>
+                                                    <Button fx:id="selectAllChildrenButton" text="Select All" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                                    <Button fx:id="clearChildrenSelectionButton" text="Clear Selection" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                                </children>
+                                            </HBox>
+                                        </children>
+                                    </HBox>
+                                    <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0">
+                                        <TableView fx:id="availableChildrenTable">
+                                            <columns>
+                                                <TableColumn fx:id="selectChildColumn" prefWidth="40.0" text="" />
+                                                <TableColumn fx:id="childNameColumn" text="NAME" prefWidth="120.0" />
+                                                <TableColumn fx:id="childAgeColumn" text="AGE" prefWidth="50.0" />
+                                                <TableColumn fx:id="childGenderColumn" text="GENDER" prefWidth="70.0" />
+                                                <TableColumn fx:id="childMemberStatusColumn" text="MEMBER" prefWidth="80.0" />
+                                                <TableColumn fx:id="parentNameColumn" text="PARENT/GUARDIAN" prefWidth="150.0" />
+                                                <TableColumn fx:id="parentEmailColumn" text="PARENT EMAIL" prefWidth="150.0" />
+                                                <TableColumn fx:id="parentPhoneColumn" text="PARENT PHONE" prefWidth="120.0" />
+                                            </columns>
+                                        </TableView>
+                                    </ScrollPane>
+                                    <HBox spacing="10.0">
+                                        <children>
+                                            <Label text="Payment Status:" />
+                                            <ComboBox fx:id="childrenPaymentStatusCombo" prefWidth="120.0" />
+                                            <Label text="Notes:" />
+                                            <TextField fx:id="childrenNotesField" prefWidth="200.0" promptText="Optional notes..." />
+                                            <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                                                <children>
+                                                    <Button fx:id="addSelectedChildrenButton" text="Add Selected Children"
+                                                            style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4;" />
+                                                </children>
+                                            </HBox>
+                                        </children>
+                                    </HBox>
+                                </children>
+                            </VBox>
+
+                            <!-- Quick Actions Section -->
+                            <VBox spacing="10.0" style="-fx-border-color: #dfe3eb; -fx-border-radius: 5; -fx-padding: 15;">
+                                <children>
+                                    <Label text="Quick Actions" textFill="#0099cc">
+                                        <font>
+                                            <Font name="System Bold" size="16.0" />
+                                        </font>
+                                    </Label>
+                                    <HBox spacing="10.0">
+                                        <children>
+                                            <Button fx:id="addFamilyButton" text="Add Entire Family"
+                                                    style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-border-radius: 4;" />
+                                            <Label text="Select a contact to add them + all their children" textFill="#71757a">
+                                                <font>
+                                                    <Font size="12.0" />
+                                                </font>
+                                            </Label>
+                                        </children>
+                                    </HBox>
+                                </children>
+                            </VBox>
+                        </children>
+                        <padding>
+                            <Insets top="10" right="10" bottom="10" left="10" />
+                        </padding>
+                    </VBox>
+                </ScrollPane>
+            </Tab>
+        </TabPane>
+    </center>
+</BorderPane>
