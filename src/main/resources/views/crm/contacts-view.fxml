@@ -46,6 +46,7 @@
                         <Button fx:id="allContactsButton" text="All contacts" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;" />
                         <Button fx:id="membersButton" text="Members" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                         <Button fx:id="nonMembersButton" text="Non-members" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="upcomingBirthdaysButton" text="Upcoming Birthdays" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                     </children>
                 </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
@@ -73,6 +74,9 @@
                     <TableColumn fx:id="editColumn" prefWidth="60.0" text="EDIT" />
                     <TableColumn fx:id="firstNameColumn" text="FIRST NAME" prefWidth="120.0" />
                     <TableColumn fx:id="lastNameColumn" text="LAST NAME" prefWidth="120.0" />
+                    <TableColumn fx:id="birthdayColumn" text="BIRTHDAY" prefWidth="100.0" />
+                    <TableColumn fx:id="ageColumn" text="AGE" prefWidth="60.0" />
+                    <TableColumn fx:id="pinColumn" text="PIN" prefWidth="80.0" />
                     <TableColumn fx:id="emailColumn" text="EMAIL" prefWidth="200.0" />
                     <TableColumn fx:id="phoneColumn" text="PHONE NUMBER" prefWidth="140.0" />
                     <TableColumn fx:id="streetNameColumn" text="STREET NAME" prefWidth="140.0" />

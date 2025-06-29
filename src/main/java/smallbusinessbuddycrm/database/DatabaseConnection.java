@@ -40,6 +40,8 @@ public class DatabaseConnection {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 first_name TEXT NOT NULL,
                 last_name TEXT NOT NULL,
+                birthday TEXT,
+                pin TEXT,
                 street_name TEXT,
                 street_num TEXT,
                 postal_code TEXT,
@@ -51,6 +53,70 @@ public class DatabaseConnection {
                 member_until TEXT,
                 created_at TEXT,
                 updated_at TEXT
+            );
+            """;
+
+        String createUnderagedTableSQL = """
+            CREATE TABLE IF NOT EXISTS underaged (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                first_name TEXT NOT NULL,
+                last_name TEXT NOT NULL,
+                birth_date TEXT,
+                age INTEGER,
+                pin TEXT,
+                gender TEXT,
+                is_member INTEGER DEFAULT 0,
+                member_since TEXT,
+                member_until TEXT,
+                note TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                contact_id INTEGER,
+                FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+            );
+            """;
+
+        String createTeachersTableSQL = """
+            CREATE TABLE IF NOT EXISTS teachers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                first_name TEXT NOT NULL,
+                last_name TEXT NOT NULL,
+                email TEXT,
+                phone_num TEXT,
+                created_at TEXT,
+                updated_at TEXT
+            );
+            """;
+
+        String createWorkshopsTableSQL = """
+            CREATE TABLE IF NOT EXISTS workshops (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                from_date TEXT,
+                to_date TEXT,
+                created_at TEXT,
+                updated_at TEXT
+            );
+            """;
+
+        String createWorkshopParticipantsTableSQL = """
+            CREATE TABLE IF NOT EXISTS workshop_participants (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                workshop_id INTEGER NOT NULL,
+                underaged_id INTEGER,
+                contact_id INTEGER,
+                participant_type TEXT NOT NULL CHECK (participant_type IN ('ADULT', 'CHILD')),
+                payment_status TEXT NOT NULL CHECK (payment_status IN ('PENDING', 'PAID', 'REFUNDED', 'CANCELLED')),
+                notes TEXT,
+                created_at TEXT,
+                updated_at TEXT,
+                FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
+                FOREIGN KEY (underaged_id) REFERENCES underaged(id) ON DELETE CASCADE,
+                FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+                CHECK (
+                    (underaged_id IS NOT NULL AND contact_id IS NULL AND participant_type = 'CHILD') OR
+                    (contact_id IS NOT NULL AND underaged_id IS NULL AND participant_type = 'ADULT')
+                )
             );
             """;
 
@@ -82,14 +148,67 @@ public class DatabaseConnection {
             );
             """;
 
+        // SQL to add birthday column if it doesn't exist (for existing databases)
+        String addBirthdayColumnSQL = """
+            ALTER TABLE contacts ADD COLUMN birthday TEXT;
+            """;
+
+        // SQL to add PIN columns if they don't exist (for existing databases)
+        String addContactPinColumnSQL = """
+            ALTER TABLE contacts ADD COLUMN pin TEXT;
+            """;
+
+        String addUnderagedPinColumnSQL = """
+            ALTER TABLE underaged ADD COLUMN pin TEXT;
+            """;
+
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
+            // Create all tables
             stmt.execute(createOrganizationTableSQL);
             stmt.execute(createContactsTableSQL);
+            stmt.execute(createUnderagedTableSQL);
+            stmt.execute(createTeachersTableSQL);
+            stmt.execute(createWorkshopsTableSQL);
+            stmt.execute(createWorkshopParticipantsTableSQL);
             stmt.execute(createListsTableSQL);
             stmt.execute(createListContactsTableSQL);
+
+            // Try to add birthday column for existing databases
+            try {
+                stmt.execute(addBirthdayColumnSQL);
+                System.out.println("Birthday column added to existing contacts table.");
+            } catch (SQLException e) {
+                // Column probably already exists, which is fine
+                if (!e.getMessage().contains("duplicate column name")) {
+                    System.err.println("Warning: Could not add birthday column: " + e.getMessage());
+                }
+            }
+
+            // Try to add PIN columns for existing databases
+            try {
+                stmt.execute(addContactPinColumnSQL);
+                System.out.println("PIN column added to existing contacts table.");
+            } catch (SQLException e) {
+                // Column probably already exists, which is fine
+                if (!e.getMessage().contains("duplicate column name")) {
+                    System.err.println("Warning: Could not add PIN column to contacts: " + e.getMessage());
+                }
+            }
+
+            try {
+                stmt.execute(addUnderagedPinColumnSQL);
+                System.out.println("PIN column added to existing underaged table.");
+            } catch (SQLException e) {
+                // Column probably already exists, which is fine
+                if (!e.getMessage().contains("duplicate column name")) {
+                    System.err.println("Warning: Could not add PIN column to underaged: " + e.getMessage());
+                }
+            }
+
             System.out.println("Baza i tablice su inicijalizirane.");
+            System.out.println("Workshop management tables created successfully.");
 
         } catch (SQLException e) {
             System.err.println("Greška pri inicijalizaciji baze: " + e.getMessage());
