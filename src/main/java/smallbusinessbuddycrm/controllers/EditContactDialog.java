@@ -109,7 +109,7 @@ public class EditContactDialog {
     private void loadData() {
         // Load existing underaged members for this contact
         UnderagedDAO underagedDAO = new UnderagedDAO();
-        List<UnderagedMember> existingChildren = underagedDAO.getUnderagedMembersByContact(contact.getId());
+        List<UnderagedMember> existingChildren = underagedDAO.getUnderagedMembersByContactId(contact.getId());
         underagedMembersList.clear();
         underagedMembersList.addAll(existingChildren);
     }

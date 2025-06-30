@@ -103,6 +103,7 @@ public class DatabaseConnection {
             CREATE TABLE IF NOT EXISTS workshop_participants (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 workshop_id INTEGER NOT NULL,
+                teacher_id INTEGER,
                 underaged_id INTEGER,
                 contact_id INTEGER,
                 participant_type TEXT NOT NULL CHECK (participant_type IN ('ADULT', 'CHILD')),
@@ -111,6 +112,7 @@ public class DatabaseConnection {
                 created_at TEXT,
                 updated_at TEXT,
                 FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
+                FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
                 FOREIGN KEY (underaged_id) REFERENCES underaged(id) ON DELETE CASCADE,
                 FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
                 CHECK (
@@ -148,20 +150,6 @@ public class DatabaseConnection {
             );
             """;
 
-        // SQL to add birthday column if it doesn't exist (for existing databases)
-        String addBirthdayColumnSQL = """
-            ALTER TABLE contacts ADD COLUMN birthday TEXT;
-            """;
-
-        // SQL to add PIN columns if they don't exist (for existing databases)
-        String addContactPinColumnSQL = """
-            ALTER TABLE contacts ADD COLUMN pin TEXT;
-            """;
-
-        String addUnderagedPinColumnSQL = """
-            ALTER TABLE underaged ADD COLUMN pin TEXT;
-            """;
-
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
@@ -175,38 +163,6 @@ public class DatabaseConnection {
             stmt.execute(createListsTableSQL);
             stmt.execute(createListContactsTableSQL);
 
-            // Try to add birthday column for existing databases
-            try {
-                stmt.execute(addBirthdayColumnSQL);
-                System.out.println("Birthday column added to existing contacts table.");
-            } catch (SQLException e) {
-                // Column probably already exists, which is fine
-                if (!e.getMessage().contains("duplicate column name")) {
-                    System.err.println("Warning: Could not add birthday column: " + e.getMessage());
-                }
-            }
-
-            // Try to add PIN columns for existing databases
-            try {
-                stmt.execute(addContactPinColumnSQL);
-                System.out.println("PIN column added to existing contacts table.");
-            } catch (SQLException e) {
-                // Column probably already exists, which is fine
-                if (!e.getMessage().contains("duplicate column name")) {
-                    System.err.println("Warning: Could not add PIN column to contacts: " + e.getMessage());
-                }
-            }
-
-            try {
-                stmt.execute(addUnderagedPinColumnSQL);
-                System.out.println("PIN column added to existing underaged table.");
-            } catch (SQLException e) {
-                // Column probably already exists, which is fine
-                if (!e.getMessage().contains("duplicate column name")) {
-                    System.err.println("Warning: Could not add PIN column to underaged: " + e.getMessage());
-                }
-            }
-
             System.out.println("Baza i tablice su inicijalizirane.");
             System.out.println("Workshop management tables created successfully.");
 
@@ -215,4 +171,6 @@ public class DatabaseConnection {
             e.printStackTrace();
         }
     }
+
+
 }

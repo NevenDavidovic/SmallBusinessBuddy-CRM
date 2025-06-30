@@ -64,7 +64,7 @@ public class EditColumnsDialog {
 
         mainLayout.getChildren().addAll(titleLabel, instructionLabel, noteLabel, checkboxContainer, buttonBox);
 
-        Scene scene = new Scene(mainLayout, 380, 550);
+        Scene scene = new Scene(mainLayout, 380, 580);
 
         // Add keyboard shortcuts
         scene.setOnKeyPressed(e -> {
@@ -90,10 +90,10 @@ public class EditColumnsDialog {
 
         // Define all available columns - MUST MATCH EXACTLY with controller
         String[] columns = {
-                "First Name", "Last Name", "Email", "Phone Number",
-                "Street Name", "Street Number", "Postal Code", "City",
-                "Member Status", "Member Since", "Member Until",
-                "Created", "Updated"
+                "First Name", "Last Name", "Birthday", "Age", "PIN",
+                "Email", "Phone Number", "Street Name", "Street Number",
+                "Postal Code", "City", "Member Status", "Member Since",
+                "Member Until", "Created", "Updated"
         };
 
         System.out.println("Creating checkboxes for columns:");
@@ -143,8 +143,9 @@ public class EditColumnsDialog {
                 String columnName = entry.getKey();
                 CheckBox checkBox = entry.getValue();
 
-                // Default visible columns
-                boolean defaultVisible = !columnName.equals("Street Number") &&
+                // Default visible columns (PIN is hidden by default for privacy)
+                boolean defaultVisible = !columnName.equals("PIN") &&
+                        !columnName.equals("Street Number") &&
                         !columnName.equals("Member Since") &&
                         !columnName.equals("Member Until") &&
                         !columnName.equals("Created") &&

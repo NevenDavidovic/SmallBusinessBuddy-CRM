@@ -9,6 +9,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import smallbusinessbuddycrm.database.*;
 import smallbusinessbuddycrm.model.*;
@@ -131,7 +132,7 @@ public class WorkshopParticipantsViewController implements Initializable {
     public void setWorkshop(Workshop workshop) {
         this.currentWorkshop = workshop;
         if (workshop != null) {
-            workshopNameLabel.setText("Workshop: " + workshop.getName() + " (" + workshop.getDateRange() + ")");
+            workshopNameLabel.setText("Workshop: " + workshop.getName() + " (" + workshop.getFormattedFromDate() + " - " + workshop.getFormattedToDate() + ")");
             loadWorkshopParticipants();
             updateStatistics();
         } else {
@@ -161,7 +162,10 @@ public class WorkshopParticipantsViewController implements Initializable {
                     Map<String, Object> participant = participantsTable.getItems().get(getIndex());
                     boolean isSelected = (Boolean) participant.getOrDefault("selected", false);
                     checkBox.setSelected(isSelected);
-                    checkBox.setOnAction(event -> participant.put("selected", checkBox.isSelected()));
+                    checkBox.setOnAction(event -> {
+                        participant.put("selected", checkBox.isSelected());
+                        System.out.println("Participant " + participant.get("participant_name") + " selected: " + checkBox.isSelected());
+                    });
                     setGraphic(checkBox);
                 }
             }
@@ -189,7 +193,11 @@ public class WorkshopParticipantsViewController implements Initializable {
             if ("CHILD".equals(type)) {
                 String parentName = (String) cellData.getValue().get("parent_name");
                 String parentPhone = (String) cellData.getValue().get("parent_phone");
-                return new SimpleStringProperty(parentName + " (" + parentPhone + ")");
+                if (parentName != null && parentPhone != null) {
+                    return new SimpleStringProperty(parentName + " (" + parentPhone + ")");
+                } else if (parentName != null) {
+                    return new SimpleStringProperty(parentName);
+                }
             }
             return new SimpleStringProperty("");
         });
@@ -241,9 +249,30 @@ public class WorkshopParticipantsViewController implements Initializable {
     }
 
     private void setupAvailableAdultsTable() {
-        selectAdultColumn.setCellFactory(CheckBoxTableCell.forTableColumn(selectAdultColumn));
-        selectAdultColumn.setCellValueFactory(new PropertyValueFactory<>("selected"));
-        selectAdultColumn.setEditable(true);
+        // FIXED: Custom checkbox setup for adults
+        selectAdultColumn.setCellFactory(tc -> {
+            CheckBox checkBox = new CheckBox();
+            TableCell<Contact, Boolean> cell = new TableCell<Contact, Boolean>() {
+                @Override
+                protected void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || getIndex() >= getTableView().getItems().size()) {
+                        setGraphic(null);
+                    } else {
+                        Contact contact = getTableView().getItems().get(getIndex());
+                        if (contact != null) {
+                            checkBox.setSelected(contact.isSelected());
+                            checkBox.setOnAction(e -> {
+                                contact.setSelected(checkBox.isSelected());
+                                System.out.println("Adult " + contact.getFullName() + " selected: " + checkBox.isSelected());
+                            });
+                            setGraphic(checkBox);
+                        }
+                    }
+                }
+            };
+            return cell;
+        });
 
         adultNameColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getFullName()));
@@ -259,9 +288,30 @@ public class WorkshopParticipantsViewController implements Initializable {
     }
 
     private void setupAvailableChildrenTable() {
-        selectChildColumn.setCellFactory(CheckBoxTableCell.forTableColumn(selectChildColumn));
-        selectChildColumn.setCellValueFactory(new PropertyValueFactory<>("selected"));
-        selectChildColumn.setEditable(true);
+        // FIXED: Custom checkbox setup for children
+        selectChildColumn.setCellFactory(tc -> {
+            CheckBox checkBox = new CheckBox();
+            TableCell<UnderagedMember, Boolean> cell = new TableCell<UnderagedMember, Boolean>() {
+                @Override
+                protected void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || getIndex() >= getTableView().getItems().size()) {
+                        setGraphic(null);
+                    } else {
+                        UnderagedMember child = getTableView().getItems().get(getIndex());
+                        if (child != null) {
+                            checkBox.setSelected(child.isSelected());
+                            checkBox.setOnAction(e -> {
+                                child.setSelected(checkBox.isSelected());
+                                System.out.println("Child " + child.getFullName() + " selected: " + checkBox.isSelected());
+                            });
+                            setGraphic(checkBox);
+                        }
+                    }
+                }
+            };
+            return cell;
+        });
 
         childNameColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getFullName()));
@@ -363,6 +413,12 @@ public class WorkshopParticipantsViewController implements Initializable {
 
         try {
             java.util.List<Map<String, Object>> participants = participantDAO.getWorkshopParticipantsWithDetails(currentWorkshop.getId());
+
+            // Initialize selection property for each participant
+            for (Map<String, Object> participant : participants) {
+                participant.put("selected", false);
+            }
+
             participantsList.setAll(participants);
             System.out.println("Loaded " + participants.size() + " participants for workshop: " + currentWorkshop.getName());
         } catch (Exception e) {
@@ -373,13 +429,19 @@ public class WorkshopParticipantsViewController implements Initializable {
 
     private void loadAvailableParticipants() {
         try {
-            // Load all contacts
+            // Load all contacts and initialize selection
             java.util.List<Contact> allContacts = contactDAO.getAllContacts();
+            for (Contact contact : allContacts) {
+                contact.setSelected(false);
+            }
             availableAdultsList.setAll(allContacts);
             availableAdultsCountLabel.setText("(" + allContacts.size() + " available)");
 
-            // Load all underaged members
+            // Load all underaged members and initialize selection
             java.util.List<UnderagedMember> allChildren = underagedDAO.getAllUnderagedMembers();
+            for (UnderagedMember child : allChildren) {
+                child.setSelected(false);
+            }
             availableChildrenList.setAll(allChildren);
             availableChildrenCountLabel.setText("(" + allChildren.size() + " available)");
 
@@ -479,35 +541,214 @@ public class WorkshopParticipantsViewController implements Initializable {
         });
     }
 
-    // Event handlers (placeholder implementations)
+    // COMPLETE EVENT HANDLERS WITH FULL FUNCTIONALITY
+
     private void handleEditParticipant(Map<String, Object> participant) {
-        Alert info = new Alert(Alert.AlertType.INFORMATION);
-        info.setTitle("Edit Participant");
-        info.setHeaderText("Edit: " + participant.get("participant_name"));
-        info.setContentText("Edit participant functionality coming soon!");
-        info.showAndWait();
+        try {
+            // Create a dialog for editing participant details
+            Dialog<ButtonType> dialog = new Dialog<>();
+            dialog.setTitle("Edit Participant");
+            dialog.setHeaderText("Edit participant: " + participant.get("participant_name"));
+
+            // Create the dialog content
+            VBox content = new VBox(10);
+            content.setPadding(new javafx.geometry.Insets(10));
+
+            // Payment Status
+            Label paymentLabel = new Label("Payment Status:");
+            ComboBox<PaymentStatus> paymentCombo = new ComboBox<>();
+            paymentCombo.getItems().setAll(PaymentStatus.values());
+
+            // Set current payment status
+            String currentPaymentStatus = (String) participant.get("payment_status");
+            try {
+                PaymentStatus currentStatus = PaymentStatus.valueOf(currentPaymentStatus);
+                paymentCombo.setValue(currentStatus);
+            } catch (Exception e) {
+                paymentCombo.setValue(PaymentStatus.PENDING);
+            }
+
+            // Notes
+            Label notesLabel = new Label("Notes:");
+            TextArea notesArea = new TextArea((String) participant.get("notes"));
+            notesArea.setPrefRowCount(3);
+            notesArea.setWrapText(true);
+
+            content.getChildren().addAll(paymentLabel, paymentCombo, notesLabel, notesArea);
+            dialog.getDialogPane().setContent(content);
+
+            // Add buttons
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            // Show dialog and handle result
+            Optional<ButtonType> result = dialog.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                // Update the participant
+                PaymentStatus newPaymentStatus = paymentCombo.getValue();
+                String newNotes = notesArea.getText().trim();
+
+                try {
+                    // Get participant ID and type
+                    int participantId = (Integer) participant.get("participant_id");
+
+                    // Update in database
+                    boolean success = participantDAO.updateParticipant(participantId, newPaymentStatus,
+                            newNotes.isEmpty() ? null : newNotes);
+
+                    if (success) {
+                        // Update the local data
+                        participant.put("payment_status", newPaymentStatus.toString());
+                        participant.put("notes", newNotes);
+                        participant.put("updated_at", java.time.LocalDateTime.now().toString());
+
+                        // Refresh the table
+                        participantsTable.refresh();
+                        updateStatistics();
+
+                        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                        successAlert.setTitle("Success");
+                        successAlert.setHeaderText("Participant Updated");
+                        successAlert.setContentText("Participant details updated successfully!");
+                        successAlert.showAndWait();
+                    } else {
+                        Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                        errorAlert.setTitle("Update Failed");
+                        errorAlert.setHeaderText("Database Error");
+                        errorAlert.setContentText("Failed to update participant in the database.");
+                        errorAlert.showAndWait();
+                    }
+
+                } catch (Exception e) {
+                    System.err.println("Error updating participant: " + e.getMessage());
+                    e.printStackTrace();
+
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Update Failed");
+                    errorAlert.setHeaderText("Error");
+                    errorAlert.setContentText("An error occurred while updating the participant: " + e.getMessage());
+                    errorAlert.showAndWait();
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error opening edit dialog: " + e.getMessage());
+            e.printStackTrace();
+
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Dialog Error");
+            errorAlert.setHeaderText("Failed to Open Edit Dialog");
+            errorAlert.setContentText("An error occurred while opening the edit dialog: " + e.getMessage());
+            errorAlert.showAndWait();
+        }
     }
 
     private void handleRemoveParticipant(Map<String, Object> participant) {
         Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
         confirmation.setTitle("Remove Participant");
         confirmation.setHeaderText("Remove " + participant.get("participant_name") + "?");
-        confirmation.setContentText("Are you sure you want to remove this participant from the workshop?");
+        confirmation.setContentText("Are you sure you want to remove this participant from the workshop? This action cannot be undone.");
 
         if (confirmation.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            // TODO: Implement actual removal
-            Alert info = new Alert(Alert.AlertType.INFORMATION);
-            info.setTitle("Remove Participant");
-            info.setContentText("Remove participant functionality coming soon!");
-            info.showAndWait();
+            try {
+                int participantId = (Integer) participant.get("participant_id");
+
+                boolean success = participantDAO.removeParticipant(participantId);
+
+                if (success) {
+                    // Remove from the list
+                    participantsList.remove(participant);
+                    updateStatistics();
+
+                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                    successAlert.setTitle("Success");
+                    successAlert.setHeaderText("Participant Removed");
+                    successAlert.setContentText("Participant has been removed from the workshop successfully!");
+                    successAlert.showAndWait();
+                } else {
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Removal Failed");
+                    errorAlert.setHeaderText("Database Error");
+                    errorAlert.setContentText("Failed to remove participant from the database.");
+                    errorAlert.showAndWait();
+                }
+
+            } catch (Exception e) {
+                System.err.println("Error removing participant: " + e.getMessage());
+                e.printStackTrace();
+
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Removal Failed");
+                errorAlert.setHeaderText("Error");
+                errorAlert.setContentText("An error occurred while removing the participant: " + e.getMessage());
+                errorAlert.showAndWait();
+            }
         }
     }
 
     private void handleRemoveSelected() {
-        Alert info = new Alert(Alert.AlertType.INFORMATION);
-        info.setTitle("Remove Selected");
-        info.setContentText("Remove selected participants functionality coming soon!");
-        info.showAndWait();
+        System.out.println("Remove selected participants clicked"); // Debug
+
+        // Get selected participants
+        java.util.List<Map<String, Object>> selectedParticipants = participantsList.stream()
+                .filter(p -> (Boolean) p.getOrDefault("selected", false))
+                .collect(Collectors.toList());
+
+        System.out.println("Selected participants count: " + selectedParticipants.size()); // Debug
+
+        if (selectedParticipants.isEmpty()) {
+            Alert warning = new Alert(Alert.AlertType.WARNING);
+            warning.setTitle("No Selection");
+            warning.setHeaderText("No participants selected");
+            warning.setContentText("Please select one or more participants to remove using the checkboxes.");
+            warning.showAndWait();
+            return;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Remove Selected Participants");
+        confirmation.setHeaderText("Remove " + selectedParticipants.size() + " participants?");
+        confirmation.setContentText("Are you sure you want to remove the selected participants from this workshop? This action cannot be undone.");
+
+        if (confirmation.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            try {
+                // Collect participant IDs
+                java.util.List<Integer> participantIds = selectedParticipants.stream()
+                        .map(p -> (Integer) p.get("participant_id"))
+                        .collect(Collectors.toList());
+
+                System.out.println("Attempting to remove participant IDs: " + participantIds); // Debug
+
+                boolean success = participantDAO.removeParticipants(participantIds);
+
+                if (success) {
+                    // Remove from the list
+                    participantsList.removeAll(selectedParticipants);
+                    updateStatistics();
+
+                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                    successAlert.setTitle("Success");
+                    successAlert.setHeaderText("Participants Removed");
+                    successAlert.setContentText("Successfully removed " + selectedParticipants.size() + " participants from the workshop!");
+                    successAlert.showAndWait();
+                } else {
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Removal Failed");
+                    errorAlert.setHeaderText("Database Error");
+                    errorAlert.setContentText("Failed to remove some or all participants from the database.");
+                    errorAlert.showAndWait();
+                }
+
+            } catch (Exception e) {
+                System.err.println("Error removing selected participants: " + e.getMessage());
+                e.printStackTrace();
+
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Removal Failed");
+                errorAlert.setHeaderText("Error");
+                errorAlert.setContentText("An error occurred while removing participants: " + e.getMessage());
+                errorAlert.showAndWait();
+            }
+        }
     }
 
     private void handleExportParticipants() {
@@ -529,29 +770,45 @@ public class WorkshopParticipantsViewController implements Initializable {
     }
 
     private void handleSelectAllAdults() {
+        System.out.println("Select all adults clicked"); // Debug
         filteredAdultsList.forEach(contact -> contact.setSelected(true));
         availableAdultsTable.refresh();
+
+        // Debug: Print selection count
+        long selectedCount = availableAdultsList.stream().filter(Contact::isSelected).count();
+        System.out.println("Selected adults: " + selectedCount);
     }
 
     private void handleClearAdultsSelection() {
+        System.out.println("Clear adults selection clicked"); // Debug
         availableAdultsList.forEach(contact -> contact.setSelected(false));
         availableAdultsTable.refresh();
     }
 
     private void handleSelectAllChildren() {
+        System.out.println("Select all children clicked"); // Debug
         filteredChildrenList.forEach(child -> child.setSelected(true));
         availableChildrenTable.refresh();
+
+        // Debug: Print selection count
+        long selectedCount = availableChildrenList.stream().filter(UnderagedMember::isSelected).count();
+        System.out.println("Selected children: " + selectedCount);
     }
 
     private void handleClearChildrenSelection() {
+        System.out.println("Clear children selection clicked"); // Debug
         availableChildrenList.forEach(child -> child.setSelected(false));
         availableChildrenTable.refresh();
     }
 
     private void handleAddSelectedAdults() {
+        System.out.println("Add selected adults clicked"); // Debug
+
         java.util.List<Contact> selectedAdults = availableAdultsList.stream()
                 .filter(Contact::isSelected)
                 .collect(Collectors.toList());
+
+        System.out.println("Selected adults count: " + selectedAdults.size()); // Debug
 
         if (selectedAdults.isEmpty()) {
             Alert warning = new Alert(Alert.AlertType.WARNING);
@@ -561,17 +818,86 @@ public class WorkshopParticipantsViewController implements Initializable {
             return;
         }
 
-        Alert info = new Alert(Alert.AlertType.INFORMATION);
-        info.setTitle("Add Adults");
-        info.setContentText("Will add " + selectedAdults.size() + " adults with payment status: " +
-                adultsPaymentStatusCombo.getValue() + "\nFunctionality coming soon!");
-        info.showAndWait();
+        if (currentWorkshop == null) {
+            Alert warning = new Alert(Alert.AlertType.WARNING);
+            warning.setTitle("No Workshop");
+            warning.setContentText("Please select a workshop first.");
+            warning.showAndWait();
+            return;
+        }
+
+        try {
+            PaymentStatus paymentStatus = adultsPaymentStatusCombo.getValue();
+            String notes = adultsNotesField.getText().trim();
+            String timestamp = java.time.LocalDateTime.now().toString();
+
+            java.util.List<Contact> addedContacts = new ArrayList<>();
+            java.util.List<String> skippedContacts = new ArrayList<>();
+
+            for (Contact contact : selectedAdults) {
+                // Check if participant already exists
+                if (participantDAO.participantExists(currentWorkshop.getId(), contact.getId(), 0)) {
+                    skippedContacts.add(contact.getFullName());
+                    contact.setSelected(false); // Clear selection
+                    continue;
+                }
+
+                WorkshopParticipant participant = new WorkshopParticipant();
+                participant.setWorkshopId(currentWorkshop.getId());
+                participant.setContactId(contact.getId());
+                participant.setParticipantType(ParticipantType.ADULT);
+                participant.setPaymentStatus(paymentStatus);
+                participant.setNotes(notes.isEmpty() ? null : notes);
+                participant.setCreatedAt(timestamp);
+                participant.setUpdatedAt(timestamp);
+
+                if (participantDAO.addParticipant(participant)) {
+                    addedContacts.add(contact);
+                }
+                contact.setSelected(false); // Clear selection
+            }
+
+            // Clear form
+            adultsNotesField.clear();
+
+            // Refresh data
+            loadWorkshopParticipants();
+            updateStatistics();
+
+            // Show results
+            StringBuilder message = new StringBuilder();
+            if (!addedContacts.isEmpty()) {
+                message.append("Successfully added ").append(addedContacts.size()).append(" adults to the workshop!");
+            }
+            if (!skippedContacts.isEmpty()) {
+                if (message.length() > 0) message.append("\n\n");
+                message.append("Skipped ").append(skippedContacts.size()).append(" adults who were already in the workshop:\n");
+                message.append(String.join(", ", skippedContacts));
+            }
+
+            Alert result = new Alert(addedContacts.isEmpty() ? Alert.AlertType.WARNING : Alert.AlertType.INFORMATION);
+            result.setTitle("Add Adults Result");
+            result.setHeaderText(addedContacts.isEmpty() ? "No Adults Added" : "Adults Added");
+            result.setContentText(message.toString());
+            result.showAndWait();
+
+        } catch (Exception e) {
+            Alert error = new Alert(Alert.AlertType.ERROR);
+            error.setTitle("Addition Failed");
+            error.setContentText("Failed to add adults: " + e.getMessage());
+            error.showAndWait();
+            e.printStackTrace();
+        }
     }
 
     private void handleAddSelectedChildren() {
+        System.out.println("Add selected children clicked"); // Debug
+
         java.util.List<UnderagedMember> selectedChildren = availableChildrenList.stream()
                 .filter(UnderagedMember::isSelected)
                 .collect(Collectors.toList());
+
+        System.out.println("Selected children count: " + selectedChildren.size()); // Debug
 
         if (selectedChildren.isEmpty()) {
             Alert warning = new Alert(Alert.AlertType.WARNING);
@@ -581,11 +907,76 @@ public class WorkshopParticipantsViewController implements Initializable {
             return;
         }
 
-        Alert info = new Alert(Alert.AlertType.INFORMATION);
-        info.setTitle("Add Children");
-        info.setContentText("Will add " + selectedChildren.size() + " children with payment status: " +
-                childrenPaymentStatusCombo.getValue() + "\nFunctionality coming soon!");
-        info.showAndWait();
+        if (currentWorkshop == null) {
+            Alert warning = new Alert(Alert.AlertType.WARNING);
+            warning.setTitle("No Workshop");
+            warning.setContentText("Please select a workshop first.");
+            warning.showAndWait();
+            return;
+        }
+
+        try {
+            PaymentStatus paymentStatus = childrenPaymentStatusCombo.getValue();
+            String notes = childrenNotesField.getText().trim();
+            String timestamp = java.time.LocalDateTime.now().toString();
+
+            java.util.List<UnderagedMember> addedChildren = new ArrayList<>();
+            java.util.List<String> skippedChildren = new ArrayList<>();
+
+            for (UnderagedMember child : selectedChildren) {
+                // Check if participant already exists
+                if (participantDAO.participantExists(currentWorkshop.getId(), 0, child.getId())) {
+                    skippedChildren.add(child.getFullName());
+                    child.setSelected(false); // Clear selection
+                    continue;
+                }
+
+                WorkshopParticipant participant = new WorkshopParticipant();
+                participant.setWorkshopId(currentWorkshop.getId());
+                participant.setUnderagedId(child.getId());
+                participant.setParticipantType(ParticipantType.CHILD);
+                participant.setPaymentStatus(paymentStatus);
+                participant.setNotes(notes.isEmpty() ? null : notes);
+                participant.setCreatedAt(timestamp);
+                participant.setUpdatedAt(timestamp);
+
+                if (participantDAO.addParticipant(participant)) {
+                    addedChildren.add(child);
+                }
+                child.setSelected(false); // Clear selection
+            }
+
+            // Clear form
+            childrenNotesField.clear();
+
+            // Refresh data
+            loadWorkshopParticipants();
+            updateStatistics();
+
+            // Show results
+            StringBuilder message = new StringBuilder();
+            if (!addedChildren.isEmpty()) {
+                message.append("Successfully added ").append(addedChildren.size()).append(" children to the workshop!");
+            }
+            if (!skippedChildren.isEmpty()) {
+                if (message.length() > 0) message.append("\n\n");
+                message.append("Skipped ").append(skippedChildren.size()).append(" children who were already in the workshop:\n");
+                message.append(String.join(", ", skippedChildren));
+            }
+
+            Alert result = new Alert(addedChildren.isEmpty() ? Alert.AlertType.WARNING : Alert.AlertType.INFORMATION);
+            result.setTitle("Add Children Result");
+            result.setHeaderText(addedChildren.isEmpty() ? "No Children Added" : "Children Added");
+            result.setContentText(message.toString());
+            result.showAndWait();
+
+        } catch (Exception e) {
+            Alert error = new Alert(Alert.AlertType.ERROR);
+            error.setTitle("Addition Failed");
+            error.setContentText("Failed to add children: " + e.getMessage());
+            error.showAndWait();
+            e.printStackTrace();
+        }
     }
 
     private void handleAddFamily() {

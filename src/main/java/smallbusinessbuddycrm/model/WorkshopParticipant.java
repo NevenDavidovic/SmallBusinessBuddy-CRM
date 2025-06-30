@@ -3,6 +3,7 @@ package smallbusinessbuddycrm.model;
 public class WorkshopParticipant {
     private int id;
     private int workshopId;
+    private Integer teacherId;    // Added teacher reference
     private Integer underagedId; // Nullable - for child participants
     private Integer contactId;   // Nullable - for adult participants
     private ParticipantType participantType;
@@ -45,12 +46,26 @@ public class WorkshopParticipant {
         this.paymentStatus = paymentStatus;
     }
 
+    // Constructor with teacher
+    public WorkshopParticipant(int workshopId, Integer teacherId, Integer contactId, Integer underagedId,
+                               ParticipantType participantType, PaymentStatus paymentStatus) {
+        this.workshopId = workshopId;
+        this.teacherId = teacherId;
+        this.contactId = contactId;
+        this.underagedId = underagedId;
+        this.participantType = participantType;
+        this.paymentStatus = paymentStatus;
+    }
+
     // Getters and setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
     public int getWorkshopId() { return workshopId; }
     public void setWorkshopId(int workshopId) { this.workshopId = workshopId; }
+
+    public Integer getTeacherId() { return teacherId; }
+    public void setTeacherId(Integer teacherId) { this.teacherId = teacherId; }
 
     public Integer getUnderagedId() { return underagedId; }
     public void setUnderagedId(Integer underagedId) {
@@ -149,6 +164,7 @@ public class WorkshopParticipant {
         return "WorkshopParticipant{" +
                 "id=" + id +
                 ", workshopId=" + workshopId +
+                ", teacherId=" + teacherId +
                 ", participantType=" + participantType +
                 ", paymentStatus=" + paymentStatus +
                 '}';
