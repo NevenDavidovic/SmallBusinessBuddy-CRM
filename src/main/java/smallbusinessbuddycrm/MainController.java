@@ -3,10 +3,16 @@ package smallbusinessbuddycrm;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Accordion;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.Node;
+import javafx.scene.shape.Circle;
+import smallbusinessbuddycrm.database.OrganizationDAO;
+import smallbusinessbuddycrm.model.Organization;
+
 import java.io.IOException;
+import java.util.Optional;
 
 public class MainController {
 
@@ -16,16 +22,154 @@ public class MainController {
     @FXML
     private TitledPane bookmarks;
 
+    @FXML
+    private MenuButton userProfileButton; // Reference to the MenuButton in FXML
+
+    @FXML
+    private Circle userAvatar; // Reference to the Circle for organization logo
+
+    private OrganizationDAO organizationDAO = new OrganizationDAO();
+
     /**
      * Initializes the controller class.
      */
     @FXML
     public void initialize() {
-        // You can set up initial view or configuration here
+        System.out.println("MainController.initialize() called");
 
+        // Debug: Check if FXML elements are properly injected
+        System.out.println("userProfileButton is null: " + (userProfileButton == null));
+        System.out.println("userAvatar is null: " + (userAvatar == null));
+
+        // Load and display organization name
+        loadOrganizationName();
+
+        // You can set up initial view or configuration here
         // If you want to expand a specific accordion pane by default
         // For example, to expand the CRM section:
         // crmPane.setExpanded(true);
+    }
+
+    /**
+     * Loads the organization name and image, sets them to the user profile button
+     */
+    private void loadOrganizationName() {
+        System.out.println("=== Loading Organization Data ===");
+        try {
+            Optional<Organization> organization = organizationDAO.getFirst();
+
+            if (organization.isPresent()) {
+                Organization org = organization.get();
+                String orgName = org.getName();
+
+                System.out.println("Organization found: " + orgName);
+                System.out.println("Organization has image: " + (org.getImage() != null));
+                if (org.getImage() != null) {
+                    System.out.println("Image size: " + org.getImage().length + " bytes");
+                }
+
+                // Set organization name
+                if (userProfileButton != null) {
+                    userProfileButton.setText(orgName);
+                    System.out.println("Organization name set to button: " + orgName);
+                } else {
+                    System.err.println("ERROR: userProfileButton is null - check FXML fx:id");
+                }
+
+                // Set organization image
+                loadOrganizationImage(org);
+
+            } else {
+                // No organization found - set default
+                System.out.println("No organization found in database");
+                if (userProfileButton != null) {
+                    userProfileButton.setText("No Organization");
+                }
+                setDefaultAvatar();
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error loading organization data: " + e.getMessage());
+            e.printStackTrace();
+
+            // Set fallback text and image
+            if (userProfileButton != null) {
+                userProfileButton.setText("Error Loading");
+            }
+            setDefaultAvatar();
+        }
+        System.out.println("=== Organization Data Loading Complete ===");
+    }
+
+    /**
+     * Loads organization image and sets it as the avatar background
+     */
+    private void loadOrganizationImage(Organization organization) {
+        System.out.println("=== Loading Organization Image ===");
+        try {
+            if (userAvatar == null) {
+                System.err.println("ERROR: userAvatar is null - check FXML fx:id");
+                return;
+            }
+
+            if (organization.getImage() != null && organization.getImage().length > 0) {
+                System.out.println("Converting byte array to JavaFX Image...");
+
+                // Convert byte array to JavaFX Image
+                javafx.scene.image.Image orgImage = new javafx.scene.image.Image(
+                        new java.io.ByteArrayInputStream(organization.getImage())
+                );
+
+                // Check if image loaded successfully
+                if (orgImage.isError()) {
+                    System.err.println("Error loading image: " + orgImage.getException().getMessage());
+                    setDefaultAvatar();
+                    return;
+                }
+
+                System.out.println("Image loaded successfully. Width: " + orgImage.getWidth() + ", Height: " + orgImage.getHeight());
+
+                // Create ImagePattern to fill the circle
+                javafx.scene.paint.ImagePattern imagePattern = new javafx.scene.paint.ImagePattern(orgImage);
+                userAvatar.setFill(imagePattern);
+
+                System.out.println("Organization image applied to avatar successfully");
+            } else {
+                // No image available, use default
+                System.out.println("No organization image available, using default");
+                setDefaultAvatar();
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading organization image: " + e.getMessage());
+            e.printStackTrace();
+            setDefaultAvatar();
+        }
+        System.out.println("=== Organization Image Loading Complete ===");
+    }
+
+    /**
+     * Sets a default avatar (color or pattern) when no organization image is available
+     */
+    private void setDefaultAvatar() {
+        System.out.println("Setting default avatar...");
+        if (userAvatar != null) {
+            // Use a solid color
+            userAvatar.setFill(javafx.scene.paint.Color.web("#0099cc")); // Blue color
+            System.out.println("Default blue avatar set");
+
+            // Alternative: Use initials or gradient
+            // You could also create a text-based avatar with organization initials here
+        } else {
+            System.err.println("Cannot set default avatar - userAvatar is null");
+        }
+    }
+
+    /**
+     * Public method to refresh organization name and image (useful after updating organization)
+     */
+    public void refreshOrganizationData() {
+        System.out.println("Refreshing organization data...");
+        loadOrganizationName();
     }
 
     /**
@@ -51,7 +195,7 @@ public class MainController {
 
     // Handler methods for sidebar buttons
 
-      @FXML
+    @FXML
     private void handleContactsAction() {
         navigateTo("/views/crm/contacts-view.fxml");
     }
@@ -83,7 +227,7 @@ public class MainController {
 
     @FXML
     private void handleBarcodeAppAction() {
-        navigateTo("/views/commerce/barcode-app-view.fxml");
+        navigateTo("/views/commerce/barcode-generator-view.fxml");
     }
 
     @FXML
@@ -109,6 +253,11 @@ public class MainController {
     @FXML
     private void handleEStatisticsAction() {
         navigateTo("/views/reporting/email-statistics-view.fxml");
+    }
+
+    @FXML
+    private void handleTeachersAction() {
+        navigateTo("/views/crm/teacher-view.fxml");
     }
 
     // Add more handlers for other menu items

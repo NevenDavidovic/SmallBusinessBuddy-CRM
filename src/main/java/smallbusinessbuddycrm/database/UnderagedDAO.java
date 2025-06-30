@@ -79,7 +79,8 @@ public class UnderagedDAO {
         return underagedMembers;
     }
 
-    public List<UnderagedMember> getUnderagedMembersByContact(int contactId) {
+    // RENAMED METHOD: Changed from getUnderagedMembersByContact to getUnderagedMembersByContactId
+    public List<UnderagedMember> getUnderagedMembersByContactId(int contactId) {
         List<UnderagedMember> underagedMembers = new ArrayList<>();
         String query = "SELECT * FROM underaged WHERE contact_id = ? ORDER BY first_name, last_name";
 

@@ -6,8 +6,8 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import smallbusinessbuddycrm.database.DatabaseConnection;
 import smallbusinessbuddycrm.database.TeacherDAO;
@@ -63,10 +63,30 @@ public class TeachersViewController implements Initializable {
     }
 
     private void setupTable() {
-        // Set up checkbox column
-        selectColumn.setCellFactory(CheckBoxTableCell.forTableColumn(selectColumn));
-        selectColumn.setCellValueFactory(new PropertyValueFactory<>("selected"));
-        selectColumn.setEditable(true);
+        // FIXED: Set up checkbox column with custom cell factory
+        selectColumn.setCellFactory(tc -> {
+            CheckBox checkBox = new CheckBox();
+            TableCell<Teacher, Boolean> cell = new TableCell<Teacher, Boolean>() {
+                @Override
+                protected void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || getIndex() >= getTableView().getItems().size()) {
+                        setGraphic(null);
+                    } else {
+                        Teacher teacher = getTableView().getItems().get(getIndex());
+                        if (teacher != null) {
+                            checkBox.setSelected(teacher.isSelected());
+                            checkBox.setOnAction(e -> {
+                                teacher.setSelected(checkBox.isSelected());
+                                System.out.println("Teacher " + teacher.getFullName() + " selected: " + checkBox.isSelected());
+                            });
+                            setGraphic(checkBox);
+                        }
+                    }
+                }
+            };
+            return cell;
+        });
 
         // Set up edit button column
         editColumn.setCellFactory(tc -> new TableCell<Teacher, Void>() {
@@ -136,6 +156,8 @@ public class TeachersViewController implements Initializable {
                 matchesSearch = true;
             } else if (teacher.getEmail() != null && teacher.getEmail().toLowerCase().contains(searchText)) {
                 matchesSearch = true;
+            } else if (teacher.getPhoneNum() != null && teacher.getPhoneNum().toLowerCase().contains(searchText)) {
+                matchesSearch = true;
             }
 
             return matchesSearch;
@@ -148,6 +170,11 @@ public class TeachersViewController implements Initializable {
         try {
             List<Teacher> teachers = teacherDAO.getAllTeachers();
             System.out.println("DAO returned " + teachers.size() + " teachers");
+
+            // Initialize selection state for all teachers
+            for (Teacher teacher : teachers) {
+                teacher.setSelected(false);
+            }
 
             allTeachersList.setAll(teachers);
             updateRecordCount();
@@ -176,59 +203,202 @@ public class TeachersViewController implements Initializable {
 
     private void handleCreateTeacher() {
         try {
-            Stage currentStage = (Stage) createTeacherButton.getScene().getWindow();
-            CreateTeacherDialog dialog = new CreateTeacherDialog(currentStage);
+            // Create a dialog for adding a new teacher
+            Dialog<Teacher> dialog = new Dialog<>();
+            dialog.setTitle("Add New Teacher");
+            dialog.setHeaderText("Enter teacher information");
 
-            if (dialog.showAndWait()) {
-                Teacher newTeacher = dialog.getResult();
-                if (newTeacher != null) {
+            // Create the dialog content
+            VBox content = new VBox(10);
+            content.setPadding(new javafx.geometry.Insets(10));
+
+            TextField firstNameField = new TextField();
+            firstNameField.setPromptText("First Name");
+
+            TextField lastNameField = new TextField();
+            lastNameField.setPromptText("Last Name");
+
+            TextField emailField = new TextField();
+            emailField.setPromptText("Email");
+
+            TextField phoneField = new TextField();
+            phoneField.setPromptText("Phone Number");
+
+            content.getChildren().addAll(
+                    new Label("First Name:"), firstNameField,
+                    new Label("Last Name:"), lastNameField,
+                    new Label("Email:"), emailField,
+                    new Label("Phone:"), phoneField
+            );
+
+            dialog.getDialogPane().setContent(content);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            // Enable/disable OK button based on input
+            Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+            okButton.setDisable(true);
+
+            // Validation
+            firstNameField.textProperty().addListener((obs, oldText, newText) -> {
+                okButton.setDisable(newText.trim().isEmpty() || lastNameField.getText().trim().isEmpty());
+            });
+            lastNameField.textProperty().addListener((obs, oldText, newText) -> {
+                okButton.setDisable(newText.trim().isEmpty() || firstNameField.getText().trim().isEmpty());
+            });
+
+            // Convert result
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == ButtonType.OK) {
+                    Teacher teacher = new Teacher();
+                    teacher.setFirstName(firstNameField.getText().trim());
+                    teacher.setLastName(lastNameField.getText().trim());
+                    teacher.setEmail(emailField.getText().trim().isEmpty() ? null : emailField.getText().trim());
+                    teacher.setPhoneNum(phoneField.getText().trim().isEmpty() ? null : phoneField.getText().trim());
+                    teacher.setCreatedAt(java.time.LocalDateTime.now().toString());
+                    teacher.setUpdatedAt(java.time.LocalDateTime.now().toString());
+                    return teacher;
+                }
+                return null;
+            });
+
+            Optional<Teacher> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                Teacher newTeacher = result.get();
+                boolean success = teacherDAO.createTeacher(newTeacher);
+
+                if (success) {
                     allTeachersList.add(newTeacher);
                     updateRecordCount();
                     teachersTable.getSelectionModel().select(newTeacher);
                     teachersTable.scrollTo(newTeacher);
+
+                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                    successAlert.setTitle("Success");
+                    successAlert.setHeaderText("Teacher Added");
+                    successAlert.setContentText("Teacher " + newTeacher.getFullName() + " has been added successfully!");
+                    successAlert.showAndWait();
+
                     System.out.println("New teacher added: " + newTeacher.getFullName());
+                } else {
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Error");
+                    errorAlert.setHeaderText("Failed to Add Teacher");
+                    errorAlert.setContentText("Could not save the teacher to the database.");
+                    errorAlert.showAndWait();
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error opening create teacher dialog: " + e.getMessage());
+            System.err.println("Error creating teacher: " + e.getMessage());
             e.printStackTrace();
 
-            // Show error to user
             Alert errorAlert = new Alert(Alert.AlertType.ERROR);
             errorAlert.setTitle("Error");
             errorAlert.setHeaderText("Create Teacher Failed");
-            errorAlert.setContentText("An error occurred while creating the teacher dialog.");
+            errorAlert.setContentText("An error occurred while creating the teacher: " + e.getMessage());
             errorAlert.showAndWait();
         }
     }
 
     private void handleEditTeacher(Teacher teacher) {
         try {
-            Stage currentStage = (Stage) createTeacherButton.getScene().getWindow();
-            EditTeacherDialog dialog = new EditTeacherDialog(currentStage, teacher);
+            // Create a dialog for editing the teacher
+            Dialog<Teacher> dialog = new Dialog<>();
+            dialog.setTitle("Edit Teacher");
+            dialog.setHeaderText("Edit teacher: " + teacher.getFullName());
 
-            if (dialog.showAndWait()) {
-                // Refresh the table to show updated data
-                teachersTable.refresh();
-                System.out.println("Teacher updated: " + teacher.getFullName());
+            // Create the dialog content
+            VBox content = new VBox(10);
+            content.setPadding(new javafx.geometry.Insets(10));
 
-                Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                successAlert.setTitle("Success");
-                successAlert.setHeaderText("Teacher Updated");
-                successAlert.setContentText("Teacher has been successfully updated.");
-                successAlert.showAndWait();
+            TextField firstNameField = new TextField(teacher.getFirstName());
+            TextField lastNameField = new TextField(teacher.getLastName());
+            TextField emailField = new TextField(teacher.getEmail() != null ? teacher.getEmail() : "");
+            TextField phoneField = new TextField(teacher.getPhoneNum() != null ? teacher.getPhoneNum() : "");
+
+            content.getChildren().addAll(
+                    new Label("First Name:"), firstNameField,
+                    new Label("Last Name:"), lastNameField,
+                    new Label("Email:"), emailField,
+                    new Label("Phone:"), phoneField
+            );
+
+            dialog.getDialogPane().setContent(content);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            // Enable/disable OK button based on input
+            Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+
+            // Validation
+            firstNameField.textProperty().addListener((obs, oldText, newText) -> {
+                okButton.setDisable(newText.trim().isEmpty() || lastNameField.getText().trim().isEmpty());
+            });
+            lastNameField.textProperty().addListener((obs, oldText, newText) -> {
+                okButton.setDisable(newText.trim().isEmpty() || firstNameField.getText().trim().isEmpty());
+            });
+
+            // Convert result
+            dialog.setResultConverter(dialogButton -> {
+                if (dialogButton == ButtonType.OK) {
+                    teacher.setFirstName(firstNameField.getText().trim());
+                    teacher.setLastName(lastNameField.getText().trim());
+                    teacher.setEmail(emailField.getText().trim().isEmpty() ? null : emailField.getText().trim());
+                    teacher.setPhoneNum(phoneField.getText().trim().isEmpty() ? null : phoneField.getText().trim());
+                    teacher.setUpdatedAt(java.time.LocalDateTime.now().toString());
+                    return teacher;
+                }
+                return null;
+            });
+
+            Optional<Teacher> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                boolean success = teacherDAO.updateTeacher(teacher);
+
+                if (success) {
+                    // Refresh the table to show updated data
+                    teachersTable.refresh();
+
+                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                    successAlert.setTitle("Success");
+                    successAlert.setHeaderText("Teacher Updated");
+                    successAlert.setContentText("Teacher " + teacher.getFullName() + " has been updated successfully!");
+                    successAlert.showAndWait();
+
+                    System.out.println("Teacher updated: " + teacher.getFullName());
+                } else {
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Error");
+                    errorAlert.setHeaderText("Failed to Update Teacher");
+                    errorAlert.setContentText("Could not save the changes to the database.");
+                    errorAlert.showAndWait();
+                }
             }
         } catch (Exception e) {
-            System.err.println("Error opening edit teacher dialog: " + e.getMessage());
+            System.err.println("Error editing teacher: " + e.getMessage());
             e.printStackTrace();
+
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Error");
+            errorAlert.setHeaderText("Edit Teacher Failed");
+            errorAlert.setContentText("An error occurred while editing the teacher: " + e.getMessage());
+            errorAlert.showAndWait();
         }
     }
 
     private void handleDeleteSelected() {
+        System.out.println("Delete selected teachers clicked"); // Debug
+
+        // Debug: Print all teachers and their selection status
+        System.out.println("=== Current Teacher Selection Status ===");
+        for (Teacher teacher : filteredTeachersList) {
+            System.out.println("Teacher: " + teacher.getFullName() + ", Selected: " + teacher.isSelected());
+        }
+
         // Get all selected teachers from the filtered list
         List<Teacher> selectedTeachers = filteredTeachersList.stream()
                 .filter(Teacher::isSelected)
                 .collect(Collectors.toList());
+
+        System.out.println("Selected teachers count: " + selectedTeachers.size()); // Debug
 
         if (selectedTeachers.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -251,6 +421,8 @@ public class TeachersViewController implements Initializable {
                 List<Integer> teacherIds = selectedTeachers.stream()
                         .map(Teacher::getId)
                         .collect(Collectors.toList());
+
+                System.out.println("Attempting to delete teacher IDs: " + teacherIds); // Debug
 
                 boolean success = teacherDAO.deleteTeachers(teacherIds);
 
@@ -275,6 +447,12 @@ public class TeachersViewController implements Initializable {
             } catch (Exception e) {
                 System.err.println("Error deleting teachers: " + e.getMessage());
                 e.printStackTrace();
+
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Error");
+                errorAlert.setHeaderText("Delete Failed");
+                errorAlert.setContentText("An error occurred while deleting teachers: " + e.getMessage());
+                errorAlert.showAndWait();
             }
         }
     }
@@ -314,46 +492,5 @@ public class TeachersViewController implements Initializable {
         successAlert.setHeaderText("Data Refreshed");
         successAlert.setContentText("Teacher data has been refreshed successfully!");
         successAlert.showAndWait();
-    }
-
-    // Placeholder classes for dialogs - these need to be created
-    private static class CreateTeacherDialog {
-        private Stage parentStage;
-
-        public CreateTeacherDialog(Stage parentStage) {
-            this.parentStage = parentStage;
-        }
-
-        public boolean showAndWait() {
-            Alert info = new Alert(Alert.AlertType.INFORMATION);
-            info.setTitle("Create Teacher");
-            info.setHeaderText("Create Teacher Dialog");
-            info.setContentText("Create teacher dialog coming soon!");
-            info.showAndWait();
-            return false; // For now, always return false
-        }
-
-        public Teacher getResult() {
-            return null;
-        }
-    }
-
-    private static class EditTeacherDialog {
-        private Stage parentStage;
-        private Teacher teacher;
-
-        public EditTeacherDialog(Stage parentStage, Teacher teacher) {
-            this.parentStage = parentStage;
-            this.teacher = teacher;
-        }
-
-        public boolean showAndWait() {
-            Alert info = new Alert(Alert.AlertType.INFORMATION);
-            info.setTitle("Edit Teacher");
-            info.setHeaderText("Edit Teacher: " + teacher.getFullName());
-            info.setContentText("Edit teacher dialog coming soon!");
-            info.showAndWait();
-            return false; // For now, always return false
-        }
     }
 }

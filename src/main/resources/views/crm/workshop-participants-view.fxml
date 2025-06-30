@@ -142,7 +142,7 @@
                                         </children>
                                     </HBox>
                                     <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0">
-                                        <TableView fx:id="availableAdultsTable">
+                                        <TableView fx:id="availableAdultsTable" editable="true">
                                             <columns>
                                                 <TableColumn fx:id="selectAdultColumn" prefWidth="40.0" text="" />
                                                 <TableColumn fx:id="adultNameColumn" text="NAME" prefWidth="150.0" />
@@ -201,7 +201,7 @@
                                         </children>
                                     </HBox>
                                     <ScrollPane fitToHeight="true" fitToWidth="true" prefHeight="200.0">
-                                        <TableView fx:id="availableChildrenTable">
+                                        <TableView fx:id="availableChildrenTable" editable="true">
                                             <columns>
                                                 <TableColumn fx:id="selectChildColumn" prefWidth="40.0" text="" />
                                                 <TableColumn fx:id="childNameColumn" text="NAME" prefWidth="120.0" />

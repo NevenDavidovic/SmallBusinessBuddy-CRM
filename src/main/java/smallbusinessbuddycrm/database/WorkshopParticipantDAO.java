@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public class WorkshopParticipantDAO {
 
@@ -69,50 +70,52 @@ public class WorkshopParticipantDAO {
         return participants;
     }
 
-    // Get all participants for a specific workshop with complete information
+    // UPDATED: Get all participants for a specific workshop with complete information
     public List<Map<String, Object>> getWorkshopParticipantsWithDetails(int workshopId) {
         List<Map<String, Object>> participants = new ArrayList<>();
         String query = """
-        SELECT 
-            wp.id as participant_id,
-            wp.workshop_id,
-            wp.participant_type,
-            wp.payment_status,
-            wp.notes,
-            wp.created_at,
-            wp.updated_at,
-            w.name as workshop_name,
-            w.from_date as workshop_from_date,
-            w.to_date as workshop_to_date,
-            c.id as contact_id,
-            c.first_name as contact_first_name,
-            c.last_name as contact_last_name,
-            c.email as contact_email,
-            c.phone_num as contact_phone,
-            c.birthday as contact_birthday,
-            u.id as underaged_id,
-            u.first_name as underaged_first_name,
-            u.last_name as underaged_last_name,
-            u.birth_date as underaged_birth_date,
-            u.age as underaged_age,
-            u.gender as underaged_gender,
-            u.contact_id as parent_contact_id,
-            parent.first_name as parent_first_name,
-            parent.last_name as parent_last_name,
-            parent.email as parent_email,
-            parent.phone_num as parent_phone
-        FROM workshop_participants wp
-        JOIN workshops w ON wp.workshop_id = w.id
-        LEFT JOIN contacts c ON wp.contact_id = c.id
-        LEFT JOIN underaged u ON wp.underaged_id = u.id
-        LEFT JOIN contacts parent ON u.contact_id = parent.id
-        WHERE wp.workshop_id = ?
-        ORDER BY wp.participant_type, c.last_name, c.first_name, u.last_name, u.first_name
-        """;
+            SELECT 
+                wp.id as participant_id,
+                wp.workshop_id,
+                wp.teacher_id,
+                wp.participant_type,
+                wp.payment_status,
+                wp.notes,
+                wp.created_at,
+                wp.updated_at,
+                w.name as workshop_name,
+                w.from_date as workshop_from_date,
+                w.to_date as workshop_to_date,
+                c.id as contact_id,
+                c.first_name as contact_first_name,
+                c.last_name as contact_last_name,
+                c.email as contact_email,
+                c.phone_num as contact_phone,
+                c.birthday as contact_birthday,
+                u.id as underaged_id,
+                u.first_name as underaged_first_name,
+                u.last_name as underaged_last_name,
+                u.birth_date as underaged_birth_date,
+                u.age as underaged_age,
+                u.gender as underaged_gender,
+                u.contact_id as parent_contact_id,
+                parent.first_name as parent_first_name,
+                parent.last_name as parent_last_name,
+                parent.email as parent_email,
+                parent.phone_num as parent_phone
+            FROM workshop_participants wp
+            JOIN workshops w ON wp.workshop_id = w.id
+            LEFT JOIN contacts c ON wp.contact_id = c.id
+            LEFT JOIN underaged u ON wp.underaged_id = u.id
+            LEFT JOIN contacts parent ON u.contact_id = parent.id
+            WHERE wp.workshop_id = ?
+            ORDER BY wp.participant_type, c.last_name, c.first_name, u.last_name, u.first_name
+            """;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
+            System.out.println("Fetching participants for workshop ID: " + workshopId);
             stmt.setInt(1, workshopId);
             ResultSet rs = stmt.executeQuery();
 
@@ -122,11 +125,13 @@ public class WorkshopParticipantDAO {
                 // Participant info
                 participantData.put("participant_id", rs.getInt("participant_id"));
                 participantData.put("workshop_id", rs.getInt("workshop_id"));
+                participantData.put("teacher_id", rs.getObject("teacher_id"));
                 participantData.put("participant_type", rs.getString("participant_type"));
                 participantData.put("payment_status", rs.getString("payment_status"));
                 participantData.put("notes", rs.getString("notes"));
                 participantData.put("created_at", rs.getString("created_at"));
                 participantData.put("updated_at", rs.getString("updated_at"));
+                participantData.put("selected", false); // For UI selection
 
                 // Workshop info
                 participantData.put("workshop_name", rs.getString("workshop_name"));
@@ -136,22 +141,30 @@ public class WorkshopParticipantDAO {
                 if ("ADULT".equals(rs.getString("participant_type"))) {
                     // Adult participant (contact)
                     participantData.put("contact_id", rs.getInt("contact_id"));
-                    participantData.put("participant_name", rs.getString("contact_first_name") + " " + rs.getString("contact_last_name"));
+                    String firstName = rs.getString("contact_first_name");
+                    String lastName = rs.getString("contact_last_name");
+                    participantData.put("participant_name", (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : ""));
                     participantData.put("participant_email", rs.getString("contact_email"));
                     participantData.put("participant_phone", rs.getString("contact_phone"));
                     participantData.put("participant_birthday", rs.getString("contact_birthday"));
                     participantData.put("participant_age", calculateAge(rs.getString("contact_birthday")));
-                } else {
+                    participantData.put("participant_gender", null); // Adults don't have gender in contacts table
+                } else if ("CHILD".equals(rs.getString("participant_type"))) {
                     // Child participant (underaged)
                     participantData.put("underaged_id", rs.getInt("underaged_id"));
-                    participantData.put("participant_name", rs.getString("underaged_first_name") + " " + rs.getString("underaged_last_name"));
+                    String firstName = rs.getString("underaged_first_name");
+                    String lastName = rs.getString("underaged_last_name");
+                    participantData.put("participant_name", (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : ""));
                     participantData.put("participant_age", rs.getInt("underaged_age"));
                     participantData.put("participant_gender", rs.getString("underaged_gender"));
                     participantData.put("participant_birthday", rs.getString("underaged_birth_date"));
+                    participantData.put("participant_email", null); // Children don't have direct email
 
                     // Parent/Guardian info
                     participantData.put("parent_contact_id", rs.getInt("parent_contact_id"));
-                    participantData.put("parent_name", rs.getString("parent_first_name") + " " + rs.getString("parent_last_name"));
+                    String parentFirstName = rs.getString("parent_first_name");
+                    String parentLastName = rs.getString("parent_last_name");
+                    participantData.put("parent_name", (parentFirstName != null ? parentFirstName : "") + " " + (parentLastName != null ? parentLastName : ""));
                     participantData.put("parent_email", rs.getString("parent_email"));
                     participantData.put("parent_phone", rs.getString("parent_phone"));
                 }
@@ -225,30 +238,31 @@ public class WorkshopParticipantDAO {
 
         String query = """
         INSERT INTO workshop_participants (
-            workshop_id, underaged_id, contact_id, participant_type, 
+            workshop_id, teacher_id, underaged_id, contact_id, participant_type, 
             payment_status, notes, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setInt(1, participant.getWorkshopId());
+            stmt.setObject(2, participant.getTeacherId());
 
             // Set either underaged_id or contact_id based on participant type
             if (participant.getUnderagedId() != null) {
-                stmt.setInt(2, participant.getUnderagedId());
-                stmt.setNull(3, Types.INTEGER);
+                stmt.setInt(3, participant.getUnderagedId());
+                stmt.setNull(4, Types.INTEGER);
             } else {
-                stmt.setNull(2, Types.INTEGER);
-                stmt.setInt(3, participant.getContactId());
+                stmt.setNull(3, Types.INTEGER);
+                stmt.setInt(4, participant.getContactId());
             }
 
-            stmt.setString(4, participant.getParticipantType().toString());
-            stmt.setString(5, participant.getPaymentStatus().toString());
-            stmt.setString(6, participant.getNotes());
-            stmt.setString(7, participant.getCreatedAt());
-            stmt.setString(8, participant.getUpdatedAt());
+            stmt.setString(5, participant.getParticipantType().toString());
+            stmt.setString(6, participant.getPaymentStatus().toString());
+            stmt.setString(7, participant.getNotes());
+            stmt.setString(8, participant.getCreatedAt());
+            stmt.setString(9, participant.getUpdatedAt());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -279,7 +293,7 @@ public class WorkshopParticipantDAO {
 
         String query = """
         UPDATE workshop_participants SET 
-            workshop_id = ?, underaged_id = ?, contact_id = ?, participant_type = ?, 
+            workshop_id = ?, teacher_id = ?, underaged_id = ?, contact_id = ?, participant_type = ?, 
             payment_status = ?, notes = ?, updated_at = ?
         WHERE id = ?
         """;
@@ -288,21 +302,22 @@ public class WorkshopParticipantDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, participant.getWorkshopId());
+            stmt.setObject(2, participant.getTeacherId());
 
             // Set either underaged_id or contact_id based on participant type
             if (participant.getUnderagedId() != null) {
-                stmt.setInt(2, participant.getUnderagedId());
-                stmt.setNull(3, Types.INTEGER);
+                stmt.setInt(3, participant.getUnderagedId());
+                stmt.setNull(4, Types.INTEGER);
             } else {
-                stmt.setNull(2, Types.INTEGER);
-                stmt.setInt(3, participant.getContactId());
+                stmt.setNull(3, Types.INTEGER);
+                stmt.setInt(4, participant.getContactId());
             }
 
-            stmt.setString(4, participant.getParticipantType().toString());
-            stmt.setString(5, participant.getPaymentStatus().toString());
-            stmt.setString(6, participant.getNotes());
-            stmt.setString(7, java.time.LocalDateTime.now().toString());
-            stmt.setInt(8, participant.getId());
+            stmt.setString(5, participant.getParticipantType().toString());
+            stmt.setString(6, participant.getPaymentStatus().toString());
+            stmt.setString(7, participant.getNotes());
+            stmt.setString(8, java.time.LocalDateTime.now().toString());
+            stmt.setInt(9, participant.getId());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -508,6 +523,205 @@ public class WorkshopParticipantDAO {
         return stats;
     }
 
+    // *** UPDATED METHODS FOR CONTROLLER - ALL RETURN BOOLEAN ***
+
+    /**
+     * Wrapper method for controller - calls existing createWorkshopParticipant
+     */
+    public boolean addParticipant(WorkshopParticipant participant) {
+        return createWorkshopParticipant(participant);
+    }
+
+    /**
+     * Remove a single participant from a workshop
+     */
+    public boolean removeParticipant(int participantId) {
+        String sql = "DELETE FROM workshop_participants WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, participantId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error removing participant: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Remove multiple participants from a workshop
+     */
+    public boolean removeParticipants(List<Integer> participantIds) {
+        if (participantIds == null || participantIds.isEmpty()) {
+            return false;
+        }
+
+        // Create SQL with proper number of placeholders
+        String placeholders = participantIds.stream()
+                .map(id -> "?")
+                .collect(Collectors.joining(","));
+
+        String sql = "DELETE FROM workshop_participants WHERE id IN (" + placeholders + ")";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // Set the parameters
+            for (int i = 0; i < participantIds.size(); i++) {
+                pstmt.setInt(i + 1, participantIds.get(i));
+            }
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected == participantIds.size(); // All participants should be deleted
+
+        } catch (SQLException e) {
+            System.err.println("Error removing participants: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Update a participant's details (payment status and notes) - FIXED TO RETURN BOOLEAN
+     */
+    public boolean updateParticipant(int participantId, PaymentStatus paymentStatus, String notes) {
+        String sql = "UPDATE workshop_participants SET payment_status = ?, notes = ?, updated_at = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, paymentStatus.toString());
+            pstmt.setString(2, notes);
+            pstmt.setString(3, java.time.LocalDateTime.now().toString());
+            pstmt.setInt(4, participantId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error updating participant: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Check if a participant exists in the workshop
+     */
+    public boolean participantExists(int workshopId, int contactId, int underagedId) {
+        String sql = "SELECT COUNT(*) FROM workshop_participants WHERE workshop_id = ? AND " +
+                "(contact_id = ? OR underaged_id = ?)";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, workshopId);
+            pstmt.setInt(2, contactId);
+            pstmt.setInt(3, underagedId);
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error checking participant existence: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Get a specific participant by ID
+     */
+    public Map<String, Object> getParticipantById(int participantId) {
+        String sql = """
+            SELECT 
+                wp.id as participant_id,
+                wp.workshop_id,
+                wp.contact_id,
+                wp.underaged_id,
+                wp.participant_type,
+                wp.payment_status,
+                wp.notes,
+                wp.created_at,
+                wp.updated_at,
+                CASE 
+                    WHEN wp.participant_type = 'ADULT' THEN 
+                        CONCAT(c.first_name, ' ', c.last_name)
+                    ELSE 
+                        CONCAT(u.first_name, ' ', u.last_name)
+                END as participant_name,
+                CASE 
+                    WHEN wp.participant_type = 'ADULT' THEN c.email
+                    ELSE parent_c.email
+                END as participant_email,
+                CASE 
+                    WHEN wp.participant_type = 'ADULT' THEN c.phone_num
+                    ELSE parent_c.phone_num
+                END as participant_phone,
+                CASE 
+                    WHEN wp.participant_type = 'ADULT' THEN c.age
+                    ELSE u.age
+                END as participant_age,
+                CASE 
+                    WHEN wp.participant_type = 'CHILD' THEN 
+                        CONCAT(parent_c.first_name, ' ', parent_c.last_name)
+                    ELSE NULL
+                END as parent_name,
+                CASE 
+                    WHEN wp.participant_type = 'CHILD' THEN parent_c.phone_num
+                    ELSE NULL
+                END as parent_phone
+            FROM workshop_participants wp
+            LEFT JOIN contacts c ON wp.contact_id = c.id
+            LEFT JOIN underaged u ON wp.underaged_id = u.id
+            LEFT JOIN contacts parent_c ON u.contact_id = parent_c.id
+            WHERE wp.id = ?
+            """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, participantId);
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Map<String, Object> participant = new HashMap<>();
+                participant.put("participant_id", rs.getInt("participant_id"));
+                participant.put("workshop_id", rs.getInt("workshop_id"));
+                participant.put("contact_id", rs.getObject("contact_id"));
+                participant.put("underaged_id", rs.getObject("underaged_id"));
+                participant.put("participant_type", rs.getString("participant_type"));
+                participant.put("payment_status", rs.getString("payment_status"));
+                participant.put("notes", rs.getString("notes"));
+                participant.put("created_at", rs.getString("created_at"));
+                participant.put("updated_at", rs.getString("updated_at"));
+                participant.put("participant_name", rs.getString("participant_name"));
+                participant.put("participant_email", rs.getString("participant_email"));
+                participant.put("participant_phone", rs.getString("participant_phone"));
+                participant.put("participant_age", rs.getObject("participant_age"));
+                participant.put("parent_name", rs.getString("parent_name"));
+                participant.put("parent_phone", rs.getString("parent_phone"));
+                participant.put("selected", false); // Initialize selection state
+
+                return participant;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error getting participant by ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     // Helper method to calculate age from birthday string
     private Integer calculateAge(String birthdayStr) {
         if (birthdayStr == null || birthdayStr.trim().isEmpty()) {
@@ -534,6 +748,12 @@ public class WorkshopParticipantDAO {
 
         participant.setId(rs.getInt("id"));
         participant.setWorkshopId(rs.getInt("workshop_id"));
+
+        // Handle teacher_id
+        int teacherId = rs.getInt("teacher_id");
+        if (!rs.wasNull()) {
+            participant.setTeacherId(teacherId);
+        }
 
         // Handle nullable foreign keys
         int underagedId = rs.getInt("underaged_id");

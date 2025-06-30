@@ -23,6 +23,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
 public class WorkshopsViewController implements Initializable {
 
@@ -74,10 +79,30 @@ public class WorkshopsViewController implements Initializable {
     }
 
     private void setupTable() {
-        // Set up checkbox column
-        selectColumn.setCellFactory(CheckBoxTableCell.forTableColumn(selectColumn));
-        selectColumn.setCellValueFactory(new PropertyValueFactory<>("selected"));
-        selectColumn.setEditable(true);
+        // FIXED: Set up checkbox column properly
+        selectColumn.setCellFactory(tc -> {
+            CheckBox checkBox = new CheckBox();
+            TableCell<Workshop, Boolean> cell = new TableCell<Workshop, Boolean>() {
+                @Override
+                protected void updateItem(Boolean item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || getIndex() >= getTableView().getItems().size()) {
+                        setGraphic(null);
+                    } else {
+                        Workshop workshop = getTableView().getItems().get(getIndex());
+                        if (workshop != null) {
+                            checkBox.setSelected(workshop.isSelected());
+                            checkBox.setOnAction(e -> {
+                                workshop.setSelected(checkBox.isSelected());
+                                System.out.println("Workshop " + workshop.getName() + " selected: " + checkBox.isSelected());
+                            });
+                            setGraphic(checkBox);
+                        }
+                    }
+                }
+            };
+            return cell;
+        });
 
         // Set up edit button column
         editColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
@@ -180,7 +205,6 @@ public class WorkshopsViewController implements Initializable {
 
         // Make table editable
         workshopsTable.setEditable(true);
-        workshopsTable.setItems(filteredWorkshopsList);
     }
 
     private void setupSearchAndFilters() {
@@ -339,10 +363,20 @@ public class WorkshopsViewController implements Initializable {
     }
 
     private void handleDeleteSelected() {
+        System.out.println("Delete button clicked"); // Debug
+
+        // Debug: Print all workshops and their selection status
+        System.out.println("=== Current Workshop Selection Status ===");
+        for (Workshop workshop : filteredWorkshopsList) {
+            System.out.println("Workshop: " + workshop.getName() + ", Selected: " + workshop.isSelected());
+        }
+
         // Get all selected workshops from the filtered list
         List<Workshop> selectedWorkshops = filteredWorkshopsList.stream()
                 .filter(Workshop::isSelected)
                 .collect(Collectors.toList());
+
+        System.out.println("Selected workshops count: " + selectedWorkshops.size()); // Debug
 
         if (selectedWorkshops.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -365,6 +399,8 @@ public class WorkshopsViewController implements Initializable {
                 List<Integer> workshopIds = selectedWorkshops.stream()
                         .map(Workshop::getId)
                         .collect(Collectors.toList());
+
+                System.out.println("Attempting to delete workshop IDs: " + workshopIds); // Debug
 
                 boolean success = workshopDAO.deleteWorkshops(workshopIds);
 
@@ -389,43 +425,55 @@ public class WorkshopsViewController implements Initializable {
             } catch (Exception e) {
                 System.err.println("Error deleting workshops: " + e.getMessage());
                 e.printStackTrace();
+
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Error");
+                errorAlert.setHeaderText("Delete Failed");
+                errorAlert.setContentText("An error occurred: " + e.getMessage());
+                errorAlert.showAndWait();
             }
         }
     }
 
     private void handleManageParticipants(Workshop workshop) {
         try {
-            // For now, show a message. Later this will open the participants view
-            Alert info = new Alert(Alert.AlertType.INFORMATION);
-            info.setTitle("Manage Participants");
-            info.setHeaderText("Workshop: " + workshop.getName());
+            // Load the workshop participants view
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/crm/workshop-participants-view.fxml"));
+            Parent root = loader.load();
 
-            // Get current participant statistics
-            Map<String, Integer> stats = participantDAO.getWorkshopStatistics(workshop.getId());
-            String message = String.format(
-                    "Current Participants:\n" +
-                            "Total: %d\n" +
-                            "Adults: %d\n" +
-                            "Children: %d\n" +
-                            "Paid: %d\n" +
-                            "Pending Payment: %d\n\n" +
-                            "Participant management interface coming soon!",
-                    stats.getOrDefault("total_participants", 0),
-                    stats.getOrDefault("adult_count", 0),
-                    stats.getOrDefault("child_count", 0),
-                    stats.getOrDefault("paid_count", 0),
-                    stats.getOrDefault("pending_count", 0)
-            );
+            // Get the controller and set the workshop
+            WorkshopParticipantsViewController controller = loader.getController();
+            controller.setWorkshop(workshop);
 
-            info.setContentText(message);
-            info.showAndWait();
+            // Create new stage for the participants view
+            Stage participantsStage = new Stage();
+            participantsStage.setTitle("Workshop Participants - " + workshop.getName());
+            participantsStage.setScene(new Scene(root));
+            participantsStage.initModality(Modality.APPLICATION_MODAL);
+            participantsStage.initOwner(createWorkshopButton.getScene().getWindow());
 
-            // TODO: Later this will navigate to workshop-participants-view
-            // MainController.navigateToWorkshopParticipants(workshop);
+            // Set minimum size and make it resizable
+            participantsStage.setMinWidth(1000);
+            participantsStage.setMinHeight(700);
+            participantsStage.setMaximized(false);
+
+            // Show the stage
+            participantsStage.showAndWait();
+
+            // After closing the participants window, refresh the workshops table
+            // to update participant counts in case they changed
+            workshopsTable.refresh();
 
         } catch (Exception e) {
             System.err.println("Error opening participant management: " + e.getMessage());
             e.printStackTrace();
+
+            // Show error to user
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Error");
+            errorAlert.setHeaderText("Failed to Open Participant Management");
+            errorAlert.setContentText("An error occurred while opening the participant management window: " + e.getMessage());
+            errorAlert.showAndWait();
         }
     }
 

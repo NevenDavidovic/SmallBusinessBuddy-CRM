@@ -58,15 +58,14 @@
                         </ImageView>
                     </graphic>
                 </Button>
-                <!-- User Profile -->
-                <MenuButton text="Neven Davidović" styleClass="user-profile-button">
+                <!-- User Profile with Organization Name -->
+                <MenuButton fx:id="userProfileButton" text="Loading..." styleClass="user-profile-button">
                     <graphic>
                         <Circle fx:id="userAvatar" radius="15" styleClass="user-avatar"/>
                     </graphic>
                     <items>
                         <MenuItem text="Profile" onAction="#handleOrganizationAction"/>
                         <MenuItem text="Settings"/>
-                        <MenuItem text="Logout"/>
                     </items>
                 </MenuButton>
             </HBox>
@@ -93,10 +92,11 @@
                             <Button text="Contacts" styleClass="sidebar-sub-item" onAction="#handleContactsAction"/>
                             <Button text="Lists" styleClass="sidebar-sub-item" onAction="#handleListsAction"/>
                             <Button text="Workshops" styleClass="sidebar-sub-item" onAction="#handleWorkshopsAction"/>
+                            <Button text="Teachers" styleClass="sidebar-sub-item" onAction="#handleTeachersAction"/>
                         </VBox>
                     </TitledPane>
 
-                     <TitledPane text="Marketing" styleClass="sidebar-accordion">
+                    <TitledPane text="Marketing" styleClass="sidebar-accordion">
                         <graphic>
                             <ImageView fitHeight="24.0" fitWidth="24.0">
                                 <Image url="@../images/icons/marketing-icon.png"/>
