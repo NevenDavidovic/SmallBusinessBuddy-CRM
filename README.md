@@ -79,24 +79,24 @@ Mala poduzeća, obrtnici, udruge i neprofitne organizacije predstavljaju značaj
 ### 2.2.1. Veliki CRM sustavi
 
 **Salesforce**
-Salesforce je jedan od najpoznatijih CRM sustava na tržištu, ali je dizajniran za velika i srednja poduzeća. Njegova složenost i cijena (od 25$ mjesečno po korisniku) čine ga neprikladnim za mala poduzeća. Dodatno, zahtijeva stalnu internetsku vezu i opsežno uvođenje.
+Salesforce je jedan od najpoznatijih CRM sustava na tržištu, ali je dizajniran za velika i srednja poduzeća.  Dodatno, zahtijeva stalnu internetsku vezu i opsežno uvođenje.
 
 **HubSpot CRM**
 HubSpot nudi besplatnu verziju svog CRM-a koja je privlačna malim poduzećima. Međutim, besplatna verzija ima ograničene funkcionalnosti, a naprednije značajke zahtijevaju plaćene planove koji mogu biti skupi. Također je u potpunosti cloud-based što znači da bez interneta nije moguće raditi.
 
 **Microsoft Dynamics 365**
-Microsoft-ovo rješenje je snažno ali kompleksno i skupo. Cijena počinje od 95$ mjesečno po korisniku, što je nedostupno većini malih organizacija. Zahtijeva značajnu IT podršku za implementaciju i održavanje.
+Microsoft-ovo rješenje je snažno ali kompleksno i skupo. Zahtijeva značajnu IT podršku za implementaciju i održavanje.
 
 ### 2.2.2. Rješenja za mala poduzeća
 
 **Zoho CRM**
-Zoho nudi relativno pristupačne planove (od 14$ mjesečno), ali i dalje zahtijeva internetsku vezu i ima složeno sučelje s previše opcija za osnovne korisnike. Lokalizacija za hrvatski tržište je ograničena.
+Zoho nudi relativno pristupačne planove, ali i dalje zahtijeva internetsku vezu i ima složeno sučelje s previše opcija za osnovne korisnike. Lokalizacija za hrvatski tržište je ograničena.
 
 **Pipedrive**
-Pipedrive se fokusira na jednostavnost, ali je primarno dizajniran za prodajne timove. Nema mogućnosti generiranja hrvatskih uplatnica ili upravljanja članarinama. Cijena od 15$ mjesečno po korisniku može se nakupiti za veće organizacije.
+Pipedrive se fokusira na jednostavnost, ali je primarno dizajniran za prodajne timove. Nema mogućnosti generiranja hrvatskih uplatnica ili upravljanja članarinama.
 
 **Insightly**
-Kombinira CRM s osnovnim mogućnostima upravljanja projektima. Besplatna verzija ograničena je na 2 korisnika, a plaćeni planovi počinju od 29$ mjesečno. Nema lokalizaciju za hrvatsko tržište.
+Kombinira CRM s osnovnim mogućnostima upravljanja projektima. Besplatna verzija ograničena je na 2 korisnika. Nema lokalizaciju za hrvatsko tržište.
 
 ### 2.2.3. Lokalna i regionalna rješenja
 
