@@ -1,6 +1,8 @@
 # SmallBusinessBuddy-CRM
 SmallBusinessBuddy: Desktop CRM za mala poduzeća
 
+![img.png](img.png)
+
 # 1. UVOD
 
 ## 1.1. Opis problema i motivacija
