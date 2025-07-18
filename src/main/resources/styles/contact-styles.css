@@ -1,0 +1,55 @@
+/* Contact View Styles */
+
+/* Header and Title */
+.contacts-title {
+    -fx-text-fill: #0099cc;
+}
+
+.record-count-label {
+    -fx-text-fill: #71757a;
+}
+
+/* Action Buttons */
+.delete-selected-button {
+    -fx-background-color: #dc3545;
+    -fx-text-fill: white;
+    -fx-border-radius: 4;
+}
+
+.import-button {
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 4;
+}
+
+.create-contact-button {
+    -fx-background-color: #ff7a59;
+    -fx-text-fill: white;
+    -fx-border-radius: 4;
+}
+
+/* Filter Buttons */
+.filter-button-active {
+    -fx-background-color: #f5f8fa;
+    -fx-border-color: #dfe3eb;
+}
+
+.filter-button {
+    -fx-background-color: white;
+    -fx-border-color: #dfe3eb;
+}
+
+/* Search and Controls */
+.search-field {
+    -fx-border-color: #dfe3eb;
+}
+
+.export-button {
+    -fx-background-color: white;
+    -fx-border-color: #dfe3eb;
+}
+
+.edit-columns-button {
+    -fx-background-color: white;
+    -fx-border-color: #dfe3eb;
+}

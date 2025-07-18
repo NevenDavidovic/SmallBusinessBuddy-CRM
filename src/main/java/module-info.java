@@ -13,6 +13,8 @@ module smallbusinessbuddycrm {
     requires java.sql;
     requires annotations;
     requires javafx.swing;
+    requires com.google.zxing;
+    requires com.google.zxing.javase;
 
     opens smallbusinessbuddycrm to javafx.fxml;
     exports smallbusinessbuddycrm;

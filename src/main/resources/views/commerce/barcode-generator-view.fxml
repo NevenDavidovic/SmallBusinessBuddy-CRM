@@ -16,7 +16,7 @@
                 <children>
                     <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-padding: 20 20 0 20;">
                         <children>
-                            <Label text="🇭🇷 Croatian HUB-3 Payment Slip Generator" textFill="#0099cc">
+                            <Label text="🇭🇷 Croatian HUB-3 Barcode Generator" textFill="#0099cc">
                                 <font>
                                     <Font name="System Bold" size="24.0" />
                                 </font>
@@ -24,197 +24,199 @@
                         </children>
                     </HBox>
 
-                    <!-- Payment Information Form -->
-                    <VBox spacing="20.0" style="-fx-border-color: #dfe3eb; -fx-border-radius: 5; -fx-padding: 20; -fx-background-color: #f8f9fa;">
+                    <!-- Two Column Layout for Form -->
+                    <HBox spacing="20.0" style="-fx-border-color: #dfe3eb; -fx-border-radius: 5; -fx-padding: 20; -fx-background-color: #f8f9fa;">
                         <children>
-                            <!-- Banking Information -->
-                            <VBox spacing="10.0" style="-fx-border-color: #e3f2fd; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #f8fdff;">
+                            <!-- Left Column -->
+                            <VBox spacing="20.0" prefWidth="400.0" minWidth="400.0" maxWidth="400.0">
                                 <children>
-                                    <Label text="💳 Banking Information" textFill="#1976d2">
-                                        <font>
-                                            <Font name="System Bold" size="14.0" />
-                                        </font>
-                                    </Label>
-                                    <GridPane hgap="15.0" vgap="10.0">
-                                        <columnConstraints>
-                                            <ColumnConstraints minWidth="120.0" prefWidth="120.0" />
-                                            <ColumnConstraints hgrow="ALWAYS" />
-                                            <ColumnConstraints minWidth="120.0" prefWidth="120.0" />
-                                            <ColumnConstraints hgrow="ALWAYS" />
-                                        </columnConstraints>
+                                    <!-- Payment Information -->
+                                    <VBox spacing="10.0" style="-fx-border-color: #e3f2fd; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #f8fdff;">
                                         <children>
-                                            <Label text="Bank Code:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                            <TextField fx:id="bankCodeField" promptText="HRVHUB30" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                            <Label text="💳 Payment Information" textFill="#1976d2">
+                                                <font>
+                                                    <Font name="System Bold" size="14.0" />
+                                                </font>
+                                            </Label>
+                                            <GridPane hgap="15.0" vgap="10.0">
+                                                <columnConstraints>
+                                                    <ColumnConstraints minWidth="80.0" prefWidth="80.0" />
+                                                    <ColumnConstraints hgrow="ALWAYS" />
+                                                </columnConstraints>
+                                                <children>
+                                                    <Label text="Amount:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                                    <TextField fx:id="amountField" promptText="0,00" GridPane.columnIndex="1" GridPane.rowIndex="0" />
 
-                                            <Label text="Currency:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-                                            <ComboBox fx:id="currencyCombo" GridPane.columnIndex="3" GridPane.rowIndex="0" prefWidth="100.0" />
+                                                    <Label text="Reference:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                                    <TextField fx:id="referenceField" promptText="7269-68949637676-00019" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
-                                            <Label text="Amount:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                            <TextField fx:id="amountField" promptText="000000000012355" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                                    <Label text="Model:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                                    <TextField fx:id="modelField" promptText="HR01" GridPane.columnIndex="1" GridPane.rowIndex="2" />
 
-                                            <Label text="Reference:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                                            <TextField fx:id="referenceField" promptText="7269-68949637676-00019" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                                                    <Label text="Purpose:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                                    <TextField fx:id="purposeCodeField" promptText="COST" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                                </children>
+                                            </GridPane>
                                         </children>
-                                    </GridPane>
+                                    </VBox>
+
+                                    <!-- Payer Information -->
+                                    <VBox spacing="10.0" style="-fx-border-color: #e8f5e8; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #f8fff8;">
+                                        <children>
+                                            <Label text="👤 Payer Information" textFill="#2e7d32">
+                                                <font>
+                                                    <Font name="System Bold" size="14.0" />
+                                                </font>
+                                            </Label>
+                                            <GridPane hgap="15.0" vgap="10.0">
+                                                <columnConstraints>
+                                                    <ColumnConstraints minWidth="80.0" prefWidth="80.0" />
+                                                    <ColumnConstraints hgrow="ALWAYS" />
+                                                </columnConstraints>
+                                                <children>
+                                                    <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                                    <TextField fx:id="payerNameField" promptText="John Doe" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+
+                                                    <Label text="Address:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                                    <TextField fx:id="payerAddressField" promptText="Main Street 123" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+
+                                                    <Label text="City:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                                    <TextField fx:id="payerCityField" promptText="10000 Zagreb" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                                </children>
+                                            </GridPane>
+                                        </children>
+                                    </VBox>
                                 </children>
                             </VBox>
 
-                            <!-- Payer Information -->
-                            <VBox spacing="10.0" style="-fx-border-color: #e8f5e8; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #f8fff8;">
+                            <!-- Right Column -->
+                            <VBox spacing="20.0" prefWidth="400.0" minWidth="400.0" maxWidth="400.0">
                                 <children>
-                                    <Label text="👤 Payer Information" textFill="#2e7d32">
-                                        <font>
-                                            <Font name="System Bold" size="14.0" />
-                                        </font>
-                                    </Label>
-                                    <GridPane hgap="15.0" vgap="10.0">
-                                        <columnConstraints>
-                                            <ColumnConstraints minWidth="120.0" prefWidth="120.0" />
-                                            <ColumnConstraints hgrow="ALWAYS" />
-                                        </columnConstraints>
+                                    <!-- Recipient Information -->
+                                    <VBox spacing="10.0" style="-fx-border-color: #fff3e0; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #fffbf5;">
                                         <children>
-                                            <Label text="Name:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                            <TextField fx:id="payerNameField" promptText="ZELJKO SENEKOVIC" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                            <Label text="🏢 Recipient Information" textFill="#f57c00">
+                                                <font>
+                                                    <Font name="System Bold" size="14.0" />
+                                                </font>
+                                            </Label>
+                                            <GridPane hgap="15.0" vgap="10.0">
+                                                <columnConstraints>
+                                                    <ColumnConstraints minWidth="80.0" prefWidth="80.0" />
+                                                    <ColumnConstraints hgrow="ALWAYS" />
+                                                </columnConstraints>
+                                                <children>
+                                                    <Label text="Company:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                                    <TextField fx:id="recipientNameField" promptText="ABC Company d.o.o." GridPane.columnIndex="1" GridPane.rowIndex="0" />
 
-                                            <Label text="Address:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                            <TextField fx:id="payerAddressField" promptText="IVANECKA ULICA 125" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                                    <Label text="Address:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                                    <TextField fx:id="recipientAddressField" promptText="Business Street 456" GridPane.columnIndex="1" GridPane.rowIndex="1" />
 
-                                            <Label text="City &amp; ZIP:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                            <TextField fx:id="payerCityField" promptText="42000 VARAZDIN" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                                    <Label text="City:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                                    <TextField fx:id="recipientCityField" promptText="10000 Zagreb" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+
+                                                    <Label text="IBAN:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                                    <TextField fx:id="ibanField" promptText="HR1210010051863000160" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                                </children>
+                                            </GridPane>
                                         </children>
-                                    </GridPane>
+                                    </VBox>
+
+                                    <!-- Payment Description -->
+                                    <VBox spacing="10.0" style="-fx-border-color: #fce4ec; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #fef7f7;">
+                                        <children>
+                                            <Label text="📋 Payment Description" textFill="#c2185b">
+                                                <font>
+                                                    <Font name="System Bold" size="14.0" />
+                                                </font>
+                                            </Label>
+                                            <GridPane hgap="15.0" vgap="10.0">
+                                                <columnConstraints>
+                                                    <ColumnConstraints minWidth="80.0" prefWidth="80.0" />
+                                                    <ColumnConstraints hgrow="ALWAYS" />
+                                                </columnConstraints>
+                                                <children>
+                                                    <Label text="Description:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                                    <TextArea fx:id="descriptionField" promptText="Payment for services..."
+                                                              GridPane.columnIndex="1" GridPane.rowIndex="0"
+                                                              prefRowCount="3" wrapText="true" />
+                                                </children>
+                                            </GridPane>
+                                        </children>
+                                    </VBox>
                                 </children>
                             </VBox>
-
-                            <!-- Recipient Information -->
-                            <VBox spacing="10.0" style="-fx-border-color: #fff3e0; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #fffbf5;">
-                                <children>
-                                    <Label text="🏢 Recipient Information" textFill="#f57c00">
-                                        <font>
-                                            <Font name="System Bold" size="14.0" />
-                                        </font>
-                                    </Label>
-                                    <GridPane hgap="15.0" vgap="10.0">
-                                        <columnConstraints>
-                                            <ColumnConstraints minWidth="120.0" prefWidth="120.0" />
-                                            <ColumnConstraints hgrow="ALWAYS" />
-                                        </columnConstraints>
-                                        <children>
-                                            <Label text="Company:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                            <TextField fx:id="recipientNameField" promptText="2DBK d.d." GridPane.columnIndex="1" GridPane.rowIndex="0" />
-
-                                            <Label text="Address:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                            <TextField fx:id="recipientAddressField" promptText="ALKARSKI PROLAZ 13B" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-                                            <Label text="City &amp; ZIP:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                            <TextField fx:id="recipientCityField" promptText="21230 SINJ" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-
-                                            <Label text="IBAN:" GridPane.columnIndex="0" GridPane.rowIndex="3" />
-                                            <TextField fx:id="ibanField" promptText="HR1210010051863000160" GridPane.columnIndex="1" GridPane.rowIndex="3" />
-                                        </children>
-                                    </GridPane>
-                                </children>
-                            </VBox>
-
-                            <!-- Payment Details -->
-                            <VBox spacing="10.0" style="-fx-border-color: #fce4ec; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #fef7f7;">
-                                <children>
-                                    <Label text="📋 Payment Details" textFill="#c2185b">
-                                        <font>
-                                            <Font name="System Bold" size="14.0" />
-                                        </font>
-                                    </Label>
-                                    <GridPane hgap="15.0" vgap="10.0">
-                                        <columnConstraints>
-                                            <ColumnConstraints minWidth="120.0" prefWidth="120.0" />
-                                            <ColumnConstraints hgrow="ALWAYS" />
-                                            <ColumnConstraints minWidth="120.0" prefWidth="120.0" />
-                                            <ColumnConstraints hgrow="ALWAYS" />
-                                        </columnConstraints>
-                                        <children>
-                                            <Label text="Model:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                                            <TextField fx:id="modelField" promptText="HR01" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-
-                                            <Label text="Purpose Code:" GridPane.columnIndex="2" GridPane.rowIndex="0" />
-                                            <TextField fx:id="purposeCodeField" promptText="COST" GridPane.columnIndex="3" GridPane.rowIndex="0" />
-
-                                            <Label text="Description:" GridPane.columnIndex="0" GridPane.rowIndex="1" />
-                                            <TextField fx:id="descriptionField" promptText="Troskovi za 1. mjesec" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="3" />
-                                        </children>
-                                    </GridPane>
-                                </children>
-                            </VBox>
-
-                            <!-- Action Buttons -->
-                            <HBox alignment="CENTER" spacing="15.0" style="-fx-padding: 10;">
-                                <children>
-                                    <Button fx:id="generateButton" text="Generate Payment Slip"
-                                            style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4; -fx-font-weight: bold; -fx-padding: 10 20;"
-                                            prefWidth="180.0">
-                                        <font>
-                                            <Font size="14.0" />
-                                        </font>
-                                    </Button>
-                                    <Button fx:id="loadTemplateButton" text="Load Template"
-                                            style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 10 20;"
-                                            prefWidth="120.0">
-                                        <font>
-                                            <Font size="12.0" />
-                                        </font>
-                                    </Button>
-                                    <Button fx:id="clearButton" text="Clear All"
-                                            style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 10 20;"
-                                            prefWidth="100.0">
-                                        <font>
-                                            <Font size="12.0" />
-                                        </font>
-                                    </Button>
-                                    <Button fx:id="saveTemplateButton" text="Save Template"
-                                            style="-fx-background-color: #ffc107; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 10 20;"
-                                            prefWidth="120.0">
-                                        <font>
-                                            <Font size="12.0" />
-                                        </font>
-                                    </Button>
-                                </children>
-                            </HBox>
                         </children>
-                    </VBox>
+                    </HBox>
+
+                    <!-- Action Buttons -->
+                    <HBox alignment="CENTER" spacing="15.0" style="-fx-padding: 10;">
+                        <children>
+                            <Button fx:id="generateButton" text="Generate Barcode"
+                                    style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4; -fx-font-weight: bold; -fx-padding: 10 20;"
+                                    >
+                                <font>
+                                    <Font size="14.0" />
+                                </font>
+                            </Button>
+                            <Button fx:id="loadTemplateButton" text="Load Template"
+                                    style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 10 20;"
+                                    >
+                                <font>
+                                    <Font size="12.0" />
+                                </font>
+                            </Button>
+                            <Button fx:id="clearButton" text="Clear All"
+                                    style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 10 20;"
+                                    >
+                                <font>
+                                    <Font size="12.0" />
+                                </font>
+                            </Button>
+                            <Button fx:id="saveTemplateButton" text="Save Template"
+                                    style="-fx-background-color: #ffc107; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 10 20;"
+                                    >
+                                <font>
+                                    <Font size="12.0" />
+                                </font>
+                            </Button>
+                        </children>
+                    </HBox>
                 </children>
                 <padding>
                     <Insets top="20" right="20" bottom="10" left="20" />
                 </padding>
             </VBox>
 
-            <!-- Generated Slip Section -->
+            <!-- Generated Barcode Section -->
             <VBox spacing="15.0" style="-fx-padding: 0 20 20 20; -fx-background-color: #f8f9fa;">
                 <children>
-                    <!-- Generated Payment Slip Display -->
+                    <!-- Generated Barcode Display -->
                     <VBox spacing="10.0" alignment="TOP_CENTER" style="-fx-border-color: #dfe3eb; -fx-border-radius: 5; -fx-padding: 20;">
                         <children>
-                            <Label text="Generated HUB-3 Payment Slip:" textFill="#333">
+                            <Label text="Generated HUB-3 PDF417 Barcode:" textFill="#333">
                                 <font>
                                     <Font name="System Bold" size="16.0" />
                                 </font>
                             </Label>
 
-                            <!-- Payment Slip Container -->
-                            <StackPane fx:id="paymentSlipContainer" prefHeight="300.0" prefWidth="600.0"
+                            <!-- Extended Barcode Container -->
+                            <StackPane fx:id="paymentSlipContainer" prefHeight="250.0" prefWidth="800.0"
                                        style="-fx-border-color: #e9ecef; -fx-border-width: 2; -fx-border-style: dashed; -fx-background-color: #f8f9fa;">
                                 <children>
                                     <VBox alignment="CENTER" fx:id="placeholderContent">
                                         <children>
-                                            <Label text="🧾" textFill="#6c757d">
+                                            <Label text="📊" textFill="#6c757d">
                                                 <font>
                                                     <Font size="48.0" />
                                                 </font>
                                             </Label>
-                                            <Label text="HUB-3 Payment Slip will appear here" textFill="#6c757d">
+                                            <Label text="HUB-3 PDF417 Barcode will appear here" textFill="#6c757d">
                                                 <font>
                                                     <Font size="14.0" />
                                                 </font>
                                             </Label>
-                                            <Label text="Fill in the form above and click 'Generate Payment Slip'" textFill="#adb5bd">
+                                            <Label text="Fill in the form above and click 'Generate Barcode'" textFill="#adb5bd">
                                                 <font>
                                                     <Font size="12.0" />
                                                 </font>
@@ -222,23 +224,19 @@
                                         </children>
                                     </VBox>
 
-                                    <!-- Generated Payment Slip Content -->
-                                    <VBox fx:id="generatedPaymentSlip" visible="false" spacing="0" alignment="TOP_LEFT"
-                                          style="-fx-background-color: white; -fx-border-color: black; -fx-border-width: 2; -fx-padding: 15;">
-                                        <!-- This will be populated programmatically -->
-                                    </VBox>
-
+                                    <!-- Generated Barcode Image -->
                                     <ImageView fx:id="generatedBarcodeView" preserveRatio="true" visible="false"
-                                               fitWidth="500" fitHeight="100" />
+                                               fitWidth="750" fitHeight="220"
+                                               style="-fx-background-color: white; -fx-border-color: black; -fx-border-width: 1;" />
                                 </children>
                             </StackPane>
 
-                            <!-- Action Buttons for Generated Slip -->
+                            <!-- Action Buttons for Generated Barcode -->
                             <HBox alignment="CENTER" spacing="10.0" fx:id="actionButtonsContainer" visible="false">
                                 <children>
-                                    <Button fx:id="saveSlipButton" text="Save as PDF"
+                                    <Button fx:id="saveSlipButton" text="Save Barcode"
                                             style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-radius: 4;"
-                                            prefWidth="100.0">
+                                            prefWidth="110.0">
                                         <font>
                                             <Font size="12.0" />
                                         </font>
@@ -265,22 +263,22 @@
                     <!-- Quick Info -->
                     <VBox spacing="5.0" style="-fx-border-color: #e8f5e8; -fx-border-radius: 5; -fx-padding: 10; -fx-background-color: #f8fff8;">
                         <children>
-                            <Label text="ℹ️ HUB-3 Format Information" textFill="#2e7d32">
+                            <Label text="ℹ️ HUB-3 Barcode Information" textFill="#2e7d32">
                                 <font>
                                     <Font name="System Bold" size="12.0" />
                                 </font>
                             </Label>
-                            <Label text="• This generator creates Croatian HUB-3 standard payment slips" textFill="#2e7d32">
+                            <Label text="• This generator creates Croatian HUB-3 standard payment barcodes in EUR currency" textFill="#2e7d32">
                                 <font>
                                     <Font size="10.0" />
                                 </font>
                             </Label>
-                            <Label text="• All fields are automatically formatted according to Croatian banking standards" textFill="#2e7d32">
+                            <Label text="• Barcodes are generated in PDF417 format - Croatian banking standard" textFill="#2e7d32">
                                 <font>
                                     <Font size="10.0" />
                                 </font>
                             </Label>
-                            <Label text="• Generated slips can be used for bank transfers and payment processing" textFill="#2e7d32">
+                            <Label text="• Generated barcodes can be scanned by standard barcode readers" textFill="#2e7d32">
                                 <font>
                                     <Font size="10.0" />
                                 </font>

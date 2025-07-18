@@ -61,10 +61,10 @@
                 <!-- User Profile with Organization Name -->
                 <MenuButton fx:id="userProfileButton" text="Loading..." styleClass="user-profile-button">
                     <graphic>
-                        <Circle fx:id="userAvatar" radius="15" styleClass="user-avatar"/>
+                        <Circle fx:id="userAvatar" radius="15" styleClass="user-avatar" />
                     </graphic>
                     <items>
-                        <MenuItem text="Profile" onAction="#handleOrganizationAction"/>
+                        <MenuItem text="Profile" onAction="#handleOrganizationAction" />
                         <MenuItem text="Settings"/>
                     </items>
                 </MenuButton>
@@ -106,6 +106,7 @@
 
                             <Button text="Email" styleClass="sidebar-sub-item" onAction="#handleEmailAction"/>
                             <Button text="Email Statistics" styleClass="sidebar-sub-item" onAction="#handleEmailStatisticsAction"/>
+                            <Button text="Email Template Builder" styleClass="sidebar-sub-item" onAction="#handleEmailTemplateAction"/>
 
                         </VBox>
                     </TitledPane>
