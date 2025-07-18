@@ -460,10 +460,10 @@ public class ListsController implements Initializable {
         addContactsBtn.setOnAction(e -> {
             System.out.println("🔧 Add Contacts button clicked from modal");
 
-            // FIXED: Close dialog first, then wait for it to fully close before opening ContactSelectionDialog
+
             dialog.close();
 
-            // Use Platform.runLater to ensure the modal is fully closed before opening the selection dialog
+
             Platform.runLater(() -> {
                 System.out.println("🔧 Modal closed, now opening ContactSelectionDialog");
                 addContactsToList(list);
@@ -472,12 +472,12 @@ public class ListsController implements Initializable {
         return addContactsBtn;
     }
 
-    // Method to add contacts to a list
+
     public void addContactsToList(List list) {
         try {
             System.out.println("🔄 Adding contacts to list: " + list.getName());
 
-            // Get all available contacts
+
             java.util.List<Contact> allContacts = contactDAO.getAllContacts();
             System.out.println("📊 Found " + allContacts.size() + " total contacts in database");
 
@@ -664,24 +664,85 @@ public class ListsController implements Initializable {
             HBox buttonBox = new HBox(5);
             buttonBox.setAlignment(Pos.CENTER);
 
+            // View Button - Blue/Teal
             Button viewBtn = new Button("👁️ View");
-            viewBtn.getStyleClass().add("action-button");
+            viewBtn.setPrefWidth(60);
+            viewBtn.setMinWidth(60);
+            viewBtn.setStyle(
+                    "-fx-background-color: #17a2b8; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-border-radius: 4; " +
+                            "-fx-background-radius: 4; " +
+                            "-fx-padding: 4 8 4 8; " +
+                            "-fx-font-size: 11px; " +
+                            "-fx-cursor: hand;"
+            );
             viewBtn.setOnAction(e -> controller.openListDetailModal(list));
 
-            Button addContactsBtn = new Button("➕ Add Contacts");
-            addContactsBtn.getStyleClass().add("action-button");
+            // Add Contacts Button - Green
+            Button addContactsBtn = new Button("➕ Add");
+            addContactsBtn.setPrefWidth(60);
+            addContactsBtn.setMinWidth(60);
+            addContactsBtn.setStyle(
+                    "-fx-background-color: #28a745; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-border-radius: 4; " +
+                            "-fx-background-radius: 4; " +
+                            "-fx-padding: 4 8 4 8; " +
+                            "-fx-font-size: 11px; " +
+                            "-fx-cursor: hand;"
+            );
             addContactsBtn.setOnAction(e -> controller.addContactsToList(list));
 
+            // Edit Button - Orange
             Button editBtn = new Button("✏️ Edit");
-            editBtn.getStyleClass().add("action-button");
+            editBtn.setPrefWidth(60);
+            editBtn.setMinWidth(60);
+            editBtn.setStyle(
+                    "-fx-background-color: #fd7e14; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-border-radius: 4; " +
+                            "-fx-background-radius: 4; " +
+                            "-fx-padding: 4 8 4 8; " +
+                            "-fx-font-size: 11px; " +
+                            "-fx-cursor: hand;"
+            );
             editBtn.setOnAction(e -> controller.editList(list));
 
+            // Delete Button - Red
             Button deleteBtn = new Button("🗑️ Delete");
-            deleteBtn.getStyleClass().add("danger-button");
+            deleteBtn.setPrefWidth(70);
+            deleteBtn.setMinWidth(70);
+            deleteBtn.setStyle(
+                    "-fx-background-color: #dc3545; " +
+                            "-fx-text-fill: white; " +
+                            "-fx-border-radius: 4; " +
+                            "-fx-background-radius: 4; " +
+                            "-fx-padding: 4 8 4 8; " +
+                            "-fx-font-size: 11px; " +
+                            "-fx-cursor: hand;"
+            );
             deleteBtn.setOnAction(e -> controller.deleteList(list));
 
             buttonBox.getChildren().addAll(viewBtn, addContactsBtn, editBtn, deleteBtn);
             return buttonBox;
+        }
+
+        // Helper method to add hover effects (add this to your ListsController class)
+        private void addHoverEffect(Button button, String hoverColor, String originalColor) {
+            button.setOnMouseEntered(e -> {
+                String currentStyle = button.getStyle();
+                String newStyle = currentStyle.replaceAll("-fx-background-color: #[a-fA-F0-9]{6}",
+                        "-fx-background-color: " + hoverColor);
+                button.setStyle(newStyle);
+            });
+
+            button.setOnMouseExited(e -> {
+                String currentStyle = button.getStyle();
+                String newStyle = currentStyle.replaceAll("-fx-background-color: #[a-fA-F0-9]{6}",
+                        "-fx-background-color: " + originalColor);
+                button.setStyle(newStyle);
+            });
         }
 
         // Getters for table columns

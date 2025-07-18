@@ -35,26 +35,18 @@ public class MainController {
      */
     @FXML
     public void initialize() {
-        System.out.println("MainController.initialize() called");
 
-        // Debug: Check if FXML elements are properly injected
-        System.out.println("userProfileButton is null: " + (userProfileButton == null));
-        System.out.println("userAvatar is null: " + (userAvatar == null));
 
-        // Load and display organization name
-        loadOrganizationName();
+      loadOrganizationName();
 
-        // You can set up initial view or configuration here
-        // If you want to expand a specific accordion pane by default
-        // For example, to expand the CRM section:
-        // crmPane.setExpanded(true);
+
     }
 
     /**
      * Loads the organization name and image, sets them to the user profile button
      */
     private void loadOrganizationName() {
-        System.out.println("=== Loading Organization Data ===");
+
         try {
             Optional<Organization> organization = organizationDAO.getFirst();
 
@@ -260,7 +252,12 @@ public class MainController {
         navigateTo("/views/crm/teacher-view.fxml");
     }
 
-    // Add more handlers for other menu items
+
+    @FXML
+    private void handleEmailTemplateAction() {
+        navigateTo("/views/marketing/email-builder.fxml");
+    }
+
 
     @FXML
     private void handleSettingsAction() {

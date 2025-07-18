@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="smallbusinessbuddycrm.controllers.NewsletterBuilderController">
+
+    <!-- Top Toolbar -->
+    <top>
+        <VBox style="-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6; -fx-border-width: 0 0 1 0;">
+            <!-- Title Bar -->
+            <HBox alignment="CENTER_LEFT" spacing="15.0" style="-fx-padding: 15 20;">
+                <children>
+                    <Label text="📧 Newsletter Builder" textFill="#0066cc">
+                        <font>
+                            <Font name="System Bold" size="24.0" />
+                        </font>
+                    </Label>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button fx:id="previewButton" text="🔍 Preview"
+                            style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 8 16;" />
+                    <Button fx:id="saveButton" text="💾 Save"
+                            style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 8 16;" />
+                    <Button fx:id="loadButton" text="📁 Load"
+                            style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 8 16;" />
+                    <Button fx:id="exportHtmlButton" text="📤 Export HTML"
+                            style="-fx-background-color: #fd7e14; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 8 16;" />
+                    <Button fx:id="sendButton" text="✉️ Send"
+                            style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 8 16;" />
+                </children>
+            </HBox>
+
+            <!-- Newsletter Configuration -->
+            <HBox spacing="20.0" style="-fx-padding: 10 20; -fx-background-color: white;">
+                <children>
+                    <VBox spacing="5.0">
+                        <Label text="Newsletter Title:" style="-fx-font-weight: bold;" />
+                        <TextField fx:id="newsletterTitleField" promptText="Enter newsletter title..." prefWidth="200.0" />
+                    </VBox>
+                    <VBox spacing="5.0">
+                        <Label text="Company Name:" style="-fx-font-weight: bold;" />
+                        <TextField fx:id="companyNameField" promptText="Your company name..." prefWidth="200.0" />
+                    </VBox>
+                    <VBox spacing="5.0">
+                        <Label text="Header Color:" style="-fx-font-weight: bold;" />
+                        <ColorPicker fx:id="headerColorPicker" prefWidth="100.0" />
+                    </VBox>
+                    <VBox spacing="5.0">
+                        <Label text="Template:" style="-fx-font-weight: bold;" />
+                        <ComboBox fx:id="templateCombo" prefWidth="150.0" />
+                    </VBox>
+                </children>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- Left Sidebar - Components Panel -->
+    <left>
+        <VBox fx:id="componentsPanel" spacing="10.0" prefWidth="250.0"
+              style="-fx-background-color: #f8f9fa; -fx-padding: 20; -fx-border-color: #dee2e6; -fx-border-width: 0 1 0 0;">
+            <children>
+                <Label text="📦 Newsletter Components" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+                <Label text="Drag components to the editor or click to add:"
+                       style="-fx-font-size: 12px; -fx-text-fill: #6c757d;" wrapText="true" />
+
+                <Separator />
+
+                <!-- Text Component -->
+                <VBox spacing="5.0" style="-fx-border-color: #e9ecef; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: white;">
+                    <Button fx:id="addTextButton" text="📝 Add Text Block"
+                            style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-border-radius: 6; -fx-padding: 10;"
+                            prefWidth="200.0" />
+                    <Label text="Add paragraphs and text content"
+                           style="-fx-font-size: 11px; -fx-text-fill: #6c757d;" wrapText="true" />
+                </VBox>
+
+                <!-- Heading Component -->
+                <VBox spacing="5.0" style="-fx-border-color: #e9ecef; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: white;">
+                    <Button fx:id="addHeadingButton" text="📰 Add Heading"
+                            style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 6; -fx-padding: 10;"
+                            prefWidth="200.0" />
+                    <Label text="Add section headings and titles"
+                           style="-fx-font-size: 11px; -fx-text-fill: #6c757d;" wrapText="true" />
+                </VBox>
+
+                <!-- Image Component -->
+                <VBox spacing="5.0" style="-fx-border-color: #e9ecef; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: white;">
+                    <Button fx:id="addImageButton" text="🖼️ Add Image"
+                            style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-border-radius: 6; -fx-padding: 10;"
+                            prefWidth="200.0" />
+                    <Label text="Upload and insert images"
+                           style="-fx-font-size: 11px; -fx-text-fill: #6c757d;" wrapText="true" />
+                </VBox>
+
+                <!-- Button Component -->
+                <VBox spacing="5.0" style="-fx-border-color: #e9ecef; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: white;">
+                    <Button fx:id="addButtonButton" text="🔘 Add CTA Button"
+                            style="-fx-background-color: #fd7e14; -fx-text-fill: white; -fx-border-radius: 6; -fx-padding: 10;"
+                            prefWidth="200.0" />
+                    <Label text="Add call-to-action buttons with links"
+                           style="-fx-font-size: 11px; -fx-text-fill: #6c757d;" wrapText="true" />
+                </VBox>
+
+                <!-- Divider Component -->
+                <VBox spacing="5.0" style="-fx-border-color: #e9ecef; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: white;">
+                    <Button fx:id="addDividerButton" text="➖ Add Divider"
+                            style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-border-radius: 6; -fx-padding: 10;"
+                            prefWidth="200.0" />
+                    <Label text="Add visual separators between sections"
+                           style="-fx-font-size: 11px; -fx-text-fill: #6c757d;" wrapText="true" />
+                </VBox>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <!-- Tips Section -->
+                <VBox spacing="5.0" style="-fx-border-color: #d1ecf1; -fx-border-radius: 8; -fx-padding: 15; -fx-background-color: #d1ecf1;">
+                    <Label text="💡 Tips" style="-fx-font-weight: bold; -fx-text-fill: #0c5460;" />
+                    <Label text="• Keep your content scannable with headings"
+                           style="-fx-font-size: 11px; -fx-text-fill: #0c5460;" wrapText="true" />
+                    <Label text="• Use images to break up text blocks"
+                           style="-fx-font-size: 11px; -fx-text-fill: #0c5460;" wrapText="true" />
+                    <Label text="• Include clear call-to-action buttons"
+                           style="-fx-font-size: 11px; -fx-text-fill: #0c5460;" wrapText="true" />
+                    <Label text="• Test your newsletter in preview mode"
+                           style="-fx-font-size: 11px; -fx-text-fill: #0c5460;" wrapText="true" />
+                </VBox>
+            </children>
+        </VBox>
+    </left>
+
+    <!-- Center - Content Editor and Preview -->
+    <center>
+        <SplitPane dividerPositions="0.5" orientation="HORIZONTAL">
+            <!-- Content Editor -->
+            <VBox spacing="10.0" style="-fx-padding: 20;">
+                <children>
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Label text="✏️ Content Editor" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label text="Edit your newsletter content below:"
+                               style="-fx-font-size: 12px; -fx-text-fill: #6c757d;" />
+                    </HBox>
+
+                    <!-- Rich Text Editor -->
+                    <HTMLEditor fx:id="contentEditor" prefHeight="600.0" VBox.vgrow="ALWAYS" />
+
+                    <!-- Content Canvas for Drag & Drop (Alternative) -->
+                    <ScrollPane fx:id="contentCanvas" visible="false" prefHeight="400.0"
+                                style="-fx-border-color: #dee2e6; -fx-border-width: 2; -fx-border-style: dashed;">
+                        <content>
+                            <VBox fx:id="contentContainer" spacing="10.0" style="-fx-padding: 20; -fx-min-height: 400;">
+                                <children>
+                                    <Label text="Drag components here to build your newsletter"
+                                           style="-fx-font-size: 14px; -fx-text-fill: #6c757d; -fx-alignment: center;" />
+                                </children>
+                            </VBox>
+                        </content>
+                    </ScrollPane>
+                </children>
+            </VBox>
+
+            <!-- Live Preview -->
+            <VBox fx:id="previewContainer" spacing="10.0" style="-fx-padding: 20; -fx-background-color: #f8f9fa;">
+                <children>
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Label text="👁️ Live Preview" style="-fx-font-weight: bold; -fx-font-size: 16px;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label text="See how your newsletter looks:"
+                               style="-fx-font-size: 12px; -fx-text-fill: #6c757d;" />
+                    </HBox>
+
+                    <!-- Newsletter Preview -->
+                    <ScrollPane style="-fx-background-color: white; -fx-border-color: #dee2e6; -fx-border-width: 1;">
+                        <content>
+                            <WebView fx:id="previewWebView" prefWidth="600.0" prefHeight="800.0" />
+                        </content>
+                    </ScrollPane>
+
+                    <!-- Preview Actions -->
+                    <HBox spacing="10.0" alignment="CENTER">
+                        <Button text="📱 Mobile View"
+                                style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 6 12;" />
+                        <Button text="🖥️ Desktop View"
+                                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 6 12;" />
+                        <Button text="📧 Email Client View"
+                                style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 6 12;" />
+                    </HBox>
+                </children>
+            </VBox>
+        </SplitPane>
+    </center>
+
+    <!-- Bottom Status Bar -->
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="15.0"
+              style="-fx-background-color: #f8f9fa; -fx-padding: 10 20; -fx-border-color: #dee2e6; -fx-border-width: 1 0 0 0;">
+            <children>
+                <Label text="📊 Status:" style="-fx-font-weight: bold;" />
+                <Label text="Ready to build" style="-fx-text-fill: #28a745;" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label text="💡 Tip: Use the components panel to add content blocks"
+                       style="-fx-font-size: 12px; -fx-text-fill: #6c757d;" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label text="Newsletter Builder v1.0"
+                       style="-fx-font-size: 11px; -fx-text-fill: #adb5bd;" />
+            </children>
+        </HBox>
+    </bottom>
+
+</BorderPane>

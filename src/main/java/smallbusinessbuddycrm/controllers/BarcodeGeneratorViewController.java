@@ -3,22 +3,38 @@ package smallbusinessbuddycrm.controllers;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.embed.swing.SwingFXUtils;
 
+// Barcode generation imports - ZXing library for PDF417
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.pdf417.PDF417Writer;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+
+// Import your existing classes
+import smallbusinessbuddycrm.database.OrganizationDAO;
+import smallbusinessbuddycrm.model.Organization;
+
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
 public class BarcodeGeneratorViewController implements Initializable {
 
-    // Form Fields - Banking Information
-    @FXML private TextField bankCodeField;
-    @FXML private ComboBox<String> currencyCombo;
+    // Form Fields - Note: bankCodeField and currencyCombo are removed from FXML
     @FXML private TextField amountField;
     @FXML private TextField referenceField;
 
@@ -36,7 +52,7 @@ public class BarcodeGeneratorViewController implements Initializable {
     // Form Fields - Payment Details
     @FXML private TextField modelField;
     @FXML private TextField purposeCodeField;
-    @FXML private TextField descriptionField;
+    @FXML private TextArea descriptionField; // Changed to TextArea in FXML
 
     // Action Buttons
     @FXML private Button generateButton;
@@ -47,7 +63,7 @@ public class BarcodeGeneratorViewController implements Initializable {
     // Display Controls
     @FXML private StackPane paymentSlipContainer;
     @FXML private VBox placeholderContent;
-    @FXML private VBox generatedPaymentSlip;
+    @FXML private ImageView generatedBarcodeView;
     @FXML private HBox actionButtonsContainer;
 
     // Generated Slip Action Buttons
@@ -55,12 +71,24 @@ public class BarcodeGeneratorViewController implements Initializable {
     @FXML private Button printSlipButton;
     @FXML private Button copyDataButton;
 
+    // Constants - Hidden from user but used internally
+    private static final String FIXED_BANK_CODE = "HRVHUB30";
+    private static final String FIXED_CURRENCY = "EUR";
+
+    // Database access
+    private OrganizationDAO organizationDAO;
+    private Organization currentOrganization;
+
     // Data
     private String currentPaymentData;
+    private BufferedImage currentBarcodeImage;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("BarcodeGeneratorViewController.initialize() called");
+
+        // Initialize database access
+        initializeDatabase();
 
         setupInitialValues();
         setupEventHandlers();
@@ -68,60 +96,241 @@ public class BarcodeGeneratorViewController implements Initializable {
         System.out.println("BarcodeGeneratorViewController initialized successfully");
     }
 
-    private void setupInitialValues() {
-        // Set up currency combo box
-        currencyCombo.getItems().addAll("HRK", "EUR", "USD");
-        currencyCombo.setValue("HRK");
+    private void initializeDatabase() {
+        try {
+            organizationDAO = new OrganizationDAO();
 
+            // Try to get the first organization from database
+            Optional<Organization> orgOptional = organizationDAO.getFirst();
+            if (orgOptional.isPresent()) {
+                currentOrganization = orgOptional.get();
+                System.out.println("Loaded organization: " + currentOrganization.getName());
+            } else {
+                System.out.println("No organization found in database");
+                // Create a default organization if none exists
+                createDefaultOrganization();
+            }
+        } catch (Exception e) {
+            System.err.println("Error initializing database: " + e.getMessage());
+            e.printStackTrace();
+            // Continue without database connection
+        }
+    }
+
+    private void createDefaultOrganization() {
+        try {
+            // Create a default organization
+            currentOrganization = new Organization();
+            currentOrganization.setName("Your Company Name");
+            currentOrganization.setIban("HR1234567890123456789");
+            currentOrganization.setStreetName("Your Street");
+            currentOrganization.setStreetNum("123");
+            currentOrganization.setPostalCode("10000");
+            currentOrganization.setCity("Zagreb");
+            currentOrganization.setEmail("info@yourcompany.com");
+            currentOrganization.setPhoneNum("+385 1 234 5678");
+
+            // Save to database
+            if (organizationDAO != null && organizationDAO.save(currentOrganization)) {
+                System.out.println("Default organization created and saved");
+            } else {
+                System.out.println("Failed to save default organization");
+            }
+        } catch (Exception e) {
+            System.err.println("Error creating default organization: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void setupInitialValues() {
         // Set default values
-        bankCodeField.setText("HRVHUB30");
         modelField.setText("HR01");
+
+        // Load organization data into recipient fields
+        loadOrganizationData();
 
         // Load example template by default
         loadExampleTemplate();
+    }
+
+    private void loadOrganizationData() {
+        if (currentOrganization != null) {
+            // Populate recipient fields with organization data
+            recipientNameField.setText(currentOrganization.getName());
+            recipientAddressField.setText(
+                    (currentOrganization.getStreetName() != null ? currentOrganization.getStreetName() : "") +
+                            (currentOrganization.getStreetNum() != null ? " " + currentOrganization.getStreetNum() : "")
+            );
+            recipientCityField.setText(
+                    (currentOrganization.getPostalCode() != null ? currentOrganization.getPostalCode() : "") +
+                            (currentOrganization.getCity() != null ? " " + currentOrganization.getCity() : "")
+            );
+            ibanField.setText(currentOrganization.getIban());
+
+            System.out.println("Organization data loaded into recipient fields");
+        } else {
+            System.out.println("No organization data available");
+        }
     }
 
     private void setupEventHandlers() {
         System.out.println("Setting up event handlers...");
 
         // Main action buttons
-        generateButton.setOnAction(e -> handleGeneratePaymentSlip());
+        generateButton.setOnAction(e -> handleGenerateBarcode());
         loadTemplateButton.setOnAction(e -> handleLoadTemplate());
         clearButton.setOnAction(e -> handleClearAll());
         saveTemplateButton.setOnAction(e -> handleSaveTemplate());
 
         // Generated slip action buttons
-        saveSlipButton.setOnAction(e -> handleSaveSlip());
-        printSlipButton.setOnAction(e -> handlePrintSlip());
+        saveSlipButton.setOnAction(e -> handleSaveBarcode());
+        printSlipButton.setOnAction(e -> handlePrintBarcode());
         copyDataButton.setOnAction(e -> handleCopyData());
+
+        // Add double-click handler to refresh organization data
+        recipientNameField.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                refreshOrganizationData();
+            }
+        });
+
+        // Setup currency formatting for amount field
+        setupCurrencyFormatting();
 
         System.out.println("Event handlers setup completed");
     }
 
-    private void loadExampleTemplate() {
-        // Load the example data you provided
-        bankCodeField.setText("HRVHUB30");
-        currencyCombo.setValue("HRK");
-        amountField.setText("000000000012355");
-        referenceField.setText("7269-68949637676-00019");
+    private void setupCurrencyFormatting() {
+        // Add listener to format amount as currency while typing
+        amountField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null || newValue.isEmpty()) {
+                return;
+            }
 
-        payerNameField.setText("ZELJKO SENEKOVIC");
-        payerAddressField.setText("IVANECKA ULICA 125");
-        payerCityField.setText("42000 VARAZDIN");
+            // Remove all non-digit characters
+            String digitsOnly = newValue.replaceAll("[^0-9]", "");
 
-        recipientNameField.setText("2DBK d.d.");
-        recipientAddressField.setText("ALKARSKI PROLAZ 13B");
-        recipientCityField.setText("21230 SINJ");
-        ibanField.setText("HR1210010051863000160");
+            if (digitsOnly.isEmpty()) {
+                amountField.setText("");
+                return;
+            }
 
-        modelField.setText("HR01");
-        purposeCodeField.setText("COST");
-        descriptionField.setText("Troskovi za 1. mjesec");
+            // Limit to reasonable amount (max 999,999.99)
+            if (digitsOnly.length() > 8) {
+                digitsOnly = digitsOnly.substring(0, 8);
+            }
+
+            // Format as currency
+            String formatted = formatCurrency(digitsOnly);
+
+            // Avoid infinite loop by checking if text actually changed
+            if (!formatted.equals(newValue)) {
+                amountField.setText(formatted);
+                amountField.positionCaret(formatted.length());
+            }
+        });
+
+        // Handle backspace and delete keys
+        amountField.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+                case BACK_SPACE:
+                case DELETE:
+                    String currentText = amountField.getText();
+                    if (currentText != null && !currentText.isEmpty()) {
+                        // Remove last digit
+                        String digitsOnly = currentText.replaceAll("[^0-9]", "");
+                        if (digitsOnly.length() > 1) {
+                            digitsOnly = digitsOnly.substring(0, digitsOnly.length() - 1);
+                            String formatted = formatCurrency(digitsOnly);
+                            amountField.setText(formatted);
+                            amountField.positionCaret(formatted.length());
+                        } else {
+                            amountField.setText("");
+                        }
+                        event.consume();
+                    }
+                    break;
+            }
+        });
     }
 
-    private void handleGeneratePaymentSlip() {
+    private String formatCurrency(String digitsOnly) {
+        if (digitsOnly == null || digitsOnly.isEmpty()) {
+            return "";
+        }
+
+        // Pad with leading zeros if needed (minimum 3 digits for 0,01)
+        while (digitsOnly.length() < 3) {
+            digitsOnly = "0" + digitsOnly;
+        }
+
+        // Split into euros and cents
+        int length = digitsOnly.length();
+        String cents = digitsOnly.substring(length - 2);
+        String euros = digitsOnly.substring(0, length - 2);
+
+        // Format euros with thousand separators (Croatian style: 1.234)
+        if (euros.length() > 3) {
+            StringBuilder formattedEuros = new StringBuilder();
+            int count = 0;
+            for (int i = euros.length() - 1; i >= 0; i--) {
+                if (count > 0 && count % 3 == 0) {
+                    formattedEuros.insert(0, ".");
+                }
+                formattedEuros.insert(0, euros.charAt(i));
+                count++;
+            }
+            euros = formattedEuros.toString();
+        }
+
+        // Remove leading zeros from euros part, but keep at least one digit
+        euros = euros.replaceFirst("^0+", "");
+        if (euros.isEmpty()) {
+            euros = "0";
+        }
+
+        // Return formatted amount (Croatian style: 1.234,56)
+        return euros + "," + cents;
+    }
+
+    private String getCurrencyValueForHUB3() {
+        // Convert display format back to cents for HUB-3 encoding
+        String displayText = amountField.getText();
+        if (displayText == null || displayText.isEmpty()) {
+            return "0";
+        }
+
+        // Extract only digits
+        String digitsOnly = displayText.replaceAll("[^0-9]", "");
+        if (digitsOnly.isEmpty()) {
+            return "0";
+        }
+
+        // Return as string of cents (for HUB-3 format)
+        return digitsOnly;
+    }
+
+    private void loadExampleTemplate() {
+        // Load example data for EUR currency (only payer info, recipient is from organization)
+        amountField.setText("0,12"); // Set as formatted currency
+        referenceField.setText("");
+
+        // Only populate payer information - recipient comes from organization
+        payerNameField.setText("Katarina Kadum");
+        payerAddressField.setText("Anke Butorac 2");
+        payerCityField.setText("52440 Poreč");
+
+        // Recipient information is loaded from organization data
+        // Don't override organization data with example data
+
+        modelField.setText(""); // Can be null/empty
+        purposeCodeField.setText("");
+        descriptionField.setText("plaćanje članarine");
+    }
+
+    private void handleGenerateBarcode() {
         try {
-            System.out.println("Generate payment slip clicked");
+            System.out.println("Generate barcode clicked");
 
             // Validate required fields
             if (!validateFields()) {
@@ -131,18 +340,18 @@ public class BarcodeGeneratorViewController implements Initializable {
             // Generate the HUB-3 data string
             currentPaymentData = generateHUB3Data();
 
-            // Generate payment slip visual
-            generatePaymentSlipVisual();
+            // Generate PDF417 barcode image
+            generateBarcodeImage();
 
-            // Show the generated content
-            showGeneratedContent();
+            // Show the generated barcode
+            showGeneratedBarcode();
 
-            showSuccess("HUB-3 Payment Slip generated successfully!");
+            showSuccess("HUB-3 PDF417 Barcode generated successfully!");
 
         } catch (Exception e) {
-            System.err.println("Error generating payment slip: " + e.getMessage());
+            System.err.println("Error generating barcode: " + e.getMessage());
             e.printStackTrace();
-            showAlert("Generation Error", "Failed to generate payment slip: " + e.getMessage(), Alert.AlertType.ERROR);
+            showAlert("Generation Error", "Failed to generate barcode: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -171,187 +380,109 @@ public class BarcodeGeneratorViewController implements Initializable {
     }
 
     private String generateHUB3Data() {
-        // Generate HUB-3 format data string
+        // Generate HUB-3 format data string with fixed bank code and EUR currency
         StringBuilder hub3Data = new StringBuilder();
 
-        // Line 1: Bank code
-        hub3Data.append(bankCodeField.getText().trim()).append("\n");
+        // 1. bazniKod: Bank code (hardcoded)
+        hub3Data.append(FIXED_BANK_CODE).append("\n");
 
-        // Line 2: Currency
-        hub3Data.append(currencyCombo.getValue()).append("\n");
+        // 2. Currency (hardcoded to EUR)
+        hub3Data.append(FIXED_CURRENCY).append("\n");
 
-        // Line 3: Amount (15 digits, zero-padded)
-        String amount = amountField.getText().trim();
-        if (amount.length() < 15) {
-            amount = String.format("%015d", Long.parseLong(amount.replaceAll("[^0-9]", "")));
+        // 3. iznosTransakcije: Transaction amount
+        String amount = getCurrencyValueForHUB3(); // Get the value in cents
+        if (!amount.isEmpty() && !amount.equals("0")) {
+            // Format amount - pad with zeros to 15 digits
+            amount = String.format("%015d", Long.parseLong(amount));
+        } else {
+            amount = "000000000000000"; // 15 zeros for empty amount
         }
         hub3Data.append(amount).append("\n");
 
-        // Line 4: Payer name
+        // 4. imePlatitelja: Payer name
         hub3Data.append(payerNameField.getText().trim()).append("\n");
 
-        // Line 5: Payer address
+        // 5. adresaPlatitelja: Payer address
         hub3Data.append(payerAddressField.getText().trim()).append("\n");
 
-        // Line 6: Payer city
+        // 6. postanskiBrojIMjestoPlatitelja: Payer postal code and city
         hub3Data.append(payerCityField.getText().trim()).append("\n");
 
-        // Line 7: Recipient name
+        // 7. imePrimatelja: Recipient name
         hub3Data.append(recipientNameField.getText().trim()).append("\n");
 
-        // Line 8: Recipient address
+        // 8. adresaPrimatelja: Recipient address
         hub3Data.append(recipientAddressField.getText().trim()).append("\n");
 
-        // Line 9: Recipient city
+        // 9. postanskiBrojIMjestoPrimatelja: Recipient postal code and city
         hub3Data.append(recipientCityField.getText().trim()).append("\n");
 
-        // Line 10: IBAN
+        // 10. ibanPrimatelja: Recipient IBAN
         hub3Data.append(ibanField.getText().trim()).append("\n");
 
-        // Line 11: Model
+        // 11. modelPlacanja: Payment model (can be null/empty)
         hub3Data.append(modelField.getText().trim()).append("\n");
 
-        // Line 12: Reference
+        // 12. pozivNaBroj: Reference number
         hub3Data.append(referenceField.getText().trim()).append("\n");
 
-        // Line 13: Purpose code
+        // 13. sifraNamjene: Purpose code
         hub3Data.append(purposeCodeField.getText().trim()).append("\n");
 
-        // Line 14: Description
+        // 14. opisPlacanja: Payment description (no newline at the end)
         hub3Data.append(descriptionField.getText().trim());
+
+        System.out.println("Generated HUB-3 data (EUR currency, fixed bank code):");
+        System.out.println(hub3Data.toString());
+        System.out.println("Total length: " + hub3Data.length() + " characters");
 
         return hub3Data.toString();
     }
 
-    private void generatePaymentSlipVisual() {
-        // Clear previous content
-        generatedPaymentSlip.getChildren().clear();
-
-        // Create payment slip layout
-        VBox slipContent = new VBox(5);
-        slipContent.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-border-color: black; -fx-border-width: 2;");
-
-        // Header
-        Label header = new Label("HRVATSKI STANDARD HUB-3");
-        header.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-text-fill: #1976d2;");
-        slipContent.getChildren().add(header);
-
-        // Add separator
-        Separator sep1 = new Separator();
-        slipContent.getChildren().add(sep1);
-
-        // Payment information grid
-        GridPane infoGrid = new GridPane();
-        infoGrid.setHgap(20);
-        infoGrid.setVgap(8);
-        infoGrid.setStyle("-fx-padding: 10;");
-
-        int row = 0;
-
-        // Banking info
-        addInfoRow(infoGrid, "Bank Code:", bankCodeField.getText(), row++);
-        addInfoRow(infoGrid, "Currency:", currencyCombo.getValue(), row++);
-        addInfoRow(infoGrid, "Amount:", formatAmount(amountField.getText()), row++);
-        addInfoRow(infoGrid, "Reference:", referenceField.getText(), row++);
-
-        // Add separator
-        Separator sep2 = new Separator();
-        GridPane.setColumnSpan(sep2, 2);
-        infoGrid.add(sep2, 0, row++);
-
-        // Payer info
-        Label payerHeader = new Label("PAYER INFORMATION:");
-        payerHeader.setStyle("-fx-font-weight: bold; -fx-text-fill: #2e7d32;");
-        GridPane.setColumnSpan(payerHeader, 2);
-        infoGrid.add(payerHeader, 0, row++);
-
-        addInfoRow(infoGrid, "Name:", payerNameField.getText(), row++);
-        addInfoRow(infoGrid, "Address:", payerAddressField.getText(), row++);
-        addInfoRow(infoGrid, "City:", payerCityField.getText(), row++);
-
-        // Add separator
-        Separator sep3 = new Separator();
-        GridPane.setColumnSpan(sep3, 2);
-        infoGrid.add(sep3, 0, row++);
-
-        // Recipient info
-        Label recipientHeader = new Label("RECIPIENT INFORMATION:");
-        recipientHeader.setStyle("-fx-font-weight: bold; -fx-text-fill: #f57c00;");
-        GridPane.setColumnSpan(recipientHeader, 2);
-        infoGrid.add(recipientHeader, 0, row++);
-
-        addInfoRow(infoGrid, "Name:", recipientNameField.getText(), row++);
-        addInfoRow(infoGrid, "Address:", recipientAddressField.getText(), row++);
-        addInfoRow(infoGrid, "City:", recipientCityField.getText(), row++);
-        addInfoRow(infoGrid, "IBAN:", ibanField.getText(), row++);
-
-        // Add separator
-        Separator sep4 = new Separator();
-        GridPane.setColumnSpan(sep4, 2);
-        infoGrid.add(sep4, 0, row++);
-
-        // Payment details
-        Label detailsHeader = new Label("PAYMENT DETAILS:");
-        detailsHeader.setStyle("-fx-font-weight: bold; -fx-text-fill: #c2185b;");
-        GridPane.setColumnSpan(detailsHeader, 2);
-        infoGrid.add(detailsHeader, 0, row++);
-
-        addInfoRow(infoGrid, "Model:", modelField.getText(), row++);
-        addInfoRow(infoGrid, "Purpose:", purposeCodeField.getText(), row++);
-        addInfoRow(infoGrid, "Description:", descriptionField.getText(), row++);
-
-        // Add timestamp
-        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
-        addInfoRow(infoGrid, "Generated:", timestamp, row++);
-
-        slipContent.getChildren().add(infoGrid);
-
-        // Add barcode representation (text-based)
-        Label barcodeLabel = new Label("HUB-3 BARCODE DATA:");
-        barcodeLabel.setStyle("-fx-font-weight: bold; -fx-padding: 10 0 5 0;");
-        slipContent.getChildren().add(barcodeLabel);
-
-        TextArea barcodeArea = new TextArea(currentPaymentData);
-        barcodeArea.setEditable(false);
-        barcodeArea.setPrefRowCount(6);
-        barcodeArea.setStyle("-fx-font-family: monospace; -fx-font-size: 10px; -fx-background-color: #f5f5f5;");
-        slipContent.getChildren().add(barcodeArea);
-
-        generatedPaymentSlip.getChildren().add(slipContent);
-    }
-
-    private void addInfoRow(GridPane grid, String label, String value, int row) {
-        Label labelNode = new Label(label);
-        labelNode.setStyle("-fx-font-weight: bold; -fx-min-width: 100px;");
-
-        Label valueNode = new Label(value != null ? value : "");
-        valueNode.setStyle("-fx-font-family: monospace;");
-
-        grid.add(labelNode, 0, row);
-        grid.add(valueNode, 1, row);
-    }
-
-    private String formatAmount(String amount) {
+    private void generateBarcodeImage() throws WriterException {
         try {
-            // Format amount with decimals
-            if (amount != null && !amount.trim().isEmpty()) {
-                String cleanAmount = amount.replaceAll("[^0-9]", "");
-                if (cleanAmount.length() >= 2) {
-                    String wholePart = cleanAmount.substring(0, cleanAmount.length() - 2);
-                    String decimalPart = cleanAmount.substring(cleanAmount.length() - 2);
-                    return wholePart + "." + decimalPart + " " + currencyCombo.getValue();
-                }
-            }
-            return amount + " " + currencyCombo.getValue();
+            // Generate PDF417 barcode
+            currentBarcodeImage = generatePDF417Barcode();
+            System.out.println("PDF417 barcode generated successfully for HUB-3 data");
+
         } catch (Exception e) {
-            return amount + " " + currencyCombo.getValue();
+            System.err.println("PDF417 generation failed: " + e.getMessage());
+            e.printStackTrace();
+            throw new WriterException("Failed to generate PDF417 barcode: " + e.getMessage());
         }
     }
 
-    private void showGeneratedContent() {
-        // Hide placeholder, show generated content
+    private BufferedImage generatePDF417Barcode() throws WriterException {
+        PDF417Writer writer = new PDF417Writer();
+
+        Map<EncodeHintType, Object> hints = new HashMap<>();
+        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+        hints.put(EncodeHintType.ERROR_CORRECTION, 2); // Medium error correction
+        hints.put(EncodeHintType.PDF417_COMPACT, false); // Full PDF417, not compact
+        hints.put(EncodeHintType.MARGIN, 10);
+
+        // Generate PDF417 barcode with proper HUB-3 dimensions
+        BitMatrix bitMatrix = writer.encode(
+                currentPaymentData,
+                BarcodeFormat.PDF_417,
+                750,  // Width - matching your display area
+                220,  // Height - good for PDF417 format
+                hints
+        );
+
+        return MatrixToImageWriter.toBufferedImage(bitMatrix);
+    }
+
+    private void showGeneratedBarcode() {
+        // Hide placeholder
         placeholderContent.setVisible(false);
-        generatedPaymentSlip.setVisible(true);
+
+        // Convert BufferedImage to JavaFX Image and display
+        Image fxImage = SwingFXUtils.toFXImage(currentBarcodeImage, null);
+        generatedBarcodeView.setImage(fxImage);
+        generatedBarcodeView.setVisible(true);
+
+        // Show action buttons
         actionButtonsContainer.setVisible(true);
     }
 
@@ -371,10 +502,22 @@ public class BarcodeGeneratorViewController implements Initializable {
                 try (FileInputStream fis = new FileInputStream(file)) {
                     props.load(fis);
 
-                    // Load all fields from properties
-                    bankCodeField.setText(props.getProperty("bankCode", ""));
-                    currencyCombo.setValue(props.getProperty("currency", "HRK"));
-                    amountField.setText(props.getProperty("amount", ""));
+                    // Load amount field with currency formatting
+                    String savedAmount = props.getProperty("amount", "");
+                    if (!savedAmount.isEmpty()) {
+                        // If saved amount is in cents, format it
+                        try {
+                            String digitsOnly = savedAmount.replaceAll("[^0-9]", "");
+                            if (!digitsOnly.isEmpty()) {
+                                String formatted = formatCurrency(digitsOnly);
+                                amountField.setText(formatted);
+                            }
+                        } catch (Exception ex) {
+                            amountField.setText("");
+                        }
+                    } else {
+                        amountField.setText("");
+                    }
                     referenceField.setText(props.getProperty("reference", ""));
 
                     payerNameField.setText(props.getProperty("payerName", ""));
@@ -415,10 +558,8 @@ public class BarcodeGeneratorViewController implements Initializable {
             if (file != null) {
                 Properties props = new Properties();
 
-                // Save all fields to properties
-                props.setProperty("bankCode", bankCodeField.getText());
-                props.setProperty("currency", currencyCombo.getValue());
-                props.setProperty("amount", amountField.getText());
+                // Save amount as cents value (for consistent storage)
+                props.setProperty("amount", getCurrencyValueForHUB3());
                 props.setProperty("reference", referenceField.getText());
 
                 props.setProperty("payerName", payerNameField.getText());
@@ -435,7 +576,7 @@ public class BarcodeGeneratorViewController implements Initializable {
                 props.setProperty("description", descriptionField.getText());
 
                 try (FileOutputStream fos = new FileOutputStream(file)) {
-                    props.store(fos, "HUB-3 Payment Template - " + LocalDateTime.now());
+                    props.store(fos, "HUB-3 Payment Template (EUR) - " + LocalDateTime.now());
                     showSuccess("Template saved successfully!");
                 }
             }
@@ -448,8 +589,6 @@ public class BarcodeGeneratorViewController implements Initializable {
 
     private void handleClearAll() {
         // Clear all fields
-        bankCodeField.clear();
-        currencyCombo.setValue("HRK");
         amountField.clear();
         referenceField.clear();
 
@@ -457,10 +596,11 @@ public class BarcodeGeneratorViewController implements Initializable {
         payerAddressField.clear();
         payerCityField.clear();
 
-        recipientNameField.clear();
-        recipientAddressField.clear();
-        recipientCityField.clear();
-        ibanField.clear();
+        // Don't clear recipient fields - they should keep organization data
+        // recipientNameField.clear();
+        // recipientAddressField.clear();
+        // recipientCityField.clear();
+        // ibanField.clear();
 
         modelField.clear();
         purposeCodeField.clear();
@@ -468,67 +608,65 @@ public class BarcodeGeneratorViewController implements Initializable {
 
         // Reset display
         placeholderContent.setVisible(true);
-        generatedPaymentSlip.setVisible(false);
+        generatedBarcodeView.setVisible(false);
         actionButtonsContainer.setVisible(false);
 
-        // Set some defaults back
-        bankCodeField.setText("HRVHUB30");
+        // Set some defaults back and reload organization data
         modelField.setText("HR01");
+        loadOrganizationData(); // Reload organization data into recipient fields
 
-        showSuccess("All fields cleared!");
+        showSuccess("All fields cleared! (Recipient info kept from organization)");
     }
 
-    private void handleSaveSlip() {
-        if (currentPaymentData == null) {
-            showAlert("No Data", "Please generate a payment slip first.", Alert.AlertType.WARNING);
+    private void handleSaveBarcode() {
+        if (currentBarcodeImage == null) {
+            showAlert("No Barcode", "Please generate a barcode first.", Alert.AlertType.WARNING);
             return;
         }
 
         try {
             FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Save Payment Slip");
-            fileChooser.setInitialFileName("hub3_payment_slip_" + System.currentTimeMillis() + ".txt");
-            fileChooser.getExtensionFilters().add(
-                    new FileChooser.ExtensionFilter("Text Files", "*.txt")
+            fileChooser.setTitle("Save Barcode");
+            fileChooser.setInitialFileName("hub3_pdf417_barcode_" + System.currentTimeMillis() + ".png");
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("PNG Images", "*.png"),
+                    new FileChooser.ExtensionFilter("JPEG Images", "*.jpg"),
+                    new FileChooser.ExtensionFilter("All Files", "*.*")
             );
 
             Stage stage = (Stage) saveSlipButton.getScene().getWindow();
             File file = fileChooser.showSaveDialog(stage);
 
             if (file != null) {
-                try (FileWriter writer = new FileWriter(file)) {
-                    writer.write("CROATIAN HUB-3 PAYMENT SLIP\n");
-                    writer.write("Generated: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) + "\n");
-                    writer.write("=====================================\n\n");
-                    writer.write(currentPaymentData);
-                    showSuccess("Payment slip saved successfully!");
-                }
+                String format = file.getName().toLowerCase().endsWith(".jpg") ? "jpg" : "png";
+                javax.imageio.ImageIO.write(currentBarcodeImage, format, file);
+                showSuccess("PDF417 barcode saved successfully!");
             }
         } catch (Exception e) {
-            System.err.println("Error saving slip: " + e.getMessage());
+            System.err.println("Error saving barcode: " + e.getMessage());
             e.printStackTrace();
-            showAlert("Save Error", "Failed to save payment slip: " + e.getMessage(), Alert.AlertType.ERROR);
+            showAlert("Save Error", "Failed to save barcode: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
-    private void handlePrintSlip() {
+    private void handlePrintBarcode() {
         Alert info = new Alert(Alert.AlertType.INFORMATION);
         info.setTitle("Print");
-        info.setHeaderText("Print Payment Slip");
+        info.setHeaderText("Print Barcode");
         info.setContentText("Print functionality will be implemented soon!");
         info.showAndWait();
     }
 
     private void handleCopyData() {
         if (currentPaymentData != null) {
-            // Copy to system clipboard (simplified for JavaFX)
+            // Copy to system clipboard
             javafx.scene.input.ClipboardContent content = new javafx.scene.input.ClipboardContent();
             content.putString(currentPaymentData);
             javafx.scene.input.Clipboard.getSystemClipboard().setContent(content);
 
             showSuccess("Payment data copied to clipboard!");
         } else {
-            showAlert("No Data", "Please generate a payment slip first.", Alert.AlertType.WARNING);
+            showAlert("No Data", "Please generate a barcode first.", Alert.AlertType.WARNING);
         }
     }
 
@@ -552,5 +690,36 @@ public class BarcodeGeneratorViewController implements Initializable {
                 new javafx.animation.KeyFrame(javafx.util.Duration.seconds(2), e -> alert.close())
         );
         timeline.play();
+    }
+
+    // Method to refresh organization data from database
+    private void refreshOrganizationData() {
+        try {
+            if (organizationDAO != null) {
+                Optional<Organization> orgOptional = organizationDAO.getFirst();
+                if (orgOptional.isPresent()) {
+                    currentOrganization = orgOptional.get();
+                    loadOrganizationData();
+                    showSuccess("Organization data refreshed from database!");
+                } else {
+                    showAlert("No Organization", "No organization found in database.", Alert.AlertType.WARNING);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error refreshing organization data: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Database Error", "Failed to refresh organization data: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    // Method to get organization display info (for debugging/info purposes)
+    public String getOrganizationInfo() {
+        if (currentOrganization != null) {
+            return String.format("Organization: %s | IBAN: %s | Address: %s",
+                    currentOrganization.getName(),
+                    currentOrganization.getIban(),
+                    currentOrganization.getFullAddress());
+        }
+        return "No organization loaded";
     }
 }

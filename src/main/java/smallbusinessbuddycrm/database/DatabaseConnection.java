@@ -150,10 +150,114 @@ public class DatabaseConnection {
             );
             """;
 
+        // NEW PAYMENT SYSTEM TABLES
+        String createPaymentTemplateTableSQL = """
+            CREATE TABLE IF NOT EXISTS payment_template (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                description TEXT,
+                amount DECIMAL(10,2) NOT NULL,
+                model_of_payment TEXT NOT NULL,
+                poziv_na_broj TEXT,
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT,
+                updated_at TEXT
+            );
+            """;
+
+        String createNewsletterTemplateTableSQL = """
+            CREATE TABLE IF NOT EXISTS newsletter_template (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                subject TEXT NOT NULL,
+                content TEXT NOT NULL,
+                template_type TEXT DEFAULT 'PAYMENT',
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT,
+                updated_at TEXT
+            );
+            """;
+
+        String createPaymentInfoTableSQL = """
+            CREATE TABLE IF NOT EXISTS payment_info (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                organization_id INTEGER NOT NULL,
+                payment_template_id INTEGER NOT NULL,
+                newsletter_template_id INTEGER,
+                
+                -- Target references (only one should be filled)
+                contact_id INTEGER,
+                list_id INTEGER,
+                workshop_id INTEGER,
+                
+                -- Payment details
+                target_type TEXT NOT NULL CHECK (target_type IN ('CONTACT', 'LIST', 'WORKSHOP')),
+                amount DECIMAL(10,2) NOT NULL,
+                model_of_payment TEXT NOT NULL,
+                poziv_na_broj TEXT,
+                
+                -- Generation info
+                barcode_data TEXT,
+                pdf_path TEXT,
+                
+                -- Status tracking
+                status TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED', 'SENT', 'PAID', 'CANCELLED')),
+                generated_at TEXT,
+                sent_at TEXT,
+                paid_at TEXT,
+                
+                -- Metadata
+                created_at TEXT,
+                updated_at TEXT,
+                
+                -- Foreign keys
+                FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE CASCADE,
+                FOREIGN KEY (payment_template_id) REFERENCES payment_template(id) ON DELETE CASCADE,
+                FOREIGN KEY (newsletter_template_id) REFERENCES newsletter_template(id) ON DELETE SET NULL,
+                FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+                FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
+                FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
+                
+                -- Ensure only one target is specified
+                CHECK (
+                    (contact_id IS NOT NULL AND list_id IS NULL AND workshop_id IS NULL AND target_type = 'CONTACT') OR
+                    (list_id IS NOT NULL AND contact_id IS NULL AND workshop_id IS NULL AND target_type = 'LIST') OR
+                    (workshop_id IS NOT NULL AND contact_id IS NULL AND list_id IS NULL AND target_type = 'WORKSHOP')
+                )
+            );
+            """;
+
+        // Table to track individual payment slips for bulk operations
+        String createPaymentSlipTableSQL = """
+            CREATE TABLE IF NOT EXISTS payment_slip (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                payment_info_id INTEGER NOT NULL,
+                contact_id INTEGER NOT NULL,
+                
+                -- Individual slip details
+                amount DECIMAL(10,2) NOT NULL,
+                poziv_na_broj TEXT,
+                barcode_data TEXT,
+                
+                -- Status tracking
+                status TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED', 'SENT', 'PAID', 'CANCELLED')),
+                sent_at TEXT,
+                paid_at TEXT,
+                
+                -- Metadata
+                created_at TEXT,
+                updated_at TEXT,
+                
+                -- Foreign keys
+                FOREIGN KEY (payment_info_id) REFERENCES payment_info(id) ON DELETE CASCADE,
+                FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
+            );
+            """;
+
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // Create all tables
+            // Create all existing tables
             stmt.execute(createOrganizationTableSQL);
             stmt.execute(createContactsTableSQL);
             stmt.execute(createUnderagedTableSQL);
@@ -163,14 +267,19 @@ public class DatabaseConnection {
             stmt.execute(createListsTableSQL);
             stmt.execute(createListContactsTableSQL);
 
+            // Create new payment system tables
+            stmt.execute(createPaymentTemplateTableSQL);
+            stmt.execute(createNewsletterTemplateTableSQL);
+            stmt.execute(createPaymentInfoTableSQL);
+            stmt.execute(createPaymentSlipTableSQL);
+
             System.out.println("Baza i tablice su inicijalizirane.");
             System.out.println("Workshop management tables created successfully.");
+            System.out.println("Payment system tables created successfully.");
 
         } catch (SQLException e) {
             System.err.println("Greška pri inicijalizaciji baze: " + e.getMessage());
             e.printStackTrace();
         }
     }
-
-
 }

@@ -37,11 +37,6 @@
     -fx-background-color: -sbb-light-blue;
 }
 
-.user-avatar {
-    -fx-fill: white;
-    -sbb-text-color: white;
-}
-
 /* Sidebar Styling */
 .sidebar {
     -fx-background-color: -sbb-dark-blue;
@@ -144,7 +139,7 @@
  .content-area {
      -fx-background-color: white;
      -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 0);
-     -fx-background-radius: 40px 0 0 0;
+     -fx-background-radius: 0;
  }
 
  .welcome-text {
@@ -157,3 +152,60 @@
      -fx-font-size: 16px;
      -fx-fill: #666666;
  }
+
+/* MenuButton main text - WHITE */
+.user-profile-button {
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 5 10 5 10;
+}
+
+.user-profile-button:hover {
+    -fx-text-fill: #e0e0e0;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Menu Items - BLACK text */
+.user-profile-button .context-menu {
+    -fx-background-color: white;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 5, 0, 0, 2);
+}
+
+.user-profile-button .menu-item {
+    -fx-text-fill: black;
+    -fx-background-color: transparent;
+    -fx-padding: 8 12 8 12;
+    -fx-font-size: 13px;
+}
+
+.user-profile-button .menu-item:hover {
+    -fx-background-color: #f0f0f0;
+    -fx-text-fill: black;
+}
+
+.user-profile-button .menu-item:focused {
+    -fx-background-color: #e0e0e0;
+    -fx-text-fill: black;
+}
+
+
+.user-avatar {
+    -fx-stroke: white;
+    -fx-stroke-width: 1;
+}
+
+.user-profile-button {
+    -fx-text-fill: white;
+    -fx-text-base-color: white;
+    -fx-text-inner-color: white;
+}
+
+.user-profile-button .menu-item {
+    -fx-text-fill: black;
+    -fx-text-base-color: black;
+    -fx-text-inner-color: black;
+}
