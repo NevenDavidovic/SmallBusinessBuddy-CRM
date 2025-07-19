@@ -92,12 +92,4 @@
             </TableView>
         </ScrollPane>
     </center>
-    <bottom>
-        <HBox alignment="CENTER">
-            <children>
-                <Pagination fx:id="contactsPagination" pageCount="1" />
-                <ComboBox fx:id="perPageComboBox" prefWidth="150.0" promptText="25 per page" />
-            </children>
-        </HBox>
-    </bottom>
 </BorderPane>

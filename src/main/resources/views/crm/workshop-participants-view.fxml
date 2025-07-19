@@ -50,10 +50,31 @@
                                 <Font size="12.0" />
                             </font>
                         </Label>
-                        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                        <!-- ADD THIS NEW TEACHER LABEL -->
+                        <Separator orientation="VERTICAL" />
+                        <Label fx:id="teacherLabel" text="Teacher: Not assigned" textFill="#dc3545">
+                            <font>
+                                <Font size="12.0" />
+                            </font>
+                        </Label>
+                        <!-- END OF NEW TEACHER LABEL -->
+                        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS" spacing="5.0">
                             <children>
-                                <Button fx:id="exportParticipantsButton" text="Export List" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                                <Button fx:id="refreshButton" text="Refresh" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                <!-- Your existing buttons -->
+                                <Button fx:id="manageTeachersButton" text="Manage Teachers"
+                                        style="-fx-background-color: #fd7e14; -fx-text-fill: white; -fx-border-radius: 4;">
+                                    <HBox.margin>
+                                        <Insets right="5.0" />
+                                    </HBox.margin>
+                                </Button>
+                                <Button fx:id="exportParticipantsButton" text="Export List"
+                                        style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;">
+                                    <HBox.margin>
+                                        <Insets right="5.0" />
+                                    </HBox.margin>
+                                </Button>
+                                <Button fx:id="refreshButton" text="Refresh"
+                                        style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
                             </children>
                         </HBox>
                     </children>

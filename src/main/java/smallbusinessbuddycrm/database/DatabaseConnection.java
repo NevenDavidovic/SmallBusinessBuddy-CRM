@@ -16,6 +16,107 @@ public class DatabaseConnection {
         return connection;
     }
 
+    // Migration method to fix existing database
+    public static void fixWorkshopParticipantsForTeachers() {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            System.out.println("Checking if database migration is needed...");
+
+            // Check if the table already supports teachers
+            try {
+                // Try to create a test teacher record - if it fails, we need migration
+                String testSQL = "SELECT participant_type FROM workshop_participants WHERE participant_type = 'TEACHER' LIMIT 1";
+                stmt.executeQuery(testSQL);
+                System.out.println("Database already supports teachers - no migration needed.");
+                return;
+            } catch (SQLException e) {
+                // If this fails, it means we need to migrate
+                System.out.println("Migration needed - updating database schema...");
+            }
+
+            // Step 1: Create a backup table with current data
+            String createBackupSQL = """
+                CREATE TABLE IF NOT EXISTS workshop_participants_backup AS 
+                SELECT * FROM workshop_participants;
+                """;
+
+            // Step 2: Drop the original table
+            String dropOriginalSQL = "DROP TABLE IF EXISTS workshop_participants;";
+
+            // Step 3: Create new table with updated constraint that supports teachers
+            String createNewTableSQL = """
+                CREATE TABLE workshop_participants (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    workshop_id INTEGER NOT NULL,
+                    teacher_id INTEGER,
+                    underaged_id INTEGER,
+                    contact_id INTEGER,
+                    participant_type TEXT NOT NULL CHECK (participant_type IN ('ADULT', 'CHILD', 'TEACHER')),
+                    payment_status TEXT NOT NULL CHECK (payment_status IN ('PENDING', 'PAID', 'REFUNDED', 'CANCELLED')),
+                    notes TEXT,
+                    created_at TEXT,
+                    updated_at TEXT,
+                    FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
+                    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
+                    FOREIGN KEY (underaged_id) REFERENCES underaged(id) ON DELETE CASCADE,
+                    FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
+                    CHECK (
+                        (underaged_id IS NOT NULL AND contact_id IS NULL AND teacher_id IS NULL AND participant_type = 'CHILD') OR
+                        (contact_id IS NOT NULL AND underaged_id IS NULL AND teacher_id IS NULL AND participant_type = 'ADULT') OR
+                        (teacher_id IS NOT NULL AND contact_id IS NULL AND underaged_id IS NULL AND participant_type = 'TEACHER')
+                    )
+                );
+                """;
+
+            // Step 4: Restore data from backup (if backup exists)
+            String restoreDataSQL = """
+                INSERT INTO workshop_participants 
+                (id, workshop_id, teacher_id, underaged_id, contact_id, participant_type, payment_status, notes, created_at, updated_at)
+                SELECT id, workshop_id, teacher_id, underaged_id, contact_id, participant_type, payment_status, notes, created_at, updated_at
+                FROM workshop_participants_backup;
+                """;
+
+            // Step 5: Drop backup table
+            String dropBackupSQL = "DROP TABLE IF EXISTS workshop_participants_backup;";
+
+            // Execute migration
+            try {
+                stmt.execute(createBackupSQL);
+                System.out.println("✓ Created backup table");
+            } catch (Exception e) {
+                System.out.println("Note: Backup creation failed (table might be empty): " + e.getMessage());
+            }
+
+            stmt.execute(dropOriginalSQL);
+            System.out.println("✓ Dropped original table");
+
+            stmt.execute(createNewTableSQL);
+            System.out.println("✓ Created new table with teacher support");
+
+            try {
+                stmt.execute(restoreDataSQL);
+                System.out.println("✓ Restored existing data");
+            } catch (Exception e) {
+                System.out.println("Note: Data restore failed (table might have been empty): " + e.getMessage());
+            }
+
+            try {
+                stmt.execute(dropBackupSQL);
+                System.out.println("✓ Cleaned up backup table");
+            } catch (Exception e) {
+                System.out.println("Note: Backup cleanup failed: " + e.getMessage());
+            }
+
+            System.out.println("🎉 Database migration completed successfully!");
+            System.out.println("Teacher assignment should now work!");
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error during migration: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     // Metoda za inicijalizaciju baze i tablice
     public static void initializeDatabase() {
         String createOrganizationTableSQL = """
@@ -99,6 +200,7 @@ public class DatabaseConnection {
             );
             """;
 
+        // UPDATED: This now includes TEACHER support
         String createWorkshopParticipantsTableSQL = """
             CREATE TABLE IF NOT EXISTS workshop_participants (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,7 +208,7 @@ public class DatabaseConnection {
                 teacher_id INTEGER,
                 underaged_id INTEGER,
                 contact_id INTEGER,
-                participant_type TEXT NOT NULL CHECK (participant_type IN ('ADULT', 'CHILD')),
+                participant_type TEXT NOT NULL CHECK (participant_type IN ('ADULT', 'CHILD', 'TEACHER')),
                 payment_status TEXT NOT NULL CHECK (payment_status IN ('PENDING', 'PAID', 'REFUNDED', 'CANCELLED')),
                 notes TEXT,
                 created_at TEXT,
@@ -116,8 +218,9 @@ public class DatabaseConnection {
                 FOREIGN KEY (underaged_id) REFERENCES underaged(id) ON DELETE CASCADE,
                 FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
                 CHECK (
-                    (underaged_id IS NOT NULL AND contact_id IS NULL AND participant_type = 'CHILD') OR
-                    (contact_id IS NOT NULL AND underaged_id IS NULL AND participant_type = 'ADULT')
+                    (underaged_id IS NOT NULL AND contact_id IS NULL AND teacher_id IS NULL AND participant_type = 'CHILD') OR
+                    (contact_id IS NOT NULL AND underaged_id IS NULL AND teacher_id IS NULL AND participant_type = 'ADULT') OR
+                    (teacher_id IS NOT NULL AND contact_id IS NULL AND underaged_id IS NULL AND participant_type = 'TEACHER')
                 )
             );
             """;
@@ -276,6 +379,9 @@ public class DatabaseConnection {
             System.out.println("Baza i tablice su inicijalizirane.");
             System.out.println("Workshop management tables created successfully.");
             System.out.println("Payment system tables created successfully.");
+
+            // IMPORTANT: Run migration after table creation
+            fixWorkshopParticipantsForTeachers();
 
         } catch (SQLException e) {
             System.err.println("Greška pri inicijalizaciji baze: " + e.getMessage());

@@ -54,6 +54,49 @@ public class ContactViewController {
     @FXML private Button upcomingBirthdaysButton; // New button for birthday filter
     @FXML private TextField searchField;
     @FXML private Label recordCountLabel;
+    @FXML private Button importButton;
+
+    private void handleImportContacts() {
+        try {
+            Stage currentStage = (Stage) importButton.getScene().getWindow();
+            ImportContactsDialog dialog = new ImportContactsDialog(currentStage);
+
+            if (dialog.showAndWait()) {
+                List<Contact> importedContacts = dialog.getImportedContacts();
+
+                if (!importedContacts.isEmpty()) {
+                    // Add imported contacts to the list
+                    allContactsList.addAll(importedContacts);
+                    updateRecordCount();
+
+                    // Show success message
+                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                    successAlert.setTitle("Import Successful");
+                    successAlert.setHeaderText("Contacts Imported");
+                    successAlert.setContentText("Successfully imported " + importedContacts.size() +
+                            " contact" + (importedContacts.size() != 1 ? "s" : "") +
+                            " from CSV file.");
+                    successAlert.showAndWait();
+
+                    // Refresh the table to show new data
+                    contactsTable.refresh();
+                    System.out.println("Imported " + importedContacts.size() + " contacts successfully");
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error in handleImportContacts: " + e.getMessage());
+            e.printStackTrace();
+
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Import Error");
+            errorAlert.setHeaderText("Import Failed");
+            errorAlert.setContentText("An error occurred while importing contacts: " + e.getMessage());
+            errorAlert.showAndWait();
+        }
+    }
+
+
 
     // Data lists
     private ObservableList<Contact> allContactsList = FXCollections.observableArrayList();
@@ -363,6 +406,7 @@ public class ContactViewController {
         createContactButton.setOnAction(e -> handleCreateContact());
         deleteSelectedButton.setOnAction(e -> handleDeleteSelected());
         exportButton.setOnAction(e -> handleExportContacts());
+        importButton.setOnAction(e -> handleImportContacts()); // ADD THIS LINE
 
         // IMPORTANT: Make sure edit columns button handler is set
         if (editColumnsButton != null) {

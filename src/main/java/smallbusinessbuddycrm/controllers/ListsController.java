@@ -665,7 +665,7 @@ public class ListsController implements Initializable {
             buttonBox.setAlignment(Pos.CENTER);
 
             // View Button - Blue/Teal
-            Button viewBtn = new Button("👁️ View");
+            Button viewBtn = new Button("View");
             viewBtn.setPrefWidth(60);
             viewBtn.setMinWidth(60);
             viewBtn.setStyle(
@@ -680,7 +680,7 @@ public class ListsController implements Initializable {
             viewBtn.setOnAction(e -> controller.openListDetailModal(list));
 
             // Add Contacts Button - Green
-            Button addContactsBtn = new Button("➕ Add");
+            Button addContactsBtn = new Button("Add");
             addContactsBtn.setPrefWidth(60);
             addContactsBtn.setMinWidth(60);
             addContactsBtn.setStyle(
@@ -695,7 +695,7 @@ public class ListsController implements Initializable {
             addContactsBtn.setOnAction(e -> controller.addContactsToList(list));
 
             // Edit Button - Orange
-            Button editBtn = new Button("✏️ Edit");
+            Button editBtn = new Button("Edit");
             editBtn.setPrefWidth(60);
             editBtn.setMinWidth(60);
             editBtn.setStyle(
@@ -710,7 +710,7 @@ public class ListsController implements Initializable {
             editBtn.setOnAction(e -> controller.editList(list));
 
             // Delete Button - Red
-            Button deleteBtn = new Button("🗑️ Delete");
+            Button deleteBtn = new Button("Delete");
             deleteBtn.setPrefWidth(70);
             deleteBtn.setMinWidth(70);
             deleteBtn.setStyle(

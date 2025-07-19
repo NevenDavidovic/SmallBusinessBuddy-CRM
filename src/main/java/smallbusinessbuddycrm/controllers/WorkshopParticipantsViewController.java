@@ -15,9 +15,14 @@ import smallbusinessbuddycrm.database.*;
 import smallbusinessbuddycrm.model.*;
 import smallbusinessbuddycrm.model.WorkshopParticipant.ParticipantType;
 import smallbusinessbuddycrm.model.WorkshopParticipant.PaymentStatus;
+import smallbusinessbuddycrm.database.TeacherDAO;
+import smallbusinessbuddycrm.model.Teacher;
+
+
 
 import java.net.URL;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class WorkshopParticipantsViewController implements Initializable {
@@ -36,6 +41,8 @@ public class WorkshopParticipantsViewController implements Initializable {
     @FXML private TableColumn<Map<String, Object>, String> notesColumn;
     @FXML private TableColumn<Map<String, Object>, String> enrollmentDateColumn;
     @FXML private TableColumn<Map<String, Object>, Void> actionsColumn;
+    @FXML private Button manageTeachersButton;
+    @FXML private Label teacherLabel;
 
     // Add Adults Tab
     @FXML private TableView<Contact> availableAdultsTable;
@@ -109,6 +116,7 @@ public class WorkshopParticipantsViewController implements Initializable {
     private WorkshopParticipantDAO participantDAO = new WorkshopParticipantDAO();
     private ContactDAO contactDAO = new ContactDAO();
     private UnderagedDAO underagedDAO = new UnderagedDAO();
+    private TeacherDAO teacherDAO = new TeacherDAO();
 
     // Current workshop
     private Workshop currentWorkshop;
@@ -406,6 +414,93 @@ public class WorkshopParticipantsViewController implements Initializable {
 
         membersOnlyAdultsFilter.setOnAction(e -> updateAdultsFilter());
         membersOnlyChildrenFilter.setOnAction(e -> updateChildrenFilter());
+
+        manageTeachersButton.setOnAction(e -> handleManageTeachers());
+    }
+
+    private void handleManageTeachers() {
+        if (currentWorkshop == null) {
+            Alert warning = new Alert(Alert.AlertType.WARNING);
+            warning.setTitle("No Workshop Selected");
+            warning.setHeaderText("Please select a workshop first");
+            warning.setContentText("You need to select a workshop before you can assign a teacher.");
+            warning.showAndWait();
+            return;
+        }
+
+        // Check if there are participants first
+        try {
+            List<Map<String, Object>> participants = participantDAO.getWorkshopParticipantsWithDetails(currentWorkshop.getId());
+
+            if (participants.isEmpty()) {
+                Alert info = new Alert(Alert.AlertType.INFORMATION);
+                info.setTitle("Add Participants First");
+                info.setHeaderText("This workshop needs participants before you can assign a teacher");
+                info.setContentText("Please add some participants to this workshop first using the 'Add Participants' tab, " +
+                        "then come back to assign a teacher.\n\n" +
+                        "Teachers are assigned to participants, so participants must be added first.");
+
+                ButtonType addParticipantsButton = new ButtonType("Go to Add Participants");
+                ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+                info.getButtonTypes().setAll(addParticipantsButton, cancelButton);
+
+                Optional<ButtonType> result = info.showAndWait();
+                if (result.isPresent() && result.get() == addParticipantsButton) {
+                    // Switch to the Add Participants tab
+                    participantsTabPane.getSelectionModel().select(1); // Index 1 = Add Participants tab
+                }
+                return;
+            }
+
+            // Proceed with teacher assignment if participants exist
+            try {
+                Stage currentStage = (Stage) manageTeachersButton.getScene().getWindow();
+                WorkshopTeacherAssignmentDialog dialog = new WorkshopTeacherAssignmentDialog(currentStage, currentWorkshop);
+
+                if (dialog.showAndWait()) {
+                    // Refresh teacher display and statistics after assignment
+                    updateTeacherDisplay();
+                    updateStatistics();
+
+                    // Show success message with teacher info
+                    List<Teacher> assignedTeachers = teacherDAO.getTeachersForWorkshop(currentWorkshop.getId());
+                    String message;
+
+                    if (assignedTeachers.isEmpty()) {
+                        message = "Teacher assignment updated. No teacher is currently assigned to this workshop.";
+                    } else {
+                        Teacher teacher = assignedTeachers.get(0);
+                        message = "Teacher assignment updated successfully!\n\n" +
+                                "Assigned Teacher: " + teacher.getFullName() +
+                                (teacher.getEmail() != null ? "\nEmail: " + teacher.getEmail() : "") +
+                                (teacher.getPhoneNum() != null ? "\nPhone: " + teacher.getPhoneNum() : "") +
+                                "\n\nAssigned to " + participants.size() + " participant" + (participants.size() == 1 ? "" : "s") + ".";
+                    }
+
+                    Alert success = new Alert(Alert.AlertType.INFORMATION);
+                    success.setTitle("Teacher Assignment Updated");
+                    success.setHeaderText("Teacher assignment updated");
+                    success.setContentText(message);
+                    success.showAndWait();
+                }
+
+            } catch (Exception e) {
+                Alert error = new Alert(Alert.AlertType.ERROR);
+                error.setTitle("Error");
+                error.setHeaderText("Failed to open teacher assignment");
+                error.setContentText("An error occurred: " + e.getMessage());
+                error.showAndWait();
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            Alert error = new Alert(Alert.AlertType.ERROR);
+            error.setTitle("Error");
+            error.setHeaderText("Failed to check participants");
+            error.setContentText("Could not check if workshop has participants: " + e.getMessage());
+            error.showAndWait();
+            e.printStackTrace();
+        }
     }
 
     private void loadWorkshopParticipants() {
@@ -452,6 +547,27 @@ public class WorkshopParticipantsViewController implements Initializable {
         }
     }
 
+    private void updateTeacherDisplay() {
+        try {
+            List<Teacher> assignedTeachers = teacherDAO.getTeachersForWorkshop(currentWorkshop.getId());
+
+            if (assignedTeachers.isEmpty()) {
+                teacherLabel.setText("Teacher: Not assigned");
+                teacherLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 12px;"); // Red color
+            } else {
+                Teacher teacher = assignedTeachers.get(0); // Get the first teacher
+                teacherLabel.setText("Teacher: " + teacher.getFullName());
+                teacherLabel.setStyle("-fx-text-fill: #28a745; -fx-font-size: 12px;"); // Green color
+            }
+        } catch (Exception e) {
+            teacherLabel.setText("Teacher: Error loading");
+            teacherLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 12px;");
+            e.printStackTrace();
+        }
+    }
+
+
+
     private void updateStatistics() {
         if (currentWorkshop == null) {
             clearStatistics();
@@ -466,12 +582,17 @@ public class WorkshopParticipantsViewController implements Initializable {
             childrenCountLabel.setText("Children: " + stats.getOrDefault("child_count", 0));
             paidCountLabel.setText("Paid: " + stats.getOrDefault("paid_count", 0));
             pendingCountLabel.setText("Pending: " + stats.getOrDefault("pending_count", 0));
+            updateTeacherDisplay();
+
         } catch (Exception e) {
+
+
             System.err.println("Error updating statistics: " + e.getMessage());
             e.printStackTrace();
             clearStatistics();
         }
     }
+
 
     private void clearStatistics() {
         totalParticipantsLabel.setText("Total: 0");
@@ -479,6 +600,8 @@ public class WorkshopParticipantsViewController implements Initializable {
         childrenCountLabel.setText("Children: 0");
         paidCountLabel.setText("Paid: 0");
         pendingCountLabel.setText("Pending: 0");
+        teacherLabel.setText("Teacher: Not assigned");
+        teacherLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 12px;");
     }
 
     // Filter methods

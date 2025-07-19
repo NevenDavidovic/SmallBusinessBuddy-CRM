@@ -787,4 +787,96 @@ public class WorkshopParticipantDAO {
 
         return participant;
     }
+
+    // ADD THESE METHODS TO YOUR EXISTING WorkshopParticipantDAO.java:
+
+    public boolean addTeacherToWorkshop(int workshopId, int teacherId) {
+        String sql = """
+        UPDATE workshop_participants 
+        SET teacher_id = ?, updated_at = ? 
+        WHERE workshop_id = ?
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            String timestamp = java.time.LocalDateTime.now().toString();
+
+            stmt.setInt(1, teacherId);
+            stmt.setString(2, timestamp);
+            stmt.setInt(3, workshopId);
+
+            int result = stmt.executeUpdate();
+
+            System.out.println("DEBUG: Updated " + result + " participant records with teacher_id=" + teacherId);
+
+            if (result > 0) {
+                System.out.println("SUCCESS: Teacher assigned to " + result + " participants!");
+                return true;
+            } else {
+                System.out.println("WARNING: No participants found for workshop " + workshopId + ". Add participants first.");
+                return false;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error adding teacher to workshop: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeTeacherFromWorkshop(int workshopId, int teacherId) {
+        String sql = """
+        UPDATE workshop_participants 
+        SET teacher_id = NULL, updated_at = ? 
+        WHERE workshop_id = ? AND teacher_id = ?
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            String timestamp = java.time.LocalDateTime.now().toString();
+
+            stmt.setString(1, timestamp);
+            stmt.setInt(2, workshopId);
+            stmt.setInt(3, teacherId);
+
+            int result = stmt.executeUpdate();
+            System.out.println("DEBUG: Removed teacher from " + result + " participant records");
+            return result >= 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error removing teacher from workshop: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeTeacherFromWorkshop(int workshopId) {
+        String sql = """
+        UPDATE workshop_participants 
+        SET teacher_id = NULL, updated_at = ? 
+        WHERE workshop_id = ?
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            String timestamp = java.time.LocalDateTime.now().toString();
+
+            stmt.setString(1, timestamp);
+            stmt.setInt(2, workshopId);
+
+            int result = stmt.executeUpdate();
+            System.out.println("DEBUG: Removed teacher from " + result + " participant records");
+            return result >= 0;
+
+        } catch (SQLException e) {
+            System.err.println("Error removing teacher from workshop: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
 }

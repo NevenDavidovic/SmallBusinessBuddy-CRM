@@ -50,7 +50,6 @@ public class WorkshopsViewController implements Initializable {
     @FXML private Button activeWorkshopsButton;
     @FXML private Button upcomingWorkshopsButton;
     @FXML private Button pastWorkshopsButton;
-    @FXML private Button exportButton;
     @FXML private Button refreshButton;
     @FXML private TextField searchField;
     @FXML private Label recordCountLabel;
@@ -284,7 +283,6 @@ public class WorkshopsViewController implements Initializable {
 
         createWorkshopButton.setOnAction(e -> handleCreateWorkshop());
         deleteSelectedButton.setOnAction(e -> handleDeleteSelected());
-        exportButton.setOnAction(e -> handleExportWorkshops());
         refreshButton.setOnAction(e -> handleRefresh());
 
         // Filter buttons
@@ -474,33 +472,6 @@ public class WorkshopsViewController implements Initializable {
             errorAlert.setHeaderText("Failed to Open Participant Management");
             errorAlert.setContentText("An error occurred while opening the participant management window: " + e.getMessage());
             errorAlert.showAndWait();
-        }
-    }
-
-    private void handleExportWorkshops() {
-        try {
-            // Get currently visible workshops (filtered/searched)
-            List<Workshop> workshopsToExport = new ArrayList<>(filteredWorkshopsList);
-
-            if (workshopsToExport.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("No Data");
-                alert.setHeaderText("No workshops to export");
-                alert.setContentText("There are no workshops visible to export. Please check your filters or add some workshops first.");
-                alert.showAndWait();
-                return;
-            }
-
-            // For now, show export info. Later implement actual CSV export
-            Alert info = new Alert(Alert.AlertType.INFORMATION);
-            info.setTitle("Export Workshops");
-            info.setHeaderText("Export functionality");
-            info.setContentText("Will export " + workshopsToExport.size() + " workshops to CSV.\nExport functionality coming soon!");
-            info.showAndWait();
-
-        } catch (Exception e) {
-            System.err.println("Error exporting workshops: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
