@@ -35,7 +35,6 @@ public class TeachersViewController implements Initializable {
     // UI Controls
     @FXML private Button createTeacherButton;
     @FXML private Button deleteSelectedButton;
-    @FXML private Button exportButton;
     @FXML private Button refreshButton;
     @FXML private TextField searchField;
     @FXML private Label recordCountLabel;
@@ -195,7 +194,6 @@ public class TeachersViewController implements Initializable {
 
         createTeacherButton.setOnAction(e -> handleCreateTeacher());
         deleteSelectedButton.setOnAction(e -> handleDeleteSelected());
-        exportButton.setOnAction(e -> handleExportTeachers());
         refreshButton.setOnAction(e -> handleRefresh());
 
         System.out.println("Event handlers setup completed");
@@ -454,33 +452,6 @@ public class TeachersViewController implements Initializable {
                 errorAlert.setContentText("An error occurred while deleting teachers: " + e.getMessage());
                 errorAlert.showAndWait();
             }
-        }
-    }
-
-    private void handleExportTeachers() {
-        try {
-            // Get currently visible teachers (filtered/searched)
-            List<Teacher> teachersToExport = new ArrayList<>(filteredTeachersList);
-
-            if (teachersToExport.isEmpty()) {
-                Alert alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("No Data");
-                alert.setHeaderText("No teachers to export");
-                alert.setContentText("There are no teachers visible to export. Please check your filters or add some teachers first.");
-                alert.showAndWait();
-                return;
-            }
-
-            // For now, show export info. Later implement actual CSV export
-            Alert info = new Alert(Alert.AlertType.INFORMATION);
-            info.setTitle("Export Teachers");
-            info.setHeaderText("Export functionality");
-            info.setContentText("Will export " + teachersToExport.size() + " teachers to CSV.\nExport functionality coming soon!");
-            info.showAndWait();
-
-        } catch (Exception e) {
-            System.err.println("Error exporting teachers: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

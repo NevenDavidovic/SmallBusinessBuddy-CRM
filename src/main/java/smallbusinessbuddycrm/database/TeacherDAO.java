@@ -267,4 +267,84 @@ public class TeacherDAO {
 
         return teacher;
     }
+
+    /**
+     * Get teachers assigned to a specific workshop
+     */
+    public List<Teacher> getTeachersForWorkshop(int workshopId) {
+        String sql = """
+        SELECT t.id, t.first_name, t.last_name, t.email, t.phone_num, 
+               t.created_at, t.updated_at
+        FROM teachers t
+        INNER JOIN workshop_participants wp ON t.id = wp.teacher_id
+        WHERE wp.workshop_id = ? AND wp.teacher_id IS NOT NULL
+        """;
+
+        List<Teacher> teachers = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, workshopId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Teacher teacher = new Teacher();
+                    teacher.setId(rs.getInt("id"));
+                    teacher.setFirstName(rs.getString("first_name"));
+                    teacher.setLastName(rs.getString("last_name"));
+                    teacher.setEmail(rs.getString("email"));
+                    teacher.setPhoneNum(rs.getString("phone_num"));
+                    teacher.setCreatedAt(rs.getString("created_at"));
+                    teacher.setUpdatedAt(rs.getString("updated_at"));
+                    teachers.add(teacher);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error getting teachers for workshop: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return teachers;
+    }
+
+    /**
+     * Check if a teacher is assigned to any workshop on conflicting dates
+     */
+    public boolean isTeacherAvailable(int teacherId, String fromDate, String toDate) {
+        String sql = """
+        SELECT COUNT(*) as conflict_count
+        FROM workshop_participants wp
+        INNER JOIN workshops w ON wp.workshop_id = w.id
+        WHERE wp.teacher_id = ? 
+        AND ((w.from_date BETWEEN ? AND ?) OR (w.to_date BETWEEN ? AND ?)
+             OR (w.from_date <= ? AND w.to_date >= ?))
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, teacherId);
+            stmt.setString(2, fromDate);
+            stmt.setString(3, toDate);
+            stmt.setString(4, fromDate);
+            stmt.setString(5, toDate);
+            stmt.setString(6, fromDate);
+            stmt.setString(7, toDate);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("conflict_count") == 0;
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error checking teacher availability: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false; // Assume not available if error occurs
+    }
+
 }

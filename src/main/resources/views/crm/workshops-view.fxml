@@ -48,7 +48,6 @@
                         <TextField fx:id="searchField" prefWidth="250.0" promptText="Search workshop name..." style="-fx-border-color: #dfe3eb;" />
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
-                                <Button fx:id="exportButton" text="Export" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                                 <Button fx:id="refreshButton" text="Refresh" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                             </children>
                         </HBox>
