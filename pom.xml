@@ -13,6 +13,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
         <javafx.version>17.0.6</javafx.version>
+        <itext.version>7.2.5</itext.version>
     </properties>
 
     <dependencies>
@@ -58,6 +59,31 @@
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
             <version>3.5.2</version>
+        </dependency>
+
+        <!-- iText7 Dependencies for PDF Generation -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>kernel</artifactId>
+            <version>${itext.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>layout</artifactId>
+            <version>${itext.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>html2pdf</artifactId>
+            <version>4.0.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>io</artifactId>
+            <version>${itext.version}</version>
         </dependency>
 
         <!-- Database -->
@@ -133,6 +159,8 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
+
 
         <!-- Testing -->
         <dependency>

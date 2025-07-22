@@ -124,16 +124,16 @@
                         </VBox>
                     </TitledPane>
 
-                    <TitledPane text="Automations" styleClass="sidebar-accordion">
+                    <TitledPane text="Design Manager" styleClass="sidebar-accordion">
                         <graphic>
                             <ImageView fitHeight="24.0" fitWidth="24.0">
                                 <Image url="@../images/icons/automations-icon.png"/>
                             </ImageView>
                         </graphic>
                         <VBox spacing="5">
-                            <Button text="Workflows" styleClass="sidebar-sub-item"/>
-                            <Button text="Sequences" styleClass="sidebar-sub-item"/>
-                            <Button text="Tasks" styleClass="sidebar-sub-item"/>
+                            <Button text="Payment template designer" styleClass="sidebar-sub-item" onAction="#handlePaymentTemplateAction"/>
+                            <Button text="Newsletter template designer" styleClass="sidebar-sub-item"/>
+                            <Button text="Payment attachments designer" styleClass="sidebar-sub-item" onAction="#handlePaymentAttachmentAction"/>
                         </VBox>
                     </TitledPane>
 

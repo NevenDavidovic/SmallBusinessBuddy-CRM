@@ -10,6 +10,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.embed.swing.SwingFXUtils;
 
+
 // Barcode generation imports - ZXing library for PDF417
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
@@ -22,15 +23,27 @@ import com.google.zxing.client.j2se.MatrixToImageWriter;
 import smallbusinessbuddycrm.database.OrganizationDAO;
 import smallbusinessbuddycrm.model.Organization;
 
+// PDF generation imports
+import com.itextpdf.html2pdf.HtmlConverter;
+
+
+// NEW: Payment Attachment imports
+import smallbusinessbuddycrm.database.PaymentAttachmentDAO;
+import smallbusinessbuddycrm.model.PaymentAttachment;
+
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Base64;
+import java.util.List;
+import javax.imageio.ImageIO;
 
 public class BarcodeGeneratorViewController implements Initializable {
 
@@ -68,6 +81,7 @@ public class BarcodeGeneratorViewController implements Initializable {
 
     // Generated Slip Action Buttons
     @FXML private Button saveSlipButton;
+    @FXML private Button savePaymentSlipButton; // NEW BUTTON
     @FXML private Button printSlipButton;
     @FXML private Button copyDataButton;
 
@@ -79,6 +93,10 @@ public class BarcodeGeneratorViewController implements Initializable {
     private OrganizationDAO organizationDAO;
     private Organization currentOrganization;
 
+    // NEW: Payment Attachment template management
+    private PaymentAttachmentDAO paymentAttachmentDAO;
+    private PaymentAttachment selectedTemplate;
+
     // Data
     private String currentPaymentData;
     private BufferedImage currentBarcodeImage;
@@ -89,6 +107,9 @@ public class BarcodeGeneratorViewController implements Initializable {
 
         // Initialize database access
         initializeDatabase();
+
+        // NEW: Initialize payment attachment templates
+        initializePaymentAttachments();
 
         setupInitialValues();
         setupEventHandlers();
@@ -114,6 +135,32 @@ public class BarcodeGeneratorViewController implements Initializable {
             System.err.println("Error initializing database: " + e.getMessage());
             e.printStackTrace();
             // Continue without database connection
+        }
+    }
+
+    // NEW: Initialize Payment Attachment templates
+    private void initializePaymentAttachments() {
+        try {
+            paymentAttachmentDAO = new PaymentAttachmentDAO();
+
+            // Load default template
+            Optional<PaymentAttachment> defaultTemplate = paymentAttachmentDAO.findDefault();
+            if (defaultTemplate.isPresent()) {
+                selectedTemplate = defaultTemplate.get();
+                System.out.println("Loaded default payment template: " + selectedTemplate.getName());
+            } else {
+                // Fallback to first available template
+                List<PaymentAttachment> templates = paymentAttachmentDAO.findAll();
+                if (!templates.isEmpty()) {
+                    selectedTemplate = templates.get(0);
+                    System.out.println("Using first available template: " + selectedTemplate.getName());
+                } else {
+                    System.err.println("No payment attachment templates found!");
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error initializing payment attachment templates: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -149,8 +196,8 @@ public class BarcodeGeneratorViewController implements Initializable {
         // Load organization data into recipient fields
         loadOrganizationData();
 
-        // Load example template by default
-        loadExampleTemplate();
+
+
     }
 
     private void loadOrganizationData() {
@@ -184,6 +231,7 @@ public class BarcodeGeneratorViewController implements Initializable {
 
         // Generated slip action buttons
         saveSlipButton.setOnAction(e -> handleSaveBarcode());
+        savePaymentSlipButton.setOnAction(e -> handleSavePaymentSlip()); // NEW HANDLER
         printSlipButton.setOnAction(e -> handlePrintBarcode());
         copyDataButton.setOnAction(e -> handleCopyData());
 
@@ -310,23 +358,7 @@ public class BarcodeGeneratorViewController implements Initializable {
         return digitsOnly;
     }
 
-    private void loadExampleTemplate() {
-        // Load example data for EUR currency (only payer info, recipient is from organization)
-        amountField.setText("0,12"); // Set as formatted currency
-        referenceField.setText("");
 
-        // Only populate payer information - recipient comes from organization
-        payerNameField.setText("Katarina Kadum");
-        payerAddressField.setText("Anke Butorac 2");
-        payerCityField.setText("52440 Poreč");
-
-        // Recipient information is loaded from organization data
-        // Don't override organization data with example data
-
-        modelField.setText(""); // Can be null/empty
-        purposeCodeField.setText("");
-        descriptionField.setText("plaćanje članarine");
-    }
 
     private void handleGenerateBarcode() {
         try {
@@ -474,16 +506,702 @@ public class BarcodeGeneratorViewController implements Initializable {
     }
 
     private void showGeneratedBarcode() {
-        // Hide placeholder
-        placeholderContent.setVisible(false);
+        try {
+            // Generate the full Croatian uplatnica template
+            String barcodeBase64 = encodeImageToBase64(currentBarcodeImage);
+            Map<String, String> variables = createVariableMap(barcodeBase64);
+            String htmlTemplate = getCroatianUplatnicaTemplate();
+            String processedHTML = processTemplate(htmlTemplate, variables);
 
-        // Convert BufferedImage to JavaFX Image and display
-        Image fxImage = SwingFXUtils.toFXImage(currentBarcodeImage, null);
-        generatedBarcodeView.setImage(fxImage);
-        generatedBarcodeView.setVisible(true);
+            // Hide placeholder
+            placeholderContent.setVisible(false);
 
-        // Show action buttons
-        actionButtonsContainer.setVisible(true);
+            // Hide the original ImageView
+            generatedBarcodeView.setVisible(false);
+
+            // Create and show WebView with full template
+            javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
+            webView.setPrefSize(950, 400);
+            webView.getEngine().loadContent(processedHTML);
+
+            // Clear the container and add the WebView
+            paymentSlipContainer.getChildren().clear();
+            paymentSlipContainer.getChildren().add(placeholderContent); // Keep placeholder for later use
+            paymentSlipContainer.getChildren().add(generatedBarcodeView); // Keep ImageView for later use
+            paymentSlipContainer.getChildren().add(webView);
+
+            // Show action buttons
+            actionButtonsContainer.setVisible(true);
+
+            System.out.println("Croatian uplatnica template displayed successfully");
+
+        } catch (Exception e) {
+            System.err.println("Error showing Croatian template: " + e.getMessage());
+            e.printStackTrace();
+
+            // Fallback to original barcode display
+            showOriginalBarcodeDisplay();
+        }
+    }
+
+    // UPDATED: Handle Save Payment Slip with Template Selection
+    private void handleSavePaymentSlip() {
+        if (currentBarcodeImage == null || currentPaymentData == null) {
+            showAlert("No Payment Data", "Please generate a barcode first.", Alert.AlertType.WARNING);
+            return;
+        }
+
+        try {
+            // Show template selection dialog
+            PaymentAttachment chosenTemplate = showTemplateSelectionDialog();
+            if (chosenTemplate == null) {
+                return; // User cancelled
+            }
+
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Save Payment Slip");
+
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            fileChooser.setInitialFileName("HUB3_Payment_Slip_" + timestamp);
+
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("PDF Files", "*.pdf"),
+                    new FileChooser.ExtensionFilter("HTML Files", "*.html"),
+                    new FileChooser.ExtensionFilter("All Files", "*.*")
+            );
+
+            Stage stage = (Stage) savePaymentSlipButton.getScene().getWindow();
+            File file = fileChooser.showSaveDialog(stage);
+
+            if (file != null) {
+                String fileName = file.getName().toLowerCase();
+
+                if (fileName.endsWith(".pdf")) {
+                    savePaymentSlipAsPDF(file, chosenTemplate);
+                    showSuccess("Payment slip saved as PDF using template: " + chosenTemplate.getName());
+                } else if (fileName.endsWith(".html")) {
+                    savePaymentSlipAsHTML(file, chosenTemplate);
+                    showSuccess("Payment slip saved as HTML using template: " + chosenTemplate.getName());
+                } else {
+                    // Default to PDF if no extension specified
+                    File pdfFile = new File(file.getAbsolutePath() + ".pdf");
+                    savePaymentSlipAsPDF(pdfFile, chosenTemplate);
+                    showSuccess("Payment slip saved as PDF using template: " + chosenTemplate.getName());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error saving payment slip: " + e.getMessage());
+            e.printStackTrace();
+            showAlert("Save Error", "Failed to save payment slip: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    // NEW: Show template selection dialog
+    private PaymentAttachment showTemplateSelectionDialog() {
+        try {
+            List<PaymentAttachment> templates = paymentAttachmentDAO.findAll();
+
+            if (templates.isEmpty()) {
+                showAlert("No Templates", "No payment templates found. Please create at least one template first.", Alert.AlertType.WARNING);
+                return null;
+            }
+
+            // Create choice dialog
+            ChoiceDialog<PaymentAttachment> dialog = new ChoiceDialog<>(selectedTemplate, templates);
+            dialog.setTitle("Select Payment Template");
+            dialog.setHeaderText("Choose a template for your payment slip:");
+            dialog.setContentText("Template:");
+
+            // Customize the dialog
+            dialog.getDialogPane().setPrefWidth(400);
+
+            Optional<PaymentAttachment> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                selectedTemplate = result.get(); // Remember choice for next time
+                return result.get();
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading templates: " + e.getMessage());
+            showAlert("Template Error", "Failed to load templates: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+
+        return null; // User cancelled or error occurred
+    }
+
+    private void savePaymentSlipAsPDF(File file, PaymentAttachment template) throws Exception {
+        // Create HTML content using selected template
+        String htmlContent = generatePaymentSlipHTML(template);
+
+        // Convert HTML to PDF using iText
+        try (FileOutputStream outputStream = new FileOutputStream(file)) {
+            HtmlConverter.convertToPdf(htmlContent, outputStream);
+        }
+    }
+
+    private void savePaymentSlipAsHTML(File file, PaymentAttachment template) throws Exception {
+        String htmlContent = generatePaymentSlipHTML(template);
+
+        try (FileWriter writer = new FileWriter(file, java.nio.charset.StandardCharsets.UTF_8)) {
+            writer.write(htmlContent);
+        }
+    }
+
+    // UPDATED: Generate HTML using selected template
+    private String generatePaymentSlipHTML(PaymentAttachment template) throws Exception {
+        // Convert barcode image to base64 for embedding
+        String barcodeBase64 = encodeImageToBase64(currentBarcodeImage);
+
+        // Create variables map for template processing
+        Map<String, String> variables = createVariableMap(barcodeBase64);
+
+        // Process template variables
+        return processTemplate(template.getHtmlContent(), variables);
+    }
+
+
+    private Map<String, String> createVariableMap(String barcodeBase64) {
+        Map<String, String> variables = new HashMap<>();
+
+        // Current date
+        variables.put("CURRENT_DATE", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")));
+
+        // Payment Information
+        variables.put("AMOUNT", amountField.getText().isEmpty() ? "0,00" : amountField.getText());
+        variables.put("REFERENCE", referenceField.getText());
+        variables.put("MODEL", modelField.getText());
+        variables.put("PURPOSE", purposeCodeField.getText());
+        variables.put("DESCRIPTION", descriptionField.getText().replace("\n", "<br>"));
+
+        // Payer Information
+        variables.put("PAYER_NAME", payerNameField.getText());
+        variables.put("PAYER_ADDRESS", payerAddressField.getText());
+        variables.put("PAYER_CITY", payerCityField.getText());
+
+        // Recipient Information
+        variables.put("RECIPIENT_NAME", recipientNameField.getText());
+        variables.put("RECIPIENT_ADDRESS", recipientAddressField.getText());
+        variables.put("RECIPIENT_CITY", recipientCityField.getText());
+        variables.put("RECIPIENT_IBAN", ibanField.getText());
+
+        // Technical
+        variables.put("BARCODE_BASE64", barcodeBase64);
+        variables.put("BANK_CODE", FIXED_BANK_CODE);
+
+        // NEW: Uplatnica background image as base64
+        variables.put("BACKGROUND_IMAGE_BASE64", getUplatnicaBackgroundBase64());
+
+        return variables;
+    }
+
+    // NEW: Get the Croatian Uplatnica template HTML
+    private String getCroatianUplatnicaTemplate() {
+        return """
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Croatian Uplatnica</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .uplatnica-form-img {
+            border: 2px solid #ffffff;
+            width: 931px;
+            height: 380px;
+            background-size: cover;
+            background-image: url('data:image/png;base64,{{BACKGROUND_IMAGE_BASE64}}');
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .uplatnica-form-img .platitelj {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            max-width: 200px;
+            left: 31px;
+            top: 44px;
+        }
+        
+        .uplatnica-form-img .platitelj .field {
+            height: 20px;
+            border: 0px solid #a26b6b;
+            font-size: 12px;
+            background: transparent;
+            color: #000;
+            margin-bottom: 2px;
+        }
+        
+        .uplatnica-form-img .iban-primatelja {
+            position: absolute;
+            top: 121px;
+            left: 335px;
+            border: 0 solid transparent;
+            background-color: transparent;
+            font-size: 12px;
+            letter-spacing: 8px;
+            max-width: 312px;
+            width: 100%;
+            height: 27px;
+            color: #000;
+        }
+        
+        .uplatnica-form-img .iznos {
+            left: 595px;
+            position: absolute;
+            top: 28px;
+            background: transparent;
+            font-size: 12px;
+            letter-spacing: 0px;
+            border: 0 solid;
+            max-width: 200px;
+            text-align: end;
+            letter-spacing: 3px;
+            height: 27px;
+            padding-top: 5px;
+            color: #000;
+        }
+        
+        .uplatnica-form-img .valuta {
+            width: 50px;
+            height: 27px;
+            top: 32px;
+            position: absolute;
+            left: 345px;
+            border: 0 solid;
+            background: transparent;
+            font-size: 12px;
+            color: #000;
+        }
+        
+        .uplatnica-form-img .primatelj {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            max-width: 200px;
+            left: 31px;
+            top: 170px;
+        }
+        
+        .uplatnica-form-img .primatelj .field {
+            height: 20px;
+            border: 0px solid #a26b6b;
+            font-size: 12px;
+            background: transparent;
+            color: #000;
+            margin-bottom: 2px;
+        }
+        
+        .uplatnica-form-img .model-placanja {
+            position: absolute;
+            top: 160px;
+            background: transparent;
+            left: 240px;
+            letter-spacing: 7px;
+            width: 57px;
+            height: 27px;
+            border: 0 solid;
+            font-size: 12px;
+            color: #000;
+        }
+        
+        .uplatnica-form-img .opis-placanja {
+            width: 249px;
+            position: absolute;
+            background: transparent;
+            top: 180px;
+            left: 384px;
+            height: 50px;
+            border: 0 solid;
+            font-size: 12px;
+            color: #000;
+        }
+        
+        .uplatnica-form-img .poziv-na-broj-primatelja {
+            height: 27px;
+            width: 200px;
+            position: absolute;
+            top: 154px;
+            left: 330px;
+            border: 0 solid;
+            background: transparent;
+            font-size: 14px;
+            color: #000;
+            padding-top: 5px;
+        }
+        
+        .uplatnica-form-img .sifra-namjene {
+            height: 27px;
+            position: absolute;
+            top: 199px;
+            left: 250px;
+            border: 0 solid;
+            background: transparent;
+            font-size: 12px;
+            color: #000;
+        }
+        
+        .uplatnica-form-img .generated-barcode {
+            position: absolute;
+            width: 250px;
+            left: 30px;
+            bottom: 33px;
+        }
+        
+        .uplatnica-form-img .generated-barcode img {
+            width: 100%;
+        }
+        
+        .uplatnica-form-img .iznos-desno {
+            height: 27px;
+            padding-top: 5px;
+            position: absolute;
+            right: 19px;
+            top: 26px;
+            background: transparent;
+            border: 0 solid;
+            font-size: 12px;
+            color: #000;
+            text-align: right;
+            letter-spacing: 3px;
+        }
+        
+        .uplatnica-form-img .model-placanja-desno {
+            position: absolute;
+            right: 194px;
+            top: 123px;
+            background: transparent;
+            border: 0;
+            font-size: 12px;
+            color: #000;
+        }
+        
+        .uplatnica-form-img .iban-primatelja-desno {
+            position: absolute;
+            right: 30px;
+            top: 120px;
+            border: transparent;
+            background: transparent;
+            padding-top: 3px;
+            font-size: 12px;
+            height: 33px;
+            color: #000;
+        }
+        
+        .uplatnica-form-img .poziv-na-broj-primatelja-desno {
+            position: absolute;
+            right: 30px;
+            top: 156px;
+            border: 0 solid;
+            background: transparent;
+            padding-top: 3px;
+            padding-bottom: 10px;
+            height: 33px;
+            font-size: 12px;
+            color: #000;
+        }
+        
+        .uplatnica-form-img .opis-placanja-desno {
+            position: absolute;
+            bottom: 149px;
+            right: 12px;
+            width: 238px;
+            border: 0 transparent;
+            background: transparent;
+            height: 45px;
+            font-size: 12px;
+            padding-top: 5px;
+            word-wrap: break-word;
+            word-break: break-all;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="uplatnica-form-img">
+        <!-- Payer Information -->
+        <div class="platitelj">
+            <div class="field">{{PAYER_NAME}}</div>
+            <div class="field">{{PAYER_ADDRESS}}</div>
+            <div class="field">{{PAYER_CITY}}</div>
+        </div>
+
+        <!-- Currency -->
+        <div class="valuta">EUR</div>
+
+        <!-- Amount -->
+        <div class="iznos">{{AMOUNT}}</div>
+
+        <!-- IBAN -->
+        <div class="iban-primatelja">{{RECIPIENT_IBAN}}</div>
+
+        <!-- Recipient Information -->
+        <div class="primatelj">
+            <div class="field">{{RECIPIENT_NAME}}</div>
+            <div class="field">{{RECIPIENT_ADDRESS}}</div>
+            <div class="field">{{RECIPIENT_CITY}}</div>
+        </div>
+
+        <!-- Payment Model -->
+        <div class="model-placanja">{{MODEL}}</div>
+
+        <!-- Reference Number -->
+        <div class="poziv-na-broj-primatelja">{{REFERENCE}}</div>
+
+        <!-- Purpose Code -->
+        <div class="sifra-namjene">{{PURPOSE}}</div>
+
+        <!-- Description -->
+        <div class="opis-placanja">{{DESCRIPTION}}</div>
+
+        <!-- Barcode -->
+        <div class="generated-barcode">
+            <img src="data:image/png;base64,{{BARCODE_BASE64}}" alt="Generated Barcode" />
+        </div>
+
+        <!-- Right side duplicated fields -->
+        <div class="iznos-desno">{{AMOUNT}}</div>
+        <div class="iban-primatelja-desno">{{RECIPIENT_IBAN}}</div>
+        <div class="model-placanja-desno">{{MODEL}}</div>
+        <div class="poziv-na-broj-primatelja-desno">{{REFERENCE}}</div>
+        <div class="opis-placanja-desno">{{DESCRIPTION}}</div>
+    </div>
+</body>
+</html>""";
+    }
+
+
+    // NEW: Process template by replacing variables
+    private String processTemplate(String htmlTemplate, Map<String, String> variables) {
+        String processed = htmlTemplate;
+
+        // Replace all variables in the format {{VARIABLE_NAME}}
+        for (Map.Entry<String, String> entry : variables.entrySet()) {
+            String placeholder = "{{" + entry.getKey() + "}}";
+            String value = entry.getValue() != null ? entry.getValue() : "";
+            processed = processed.replace(placeholder, value);
+        }
+
+        return processed;
+    }
+
+    // Keep the old method for backward compatibility (fallback to default template)
+    private String generatePaymentSlipHTML() throws Exception {
+        if (selectedTemplate == null) {
+            // Fallback to hardcoded template if no template selected
+            return generateFallbackHTML();
+        }
+        return generatePaymentSlipHTML(selectedTemplate);
+    }
+
+    // Fallback HTML generation (your original method)
+    private String generateFallbackHTML() throws Exception {
+        String barcodeBase64 = encodeImageToBase64(currentBarcodeImage);
+        String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+
+        return String.format("""
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUB-3 Payment Slip</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0099cc;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            color: #0099cc;
+            margin: 0;
+            font-size: 24px;
+        }
+        .payment-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+        .section {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #0099cc;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .field {
+            margin-bottom: 8px;
+        }
+        .field-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 100px;
+            color: #555;
+        }
+        .field-value {
+            color: #333;
+        }
+        .barcode-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            background-color: #f8f9fa;
+        }
+        .barcode-image {
+            max-width: 100%%;
+            height: auto;
+            border: 1px solid #333;
+            background-color: white;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        .amount-highlight {
+            font-size: 18px;
+            font-weight: bold;
+            color: #28a745;
+        }
+        @media print {
+            body { margin: 10px; }
+            .header h1 { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🇭🇷 Croatian HUB-3 Payment Slip</h1>
+        <p>Generated on: %s</p>
+    </div>
+
+    <div class="payment-info">
+        <div class="section">
+            <h3>💳 Payment Information</h3>
+            <div class="field">
+                <span class="field-label">Amount:</span>
+                <span class="field-value amount-highlight">%s EUR</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Reference:</span>
+                <span class="field-value">%s</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Model:</span>
+                <span class="field-value">%s</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Purpose:</span>
+                <span class="field-value">%s</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Description:</span>
+                <span class="field-value">%s</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>👤 Payer Information</h3>
+            <div class="field">
+                <span class="field-label">Name:</span>
+                <span class="field-value">%s</span>
+            </div>
+            <div class="field">
+                <span class="field-label">Address:</span>
+                <span class="field-value">%s</span>
+            </div>
+            <div class="field">
+                <span class="field-label">City:</span>
+                <span class="field-value">%s</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>🏢 Recipient Information</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <div class="field">
+                    <span class="field-label">Company:</span>
+                    <span class="field-value">%s</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Address:</span>
+                    <span class="field-value">%s</span>
+                </div>
+            </div>
+            <div>
+                <div class="field">
+                    <span class="field-label">City:</span>
+                    <span class="field-value">%s</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">IBAN:</span>
+                    <span class="field-value">%s</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="barcode-section">
+        <h3>📊 HUB-3 PDF417 Barcode</h3>
+        <p>Scan this barcode with your banking app to make the payment</p>
+        <img src="data:image/png;base64,%s" alt="HUB-3 PDF417 Barcode" class="barcode-image">
+    </div>
+
+    <div class="footer">
+        <p><strong>HUB-3 Payment Standard</strong> | Croatian Banking Association</p>
+        <p>This barcode contains all payment information in PDF417 format</p>
+        <p>Currency: EUR | Bank Code: %s</p>
+    </div>
+</body>
+</html>""",
+                currentDate,
+                amountField.getText().isEmpty() ? "0,00" : amountField.getText(),
+                referenceField.getText(),
+                modelField.getText(),
+                purposeCodeField.getText(),
+                descriptionField.getText().replace("\n", "<br>"),
+                payerNameField.getText(),
+                payerAddressField.getText(),
+                payerCityField.getText(),
+                recipientNameField.getText(),
+                recipientAddressField.getText(),
+                recipientCityField.getText(),
+                ibanField.getText(),
+                barcodeBase64,
+                FIXED_BANK_CODE
+        );
+    }
+
+    private String encodeImageToBase64(BufferedImage image) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+        byte[] imageBytes = baos.toByteArray();
+        return Base64.getEncoder().encodeToString(imageBytes);
     }
 
     private void handleLoadTemplate() {
@@ -721,5 +1439,80 @@ public class BarcodeGeneratorViewController implements Initializable {
                     currentOrganization.getFullAddress());
         }
         return "No organization loaded";
+    }
+
+    // NEW: Public method to refresh payment attachment templates
+    public void refreshPaymentTemplates() {
+        initializePaymentAttachments();
+    }
+
+    // NEW: Public method to get current selected template
+    public PaymentAttachment getCurrentTemplate() {
+        return selectedTemplate;
+    }
+
+    // NEW: Public method to set template (for external calls)
+    public void setTemplate(PaymentAttachment template) {
+        if (template != null) {
+            this.selectedTemplate = template;
+            System.out.println("Template set to: " + template.getName());
+        }
+    }
+
+    private String getUplatnicaBackgroundBase64() {
+        try {
+            // Load the image from resources
+            InputStream imageStream = getClass().getResourceAsStream("/images/uplatnica.png");
+            if (imageStream == null) {
+                System.err.println("Uplatnica background image not found: /images/uplatnica.png");
+                return "";
+            }
+
+            // Read the image into a byte array
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = imageStream.read(buffer)) != -1) {
+                baos.write(buffer, 0, length);
+            }
+            imageStream.close();
+
+            // Convert to base64
+            String base64Image = Base64.getEncoder().encodeToString(baos.toByteArray());
+            return base64Image; // Return just the base64 string, not with data: prefix
+
+        } catch (IOException e) {
+            System.err.println("Error loading uplatnica background image: " + e.getMessage());
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    private void showFullTemplateInWebView(String htmlContent) {
+        // Option 1: If you have a WebView in your FXML
+        // webView.getEngine().loadContent(htmlContent);
+
+        // Option 2: Create WebView programmatically and replace the ImageView
+        javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
+        webView.setPrefSize(950, 400);
+        webView.getEngine().loadContent(htmlContent);
+
+        // Clear the container and add the WebView
+        paymentSlipContainer.getChildren().clear();
+        paymentSlipContainer.getChildren().add(webView);
+    }
+
+    // Fallback method (your original display)
+    private void showOriginalBarcodeDisplay() {
+        // Hide placeholder
+        placeholderContent.setVisible(false);
+
+        // Convert BufferedImage to JavaFX Image and display
+        Image fxImage = SwingFXUtils.toFXImage(currentBarcodeImage, null);
+        generatedBarcodeView.setImage(fxImage);
+        generatedBarcodeView.setVisible(true);
+
+        // Show action buttons
+        actionButtonsContainer.setVisible(true);
     }
 }
