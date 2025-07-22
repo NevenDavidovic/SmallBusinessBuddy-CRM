@@ -72,6 +72,7 @@
                 <columns>
                     <TableColumn fx:id="selectColumn" prefWidth="40.0" text="" />
                     <TableColumn fx:id="editColumn" prefWidth="60.0" text="EDIT" />
+                    <TableColumn fx:id="barcodeColumn" prefWidth="60.0" text="BARCODE" />
                     <TableColumn fx:id="firstNameColumn" text="FIRST NAME" prefWidth="120.0" />
                     <TableColumn fx:id="lastNameColumn" text="LAST NAME" prefWidth="120.0" />
                     <TableColumn fx:id="birthdayColumn" text="BIRTHDAY" prefWidth="100.0" />

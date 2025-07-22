@@ -15,6 +15,10 @@ module smallbusinessbuddycrm {
     requires javafx.swing;
     requires com.google.zxing;
     requires com.google.zxing.javase;
+    requires kernel;
+    requires html2pdf;
+    requires layout;
+    requires io;
 
     opens smallbusinessbuddycrm to javafx.fxml;
     exports smallbusinessbuddycrm;

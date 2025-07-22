@@ -42,6 +42,7 @@ public class ContactViewController {
     @FXML private TableColumn<Contact, String> memberUntilColumn;
     @FXML private TableColumn<Contact, String> createdAtColumn;
     @FXML private TableColumn<Contact, String> updatedAtColumn;
+    @FXML private TableColumn<Contact, Void> barcodeColumn;
 
     // UI Controls - MAKE SURE THESE ARE DECLARED
     @FXML private Button createContactButton;
@@ -55,6 +56,7 @@ public class ContactViewController {
     @FXML private TextField searchField;
     @FXML private Label recordCountLabel;
     @FXML private Button importButton;
+
 
     private void handleImportContacts() {
         try {
@@ -207,6 +209,29 @@ public class ContactViewController {
                 }
             }
         });
+        barcodeColumn.setCellFactory(tc -> new TableCell<Contact, Void>() {
+            private final Button barcodeButton = new Button("💳");
+
+            {
+                barcodeButton.setStyle("-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-border-radius: 3; -fx-font-size: 10px;");
+                barcodeButton.setPrefWidth(50);
+                barcodeButton.setTooltip(new Tooltip("Generate HUB-3 Payment Barcode"));
+                barcodeButton.setOnAction(event -> {
+                    Contact contact = getTableView().getItems().get(getIndex());
+                    handleGenerateHUB3Barcode(contact);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(barcodeButton);
+                }
+            }});
+
 
         // Set up edit button column
         editColumn.setCellFactory(tc -> new TableCell<Contact, Void>() {
@@ -284,6 +309,8 @@ public class ContactViewController {
                 new SimpleStringProperty(cellData.getValue().getCreatedAt()));
         updatedAtColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getUpdatedAt()));
+
+
     }
 
     private void setupSearchAndFilters() {
@@ -732,6 +759,26 @@ public class ContactViewController {
         } catch (Exception e) {
             System.err.println("Error getting upcoming birthdays: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void handleGenerateHUB3Barcode(Contact contact) {
+        try {
+            Stage currentStage = (Stage) createContactButton.getScene().getWindow();
+            BarcodePaymentDialog dialog = new BarcodePaymentDialog(currentStage, contact);
+            dialog.showAndWait();
+
+            System.out.println("HUB-3 barcode dialog closed for contact: " + contact.getFirstName() + " " + contact.getLastName());
+
+        } catch (Exception e) {
+            System.err.println("Error opening HUB-3 barcode dialog: " + e.getMessage());
+            e.printStackTrace();
+
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Error");
+            errorAlert.setHeaderText("HUB-3 Barcode Generation Failed");
+            errorAlert.setContentText("An error occurred while opening the HUB-3 barcode generator: " + e.getMessage());
+            errorAlert.showAndWait();
         }
     }
 }

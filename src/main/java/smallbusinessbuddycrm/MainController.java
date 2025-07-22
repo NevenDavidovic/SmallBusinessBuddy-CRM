@@ -257,8 +257,14 @@ public class MainController {
     private void handleEmailTemplateAction() {
         navigateTo("/views/marketing/email-builder.fxml");
     }
+    @FXML
+    private void handlePaymentTemplateAction() {
+        navigateTo("/views/commerce/payment-template-view.fxml");
+    }
 
 
+    @FXML
+    private void handlePaymentAttachmentAction(){navigateTo("/views/commerce/payment-attachment-view.fxml");}
     @FXML
     private void handleSettingsAction() {
         navigateTo("/com/example/smallbusinessbuddy_crm/views/settings_view.fxml");
