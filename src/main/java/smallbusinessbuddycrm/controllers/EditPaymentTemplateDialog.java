@@ -168,7 +168,7 @@ public class EditPaymentTemplateDialog {
         Label refLabel = new Label("Reference Template:");
         refLabel.setStyle("-fx-font-weight: bold;");
         referenceField = new TextField();
-        referenceField.setPromptText("Optional - use {contact_id} for auto-generation");
+
 
         VBox refBox = new VBox(5);
         refBox.getChildren().add(referenceField);
