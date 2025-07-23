@@ -196,7 +196,7 @@ public class BarcodeGeneratorViewController implements Initializable {
         // Load organization data into recipient fields
         loadOrganizationData();
 
-
+        // Load example template by default
 
     }
 
