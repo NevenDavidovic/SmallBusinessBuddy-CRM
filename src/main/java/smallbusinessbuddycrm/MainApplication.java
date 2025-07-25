@@ -11,7 +11,7 @@ import smallbusinessbuddycrm.controllers.OrganizationSetupDialog;
 
 import java.util.Optional;
 
-public class    MainApplication extends Application {
+public class MainApplication extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {

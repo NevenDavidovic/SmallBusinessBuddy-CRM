@@ -1,22 +1,31 @@
 package smallbusinessbuddycrm.controllers;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import smallbusinessbuddycrm.database.PaymentTemplateDAO;
 import smallbusinessbuddycrm.model.Contact;
 import smallbusinessbuddycrm.database.ContactDAO;
 import smallbusinessbuddycrm.database.DatabaseConnection;
 import javafx.stage.Stage;
+import smallbusinessbuddycrm.model.PaymentTemplate;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class ContactViewController {
@@ -28,9 +37,9 @@ public class ContactViewController {
     @FXML private TableColumn<Contact, Void> editColumn;
     @FXML private TableColumn<Contact, String> firstNameColumn;
     @FXML private TableColumn<Contact, String> lastNameColumn;
-    @FXML private TableColumn<Contact, String> birthdayColumn; // Added birthday column
-    @FXML private TableColumn<Contact, String> ageColumn; // Added age column
-    @FXML private TableColumn<Contact, String> pinColumn; // Added PIN column
+    @FXML private TableColumn<Contact, String> birthdayColumn;
+    @FXML private TableColumn<Contact, String> ageColumn;
+    @FXML private TableColumn<Contact, String> pinColumn;
     @FXML private TableColumn<Contact, String> emailColumn;
     @FXML private TableColumn<Contact, String> phoneColumn;
     @FXML private TableColumn<Contact, String> streetNameColumn;
@@ -44,6 +53,7 @@ public class ContactViewController {
     @FXML private TableColumn<Contact, String> updatedAtColumn;
     @FXML private TableColumn<Contact, Void> barcodeColumn;
 
+
     // UI Controls - MAKE SURE THESE ARE DECLARED
     @FXML private Button createContactButton;
     @FXML private Button deleteSelectedButton;
@@ -51,11 +61,183 @@ public class ContactViewController {
     @FXML private Button membersButton;
     @FXML private Button nonMembersButton;
     @FXML private Button exportButton;
-    @FXML private Button editColumnsButton; // THIS MUST BE HERE
-    @FXML private Button upcomingBirthdaysButton; // New button for birthday filter
+    @FXML private Button editColumnsButton;
+    @FXML private Button upcomingBirthdaysButton;
     @FXML private TextField searchField;
     @FXML private Label recordCountLabel;
     @FXML private Button importButton;
+    @FXML private Button generateBarcodeButton;
+
+
+    @FXML
+    private void handleGenerateBarcode() {
+        System.out.println("🔧 Generate Barcode button clicked");
+
+        // Get all selected contacts from the filtered list
+        List<Contact> selectedContacts = filteredContactsList.stream()
+                .filter(Contact::isSelected)
+                .collect(Collectors.toList());
+
+        if (selectedContacts.isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("No Selection");
+            alert.setHeaderText("No contacts selected");
+            alert.setContentText("Please select one or more contacts to generate barcodes for using the checkboxes.");
+            alert.showAndWait();
+            return;
+        }
+
+        try {
+            System.out.println("🔧 First selecting payment template...");
+
+            // Step 1: Load and show payment template selection
+            PaymentTemplate selectedTemplate = showPaymentTemplateSelectionDialog();
+            if (selectedTemplate == null) {
+                System.out.println("🔧 No payment template selected, cancelling barcode generation");
+                return; // User cancelled template selection
+            }
+
+            System.out.println("🔧 Selected payment template: " + selectedTemplate.getName());
+            System.out.println("🔧 Opening MultipleGenerationBarcodeDialog with " + selectedContacts.size() + " selected contacts");
+
+            // Step 2: Open the main barcode generation dialog with template and contacts
+            Stage currentStage = (Stage) generateBarcodeButton.getScene().getWindow();
+            MultipleGenerationBarcodeDialog dialog = new MultipleGenerationBarcodeDialog(currentStage, selectedContacts, selectedTemplate);
+            dialog.showAndWait();
+
+            System.out.println("🔧 MultipleGenerationBarcodeDialog closed");
+
+        } catch (Exception e) {
+            System.err.println("Error opening barcode generation dialog: " + e.getMessage());
+            e.printStackTrace();
+
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Error");
+            errorAlert.setHeaderText("Barcode Generation Failed");
+            errorAlert.setContentText("An error occurred while opening the barcode generator: " + e.getMessage());
+            errorAlert.showAndWait();
+        }
+    }
+
+    private PaymentTemplate showPaymentTemplateSelectionDialog() {
+        try {
+            System.out.println("🔧 Loading payment templates...");
+            PaymentTemplateDAO dao = new PaymentTemplateDAO();
+            List<PaymentTemplate> templates = dao.getActivePaymentTemplates();
+
+            System.out.println("🔧 Found " + templates.size() + " active payment templates");
+
+            if (templates.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("No Payment Templates");
+                alert.setHeaderText("No active payment templates found");
+                alert.setContentText("Please create at least one active payment template before generating barcodes.");
+                alert.showAndWait();
+                return null;
+            }
+
+            // Create choice dialog
+            ChoiceDialog<PaymentTemplate> dialog = new ChoiceDialog<>(templates.get(0), templates);
+            dialog.setTitle("Select Payment Template");
+            dialog.setHeaderText("Choose a payment template for barcode generation:");
+            dialog.setContentText("Payment Template:");
+
+            dialog.getDialogPane().setPrefWidth(500);
+            Stage currentStage = (Stage) generateBarcodeButton.getScene().getWindow();
+            dialog.initOwner(currentStage);
+
+            // "Show Details" section
+            VBox infoPane = createTemplateInfoPane(templates.get(0));
+            infoPane.setStyle("-fx-text-fill: white; -fx-background-color: #ff7a59;");
+            dialog.getDialogPane().setExpandableContent(infoPane);
+
+            // 🔸 Result label (to display user action in white)
+            Label resultLabel = new Label();
+            resultLabel.setStyle("-fx-text-fill: white; -fx-padding: 10 0 0 0;");
+
+            // Combine dialog content + result label into one VBox
+            VBox combinedContent = new VBox(10);
+            combinedContent.getChildren().addAll(dialog.getDialogPane().getContent(), resultLabel);
+            dialog.getDialogPane().setContent(combinedContent);
+
+            // 🔸 Style components after dialog loads
+            Platform.runLater(() -> {
+                // White label for "Payment Template:"
+                dialog.getDialogPane().lookupAll(".label").forEach(node -> {
+                    if (node instanceof Label label && label.getText().contains("Payment Template:")) {
+                        label.setStyle("-fx-text-fill: white;");
+                    }
+                });
+
+                // Orange OK button with white text
+                dialog.getDialogPane().lookupButton(ButtonType.OK).setStyle(
+                        "-fx-background-color: #ff7a59; -fx-text-fill: white;"
+                );
+            });
+
+            // Show the dialog and handle result
+            Optional<PaymentTemplate> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                PaymentTemplate selectedTemplate = result.get();
+                resultLabel.setText("✅ Selected: " + selectedTemplate.getName());
+                resultLabel.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
+                System.out.println("🔧 User selected template: " + selectedTemplate.getName());
+                return selectedTemplate;
+            } else {
+                resultLabel.setText("❌ You cancelled the selection.");
+                resultLabel.setStyle("-fx-text-fill: white; -fx-font-style: italic;");
+                System.out.println("🔧 User cancelled template selection");
+                return null;
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error loading payment templates: " + e.getMessage());
+            e.printStackTrace();
+
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Template Loading Error");
+            errorAlert.setHeaderText("Failed to load payment templates");
+            errorAlert.setContentText("An error occurred while loading payment templates: " + e.getMessage());
+            errorAlert.showAndWait();
+
+            return null;
+        }
+    }
+
+    private VBox createTemplateInfoPane(PaymentTemplate template) {
+        VBox infoPane = new VBox(8);
+        infoPane.setPadding(new Insets(10, 10, 10, 10));
+        // Optional: use dark background for contrast or remove background entirely
+        infoPane.setStyle("-fx-background-color: transparent;");
+
+        if (template != null) {
+            Label nameLabel = new Label("Template: " + template.getName());
+            nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px; -fx-text-fill: white;");
+
+            Label amountLabel = new Label("Amount: " + template.getAmount() + " EUR");
+            amountLabel.setStyle("-fx-text-fill: white;");
+
+            Label modelLabel = new Label("Payment Model: " +
+                    (template.getModelOfPayment() != null ? template.getModelOfPayment() : "N/A"));
+            modelLabel.setStyle("-fx-text-fill: white;");
+
+            Label descLabel = new Label("Description: " +
+                    (template.getDescription() != null && !template.getDescription().trim().isEmpty()
+                            ? template.getDescription() : "N/A"));
+            descLabel.setWrapText(true);
+            descLabel.setMaxWidth(450);
+            descLabel.setStyle("-fx-text-fill: white;");
+
+            infoPane.getChildren().addAll(nameLabel, amountLabel, modelLabel, descLabel);
+        } else {
+            Label noInfoLabel = new Label("No template information available");
+            noInfoLabel.setStyle("-fx-text-fill: #6c757d;");
+            infoPane.getChildren().add(noInfoLabel);
+        }
+
+        return infoPane;
+    }
+
 
 
     private void handleImportContacts() {
@@ -383,7 +565,7 @@ public class ContactViewController {
             return hasUpcomingBirthday(contact, 30); // Next 30 days
         }
 
-        return true; // Default: show all
+        return true;
     }
 
     private boolean hasUpcomingBirthday(Contact contact, int daysAhead) {
@@ -433,7 +615,8 @@ public class ContactViewController {
         createContactButton.setOnAction(e -> handleCreateContact());
         deleteSelectedButton.setOnAction(e -> handleDeleteSelected());
         exportButton.setOnAction(e -> handleExportContacts());
-        importButton.setOnAction(e -> handleImportContacts()); // ADD THIS LINE
+        importButton.setOnAction(e -> handleImportContacts());
+        generateBarcodeButton.setOnAction(e -> handleGenerateBarcode());
 
         // IMPORTANT: Make sure edit columns button handler is set
         if (editColumnsButton != null) {

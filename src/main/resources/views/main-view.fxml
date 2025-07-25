@@ -35,7 +35,7 @@
                     <Insets right="10.0"/>
                 </padding>
                 <!-- Table Icon -->
-                <Button styleClass="icon-button">
+                <Button styleClass="icon-button" onAction="#handleHelpTemplateAction">
                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0">
                             <Image url="@../images/icons/support-icon.png"/>

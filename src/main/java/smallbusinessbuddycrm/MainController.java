@@ -262,17 +262,21 @@ public class MainController {
         navigateTo("/views/commerce/payment-template-view.fxml");
     }
 
+    @FXML
+    private void handleHelpTemplateAction() {
+        navigateTo("/views/general/help-view.fxml");
+    }
 
     @FXML
     private void handlePaymentAttachmentAction(){navigateTo("/views/commerce/payment-attachment-view.fxml");}
     @FXML
     private void handleSettingsAction() {
-        navigateTo("/com/example/smallbusinessbuddy_crm/views/settings_view.fxml");
+        navigateTo("/views/settings_view.fxml");
     }
 
     @FXML
     private void handleProfileAction() {
-        navigateTo("/com/example/smallbusinessbuddy_crm/views/profile_view.fxml");
+        navigateTo("/views/profile_view.fxml");
     }
 
     @FXML

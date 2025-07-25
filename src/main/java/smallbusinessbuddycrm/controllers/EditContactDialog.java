@@ -59,6 +59,11 @@ public class EditContactDialog {
     private DatePicker childMemberUntilPicker;
     private TextArea childNoteTextArea;
 
+    // Button references for cleaner toggle functionality - ADD THESE FIELDS
+    private Button addChildButton;
+    private Button updateChildButton;
+    private Button cancelEditButton;
+
     // For editing existing children
     private UnderagedMember currentEditingChild = null;
     private boolean isEditingChild = false;
@@ -413,28 +418,29 @@ public class EditContactDialog {
             }
         });
 
-        // Buttons
+        // FIXED: Buttons - Assign to class fields (remove "Button" declarations)
         HBox buttonBox = new HBox(10);
-        Button addChildButton = new Button("Add Child");
+
+        addChildButton = new Button("Add Child");  // ← No "Button" declaration
         addChildButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
         addChildButton.setOnAction(e -> handleAddChild());
 
-        Button updateChildButton = new Button("Update Child");
+        updateChildButton = new Button("Update Child");  // ← No "Button" declaration
         updateChildButton.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white;");
         updateChildButton.setOnAction(e -> handleUpdateChild());
         updateChildButton.setVisible(false);
 
-        Button cancelEditButton = new Button("Cancel Edit");
+        cancelEditButton = new Button("Cancel Edit");  // ← No "Button" declaration
         cancelEditButton.setOnAction(e -> cancelChildEdit());
         cancelEditButton.setVisible(false);
 
-        Button clearFormButton = new Button("Clear Form");
+        Button clearFormButton = new Button("Clear Form");  // ← Keep "Button" here (local variable is fine)
         clearFormButton.setOnAction(e -> clearChildForm());
 
         buttonBox.getChildren().addAll(addChildButton, updateChildButton, cancelEditButton, clearFormButton);
 
-        // Store references to buttons for toggling visibility
-        buttonBox.setUserData(new Button[]{addChildButton, updateChildButton, cancelEditButton});
+        // Remove this line since we're using class fields now:
+        // buttonBox.setUserData(new Button[]{addChildButton, updateChildButton, cancelEditButton});
 
         formSection.getChildren().addAll(formTitle, childGrid, buttonBox);
         return formSection;
@@ -513,17 +519,11 @@ public class EditContactDialog {
         toggleChildFormButtons(false);
     }
 
+    // FIXED: Clean implementation using field references
     private void toggleChildFormButtons(boolean editMode) {
-        // Find the button box and toggle button visibility
-        VBox childForm = (VBox) underagedTableView.getParent();
-        HBox buttonBox = (HBox) childForm.getChildren().get(2); // Button box is third child
-        Button[] buttons = (Button[]) buttonBox.getUserData();
-
-        if (buttons != null && buttons.length >= 3) {
-            buttons[0].setVisible(!editMode); // Add button
-            buttons[1].setVisible(editMode);  // Update button
-            buttons[2].setVisible(editMode);  // Cancel button
-        }
+        addChildButton.setVisible(!editMode);      // Hide Add button when editing
+        updateChildButton.setVisible(editMode);    // Show Update button when editing
+        cancelEditButton.setVisible(editMode);     // Show Cancel button when editing
     }
 
     private boolean validateChildInput() {
