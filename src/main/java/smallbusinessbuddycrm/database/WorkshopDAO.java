@@ -60,6 +60,7 @@ public class WorkshopDAO {
                         System.out.println("First workshop loaded: " + workshop.getName() + " (" + workshop.getDateRange() + ")");
                         System.out.println("  Duration: " + workshop.getDurationInDays() + " days");
                         System.out.println("  Status: " + (workshop.isActive() ? "Active" : workshop.isUpcoming() ? "Upcoming" : "Past"));
+                        System.out.println("  Has Teacher: " + workshop.hasTeacher());
                     }
                 }
 
@@ -80,9 +81,9 @@ public class WorkshopDAO {
     public boolean createWorkshop(Workshop workshop) {
         String query = """
         INSERT INTO workshops (
-            name, from_date, to_date, 
+            name, from_date, to_date, teacher_id,
             created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?)
         """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -94,8 +95,15 @@ public class WorkshopDAO {
             stmt.setString(2, workshop.getFromDate() != null ? workshop.getFromDate().toString() : null);
             stmt.setString(3, workshop.getToDate() != null ? workshop.getToDate().toString() : null);
 
-            stmt.setString(4, workshop.getCreatedAt());
-            stmt.setString(5, workshop.getUpdatedAt());
+            // Handle teacher_id
+            if (workshop.getTeacherId() != null) {
+                stmt.setInt(4, workshop.getTeacherId());
+            } else {
+                stmt.setNull(4, Types.INTEGER);
+            }
+
+            stmt.setString(5, workshop.getCreatedAt());
+            stmt.setString(6, workshop.getUpdatedAt());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -121,7 +129,7 @@ public class WorkshopDAO {
     public boolean updateWorkshop(Workshop workshop) {
         String query = """
         UPDATE workshops SET 
-            name = ?, from_date = ?, to_date = ?, 
+            name = ?, from_date = ?, to_date = ?, teacher_id = ?,
             updated_at = ?
         WHERE id = ?
         """;
@@ -135,8 +143,15 @@ public class WorkshopDAO {
             stmt.setString(2, workshop.getFromDate() != null ? workshop.getFromDate().toString() : null);
             stmt.setString(3, workshop.getToDate() != null ? workshop.getToDate().toString() : null);
 
-            stmt.setString(4, java.time.LocalDateTime.now().toString());
-            stmt.setInt(5, workshop.getId());
+            // Handle teacher_id
+            if (workshop.getTeacherId() != null) {
+                stmt.setInt(4, workshop.getTeacherId());
+            } else {
+                stmt.setNull(4, Types.INTEGER);
+            }
+
+            stmt.setString(5, java.time.LocalDateTime.now().toString());
+            stmt.setInt(6, workshop.getId());
 
             int rowsAffected = stmt.executeUpdate();
 
@@ -322,12 +337,127 @@ public class WorkshopDAO {
         return workshops;
     }
 
+    // NEW: Get workshops by teacher
+    public List<Workshop> getWorkshopsByTeacher(int teacherId) {
+        List<Workshop> workshops = new ArrayList<>();
+        String query = """
+        SELECT * FROM workshops 
+        WHERE teacher_id = ?
+        ORDER BY from_date DESC, name
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, teacherId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Workshop workshop = createWorkshopFromResultSet(rs);
+                workshops.add(workshop);
+            }
+
+            System.out.println("Found " + workshops.size() + " workshops for teacher ID: " + teacherId);
+        } catch (SQLException e) {
+            System.err.println("Error getting workshops by teacher: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return workshops;
+    }
+
+    // NEW: Assign teacher to workshop
+    public boolean assignTeacherToWorkshop(int workshopId, int teacherId) {
+        String query = "UPDATE workshops SET teacher_id = ?, updated_at = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setInt(1, teacherId);
+            stmt.setString(2, java.time.LocalDateTime.now().toString());
+            stmt.setInt(3, workshopId);
+
+            int rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Teacher " + teacherId + " assigned to workshop " + workshopId);
+                return true;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error assigning teacher to workshop: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    // NEW: Remove teacher from workshop
+    public boolean removeTeacherFromWorkshop(int workshopId) {
+        String query = "UPDATE workshops SET teacher_id = NULL, updated_at = ? WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, java.time.LocalDateTime.now().toString());
+            stmt.setInt(2, workshopId);
+
+            int rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Teacher removed from workshop " + workshopId);
+                return true;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error removing teacher from workshop: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    // NEW: Get workshops with teacher information
+    public List<Workshop> getWorkshopsWithTeachers() {
+        List<Workshop> workshops = new ArrayList<>();
+        String query = """
+        SELECT w.*, t.first_name as teacher_first_name, t.last_name as teacher_last_name
+        FROM workshops w
+        LEFT JOIN teachers t ON w.teacher_id = t.id
+        ORDER BY w.from_date DESC, w.name
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+            while (rs.next()) {
+                Workshop workshop = createWorkshopFromResultSet(rs);
+                // You could add teacher name to workshop model or handle it separately
+                workshops.add(workshop);
+            }
+
+            System.out.println("Found " + workshops.size() + " workshops with teacher information");
+        } catch (SQLException e) {
+            System.err.println("Error getting workshops with teachers: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return workshops;
+    }
+
     // Helper method: Extract workshop creation logic
     private Workshop createWorkshopFromResultSet(ResultSet rs) throws SQLException {
         Workshop workshop = new Workshop();
 
         workshop.setId(rs.getInt("id"));
         workshop.setName(rs.getString("name"));
+
+        // Handle teacher_id
+        int teacherId = rs.getInt("teacher_id");
+        if (!rs.wasNull()) {
+            workshop.setTeacherId(teacherId);
+        }
 
         // Handle dates
         String fromDateStr = rs.getString("from_date");

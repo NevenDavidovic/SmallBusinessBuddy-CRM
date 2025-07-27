@@ -8,6 +8,7 @@ public class Workshop {
     private String name;
     private LocalDate fromDate;
     private LocalDate toDate;
+    private Integer teacherId; // Added teacher reference
     private String createdAt;
     private String updatedAt;
     private boolean selected; // For checkbox in UI
@@ -19,6 +20,14 @@ public class Workshop {
         this.name = name;
         this.fromDate = fromDate;
         this.toDate = toDate;
+    }
+
+    public Workshop(int id, String name, LocalDate fromDate, LocalDate toDate, Integer teacherId) {
+        this.id = id;
+        this.name = name;
+        this.fromDate = fromDate;
+        this.toDate = toDate;
+        this.teacherId = teacherId;
     }
 
     // Getters and setters
@@ -33,6 +42,9 @@ public class Workshop {
 
     public LocalDate getToDate() { return toDate; }
     public void setToDate(LocalDate toDate) { this.toDate = toDate; }
+
+    public Integer getTeacherId() { return teacherId; }
+    public void setTeacherId(Integer teacherId) { this.teacherId = teacherId; }
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
@@ -86,6 +98,10 @@ public class Workshop {
     public boolean isPast() {
         LocalDate today = LocalDate.now();
         return toDate != null && today.isAfter(toDate);
+    }
+
+    public boolean hasTeacher() {
+        return teacherId != null && teacherId > 0;
     }
 
     @Override

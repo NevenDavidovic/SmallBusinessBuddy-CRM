@@ -45,7 +45,7 @@
                 </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search workshop name..." style="-fx-border-color: #dfe3eb;" />
+                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search workshop name or teacher..." style="-fx-border-color: #dfe3eb;" />
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
                                 <Button fx:id="refreshButton" text="Refresh" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
@@ -65,13 +65,15 @@
                 <columns>
                     <TableColumn fx:id="selectColumn" prefWidth="40.0" text="" />
                     <TableColumn fx:id="editColumn" prefWidth="60.0" text="EDIT" />
-                    <TableColumn fx:id="nameColumn" text="WORKSHOP NAME" prefWidth="200.0" />
+                    <TableColumn fx:id="nameColumn" text="WORKSHOP NAME" prefWidth="180.0" />
                     <TableColumn fx:id="fromDateColumn" text="FROM DATE" prefWidth="100.0" />
                     <TableColumn fx:id="toDateColumn" text="TO DATE" prefWidth="100.0" />
                     <TableColumn fx:id="durationColumn" text="DURATION" prefWidth="80.0" />
                     <TableColumn fx:id="statusColumn" text="STATUS" prefWidth="100.0" />
+                    <TableColumn fx:id="teacherColumn" text="TEACHER" prefWidth="120.0" />
                     <TableColumn fx:id="participantCountColumn" text="PARTICIPANTS" prefWidth="100.0" />
-                    <TableColumn fx:id="manageParticipantsColumn" text="MANAGE" prefWidth="80.0" />
+                    <TableColumn fx:id="manageParticipantsColumn" text="PARTICIPANTS" prefWidth="80.0" />
+                    <TableColumn fx:id="manageTeacherColumn" text="TEACHER" prefWidth="70.0" />
                     <TableColumn fx:id="createdAtColumn" text="CREATED" prefWidth="140.0" />
                 </columns>
             </TableView>

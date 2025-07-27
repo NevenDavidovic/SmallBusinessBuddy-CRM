@@ -25,7 +25,6 @@ public class CreatePaymentTemplateDialog {
     private TextField nameField;
     private TextField amountField;
     private ComboBox<String> modelCombo;
-    private TextField referenceField;
     private CheckBox activeCheckBox;
 
     // Description fields
@@ -33,7 +32,11 @@ public class CreatePaymentTemplateDialog {
     private VBox descriptionContainer;
     private TextArea descriptionPreview;
 
-    // Contact and underaged attributes
+    // Reference field
+    private ReferenceField referenceField;
+    private TextArea referencePreview;
+
+    // Contact and underaged attributes for description
     private static final String[] CONTACT_ATTRIBUTES = {
             "first_name", "last_name", "email", "phone_num", "birthday", "pin",
             "street_name", "street_num", "postal_code", "city", "member_since", "member_until"
@@ -43,6 +46,10 @@ public class CreatePaymentTemplateDialog {
             "first_name", "last_name", "birth_date", "age", "pin", "gender",
             "is_member", "member_since", "member_until", "note"
     };
+
+    // Reference-specific attributes (only PIN allowed)
+    private static final String[] CONTACT_REFERENCE_ATTRIBUTES = {"pin"};
+    private static final String[] UNDERAGED_REFERENCE_ATTRIBUTES = {"pin"};
 
     public CreatePaymentTemplateDialog(Stage parentStage) {
         descriptionFields = new ArrayList<>();
@@ -74,7 +81,7 @@ public class CreatePaymentTemplateDialog {
 
         mainLayout.getChildren().addAll(titleLabel, formGrid, buttonBox);
 
-        Scene scene = new Scene(mainLayout, 500, 700);
+        Scene scene = new Scene(mainLayout, 500, 800);
         dialog.setScene(scene);
 
         // Focus on name field
@@ -136,21 +143,14 @@ public class CreatePaymentTemplateDialog {
         grid.add(modelLabel, 0, row);
         grid.add(modelCombo, 1, row++);
 
-        // Reference Number Template
+        // Reference Number Template - ENHANCED VERSION
         Label refLabel = new Label("Reference Template:");
         refLabel.setStyle("-fx-font-weight: bold;");
-        referenceField = new TextField();
 
-
-        VBox refBox = new VBox(5);
-        refBox.getChildren().add(referenceField);
-
-        Label refHint = new Label("💡 Leave empty for auto-generation or use {contact_id} placeholder");
-        refHint.setStyle("-fx-font-size: 10px; -fx-text-fill: #6c757d;");
-        refBox.getChildren().add(refHint);
+        VBox referenceSection = createReferenceSection();
 
         grid.add(refLabel, 0, row);
-        grid.add(refBox, 1, row++);
+        grid.add(referenceSection, 1, row++);
 
         // Active Status
         Label activeLabel = new Label("Status:");
@@ -205,6 +205,30 @@ public class CreatePaymentTemplateDialog {
         return section;
     }
 
+    private VBox createReferenceSection() {
+        VBox section = new VBox(8);
+
+        // Single reference field
+        referenceField = new ReferenceField();
+
+        // Preview
+        Label previewLabel = new Label("Preview:");
+        previewLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 11px;");
+
+        referencePreview = new TextArea();
+        referencePreview.setPrefRowCount(1);
+        referencePreview.setEditable(false);
+        referencePreview.setStyle("-fx-background-color: #f8f9fa; -fx-font-size: 10px;");
+
+        // Hint
+        Label refHint = new Label("💡 Use Contact/Underaged PIN attributes or custom numbers for dynamic references");
+        refHint.setStyle("-fx-font-size: 10px; -fx-text-fill: #6c757d;");
+
+        section.getChildren().addAll(referenceField, previewLabel, referencePreview, refHint);
+
+        return section;
+    }
+
     private void addDescriptionField() {
         if (descriptionFields.size() >= 4) {
             showAlert(Alert.AlertType.WARNING, "Maximum Fields", "Maximum 4 description fields allowed.");
@@ -242,8 +266,17 @@ public class CreatePaymentTemplateDialog {
         descriptionPreview.setText(preview.toString());
     }
 
+    private void updateReferencePreview() {
+        String value = referenceField.getTemplateValue();
+        referencePreview.setText(value);
+    }
+
     private String buildDescriptionTemplate() {
         return descriptionPreview.getText();
+    }
+
+    private String buildReferenceTemplate() {
+        return referencePreview.getText();
     }
 
     private void setupCurrencyFormatting(TextField field) {
@@ -362,7 +395,10 @@ public class CreatePaymentTemplateDialog {
             }
 
             template.setModelOfPayment(modelCombo.getValue() != null ? modelCombo.getValue().trim() : "");
-            template.setPozivNaBroj(referenceField.getText().trim());
+
+            // Use the new reference system instead of the old referenceField
+            template.setPozivNaBroj(buildReferenceTemplate());
+
             template.setActive(activeCheckBox.isSelected());
 
             // Save to database
@@ -510,6 +546,129 @@ public class CreatePaymentTemplateDialog {
             }
 
             return "";
+        }
+    }
+
+    // Inner class for reference field
+    private class ReferenceField extends HBox {
+        private ComboBox<String> typeCombo;
+        private ComboBox<String> attributeCombo;
+        private TextField customField;
+        private StackPane inputContainer;
+
+        public ReferenceField() {
+            setSpacing(5);
+            setStyle("-fx-padding: 5; -fx-border-color: #dee2e6; -fx-border-radius: 3; -fx-background-color: white;");
+
+            Label fieldLabel = new Label("Reference:");
+            fieldLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 10px;");
+            fieldLabel.setMinWidth(70);
+
+            typeCombo = new ComboBox<>();
+            typeCombo.getItems().addAll("Contact Attribute", "Underaged Attribute", "Custom Text", "Empty");
+            typeCombo.setPromptText("Select type...");
+            typeCombo.setPrefWidth(120);
+            typeCombo.setOnAction(e -> handleTypeChange());
+
+            inputContainer = new StackPane();
+            inputContainer.setPrefWidth(180);
+
+            attributeCombo = new ComboBox<>();
+            attributeCombo.setPromptText("Select attribute...");
+            attributeCombo.setPrefWidth(180);
+            attributeCombo.setOnAction(e -> updateReferencePreview());
+            attributeCombo.setVisible(false);
+
+            customField = new TextField();
+            customField.setPromptText("Enter numbers only...");
+            customField.setPrefWidth(180);
+            customField.textProperty().addListener((obs, old, text) -> updateReferencePreview());
+
+            // Restrict input to numbers only
+            customField.textProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null && !newValue.matches("\\d*")) {
+                    customField.setText(newValue.replaceAll("[^\\d]", ""));
+                }
+            });
+
+            customField.setVisible(false);
+
+            inputContainer.getChildren().addAll(attributeCombo, customField);
+
+            getChildren().addAll(fieldLabel, typeCombo, inputContainer);
+        }
+
+        private void handleTypeChange() {
+            String type = typeCombo.getValue();
+
+            if ("Contact Attribute".equals(type)) {
+                attributeCombo.getItems().clear();
+                attributeCombo.getItems().addAll(CONTACT_REFERENCE_ATTRIBUTES); // Only PIN
+                attributeCombo.setVisible(true);
+                customField.setVisible(false);
+            } else if ("Underaged Attribute".equals(type)) {
+                attributeCombo.getItems().clear();
+                attributeCombo.getItems().addAll(UNDERAGED_REFERENCE_ATTRIBUTES); // Only PIN
+                attributeCombo.setVisible(true);
+                customField.setVisible(false);
+            } else if ("Custom Text".equals(type)) {
+                attributeCombo.setVisible(false);
+                customField.setVisible(true);
+            } else if ("Empty".equals(type)) {
+                attributeCombo.setVisible(false);
+                customField.setVisible(false);
+            }
+
+            updateReferencePreview();
+        }
+
+        public String getTemplateValue() {
+            String type = typeCombo.getValue();
+
+            if ("Contact Attribute".equals(type)) {
+                String attr = attributeCombo.getValue();
+                return attr != null ? "{{contact_attributes." + attr + "}}" : "";
+            } else if ("Underaged Attribute".equals(type)) {
+                String attr = attributeCombo.getValue();
+                return attr != null ? "{{underaged_attributes." + attr + "}}" : "";
+            } else if ("Custom Text".equals(type)) {
+                String text = customField.getText();
+                return text != null && !text.trim().isEmpty() ? text.trim() : "";
+            } else if ("Empty".equals(type)) {
+                return "";
+            }
+
+            return "";
+        }
+
+        public void setToContactAttribute(String attribute) {
+            if ("pin".equals(attribute)) { // Only allow PIN
+                typeCombo.setValue("Contact Attribute");
+                handleTypeChange();
+                attributeCombo.setValue(attribute);
+            }
+        }
+
+        public void setToUnderagedAttribute(String attribute) {
+            if ("pin".equals(attribute)) { // Only allow PIN
+                typeCombo.setValue("Underaged Attribute");
+                handleTypeChange();
+                attributeCombo.setValue(attribute);
+            }
+        }
+
+        public void setToCustomText(String text) {
+            // Validate that text contains only numbers
+            if (text != null && text.matches("\\d*")) {
+                typeCombo.setValue("Custom Text");
+                handleTypeChange();
+                customField.setText(text);
+            }
+        }
+
+        public void setToEmpty() {
+            typeCombo.setValue("Empty");
+            handleTypeChange();
         }
     }
 }

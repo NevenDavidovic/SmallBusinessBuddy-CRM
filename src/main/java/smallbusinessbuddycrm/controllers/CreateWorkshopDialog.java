@@ -8,11 +8,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import smallbusinessbuddycrm.database.TeacherDAO;
 import smallbusinessbuddycrm.database.WorkshopDAO;
+import smallbusinessbuddycrm.model.Teacher;
 import smallbusinessbuddycrm.model.Workshop;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class CreateWorkshopDialog {
 
@@ -24,12 +27,16 @@ public class CreateWorkshopDialog {
     private TextField nameField;
     private DatePicker fromDatePicker;
     private DatePicker toDatePicker;
+    private ComboBox<Teacher> teacherComboBox; // NEW: Teacher selection
     private Button saveButton; // Make save button a class field so we can control it
 
     // Error labels for validation
     private Label nameErrorLabel;
     private Label fromDateErrorLabel;
     private Label toDateErrorLabel;
+
+    // DAOs
+    private TeacherDAO teacherDAO = new TeacherDAO();
 
     public CreateWorkshopDialog(Stage parentStage) {
         System.out.println("CreateWorkshopDialog constructor called"); // DEBUG
@@ -63,10 +70,11 @@ public class CreateWorkshopDialog {
 
         mainLayout.getChildren().addAll(titleLabel, workshopSection, buttonBox);
 
-        Scene scene = new Scene(mainLayout, 500, 400); // Made bigger
+        Scene scene = new Scene(mainLayout, 500, 500); // Made taller for teacher field
         dialogStage.setScene(scene);
 
-        // Initial validation to set save button state
+        // Load teachers and initial validation
+        loadTeachers();
         validateForm();
 
         System.out.println("Dialog stage created successfully"); // DEBUG
@@ -123,6 +131,38 @@ public class CreateWorkshopDialog {
         toDateErrorLabel.setVisible(false);
         grid.add(toDateErrorLabel, 1, row++);
 
+        // NEW: Teacher Selection
+        grid.add(new Label("Teacher:"), 0, row);
+        teacherComboBox = new ComboBox<>();
+        teacherComboBox.setPrefWidth(280);
+        teacherComboBox.setPromptText("Select a teacher (optional)");
+
+        // Custom string converter for teacher display
+        teacherComboBox.setConverter(new javafx.util.StringConverter<Teacher>() {
+            @Override
+            public String toString(Teacher teacher) {
+                if (teacher == null) {
+                    return "No Teacher";
+                }
+                if (teacher.getId() == -1) {
+                    return "No Teacher";
+                }
+                return teacher.getFirstName() + " " + teacher.getLastName();
+            }
+
+            @Override
+            public Teacher fromString(String string) {
+                return null; // Not needed for this use case
+            }
+        });
+
+        grid.add(teacherComboBox, 1, row++);
+
+        // Add a note about teacher assignment
+        Label teacherNote = new Label("You can assign or change the teacher later");
+        teacherNote.setStyle("-fx-text-fill: #6c757d; -fx-font-size: 10px;");
+        grid.add(teacherNote, 1, row++);
+
         // Add date validation listeners
         fromDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && toDatePicker.getValue() != null && newVal.isAfter(toDatePicker.getValue())) {
@@ -164,6 +204,39 @@ public class CreateWorkshopDialog {
         System.out.println("Buttons added to box. Total children: " + buttonBox.getChildren().size()); // DEBUG
 
         return buttonBox;
+    }
+
+    // NEW: Load teachers for selection
+    private void loadTeachers() {
+        try {
+            List<Teacher> teachers = teacherDAO.getAllTeachers();
+
+            // Add "No Teacher" option
+            Teacher noTeacher = new Teacher();
+            noTeacher.setId(-1);
+            noTeacher.setFirstName("No");
+            noTeacher.setLastName("Teacher");
+
+            teacherComboBox.getItems().clear();
+            teacherComboBox.getItems().add(noTeacher);
+            teacherComboBox.getItems().addAll(teachers);
+
+            // Set "No Teacher" as default selection
+            teacherComboBox.setValue(noTeacher);
+
+            System.out.println("Loaded " + teachers.size() + " teachers for selection");
+        } catch (Exception e) {
+            System.err.println("Error loading teachers: " + e.getMessage());
+            e.printStackTrace();
+
+            // Add just the "No Teacher" option if loading fails
+            Teacher noTeacher = new Teacher();
+            noTeacher.setId(-1);
+            noTeacher.setFirstName("No");
+            noTeacher.setLastName("Teacher");
+            teacherComboBox.getItems().add(noTeacher);
+            teacherComboBox.setValue(noTeacher);
+        }
     }
 
     private boolean validateForm() {
@@ -243,11 +316,21 @@ public class CreateWorkshopDialog {
                     okClicked = true;
                     dialogStage.close();
 
-                    // Show success message
+                    // Show success message with teacher info
+                    String successMessage = "Workshop '" + newWorkshop.getName() + "' has been created successfully!";
+                    if (newWorkshop.hasTeacher()) {
+                        Teacher selectedTeacher = teacherComboBox.getValue();
+                        if (selectedTeacher != null && selectedTeacher.getId() != -1) {
+                            successMessage += "\n\nTeacher assigned: " + selectedTeacher.getFirstName() + " " + selectedTeacher.getLastName();
+                        }
+                    } else {
+                        successMessage += "\n\nNo teacher assigned. You can assign a teacher later from the workshops view.";
+                    }
+
                     Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
                     successAlert.setTitle("Success");
                     successAlert.setHeaderText("Workshop Created");
-                    successAlert.setContentText("Workshop '" + newWorkshop.getName() + "' has been created successfully!");
+                    successAlert.setContentText(successMessage);
                     successAlert.showAndWait();
                 } else {
                     showErrorAlert("Failed to save workshop to database.");
@@ -301,6 +384,16 @@ public class CreateWorkshopDialog {
         workshop.setName(nameField.getText().trim());
         workshop.setFromDate(fromDatePicker.getValue());
         workshop.setToDate(toDatePicker.getValue());
+
+        // NEW: Set teacher if selected
+        Teacher selectedTeacher = teacherComboBox.getValue();
+        if (selectedTeacher != null && selectedTeacher.getId() != -1) {
+            workshop.setTeacherId(selectedTeacher.getId());
+            System.out.println("Teacher assigned: " + selectedTeacher.getFirstName() + " " + selectedTeacher.getLastName());
+        } else {
+            workshop.setTeacherId(null);
+            System.out.println("No teacher assigned");
+        }
 
         // Set timestamps using LocalDateTime.now().toString() format like your Contact dialog
         String now = LocalDateTime.now().toString();
