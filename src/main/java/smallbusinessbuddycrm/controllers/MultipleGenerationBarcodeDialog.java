@@ -215,7 +215,13 @@ public class MultipleGenerationBarcodeDialog {
                         ? paymentTemplate.getDescription() : "N/A"));
         templateDesc.setWrapText(true);
 
-        templateSection.getChildren().addAll(templateTitle, templateName, templateAmount, templateModel, templateDesc);
+        // Show reference template info
+        Label templateRef = new Label("Reference Template: " +
+                (paymentTemplate.getPozivNaBroj() != null && !paymentTemplate.getPozivNaBroj().trim().isEmpty()
+                        ? paymentTemplate.getPozivNaBroj() : "Auto-generated"));
+        templateRef.setWrapText(true);
+
+        templateSection.getChildren().addAll(templateTitle, templateName, templateAmount, templateModel, templateDesc, templateRef);
         return templateSection;
     }
 
@@ -357,9 +363,9 @@ public class MultipleGenerationBarcodeDialog {
         Task<Void> previewTask = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
-                // Check if payment template contains underage placeholders
-                boolean templateHasUnderagedData = templateContainsUnderagedPlaceholders(paymentTemplate.getDescription());
-                System.out.println("🔍 Template contains underage data: " + templateHasUnderagedData);
+                // FIXED: Check if payment template contains underage placeholders in EITHER description OR reference
+                boolean templateHasUnderagedData = templateContainsUnderagedPlaceholders(paymentTemplate);
+                System.out.println("🔍 Template contains underage data (description or reference): " + templateHasUnderagedData);
 
                 int totalGenerations = calculateTotalGenerations(selectedItems, templateHasUnderagedData);
                 int currentGeneration = 0;
@@ -444,7 +450,7 @@ public class MultipleGenerationBarcodeDialog {
     }
 
     /**
-     * Check if payment template description contains underage placeholders
+     * UPDATED: Check if payment template description contains underage placeholders
      */
     private boolean templateContainsUnderagedPlaceholders(String description) {
         if (description == null || description.trim().isEmpty()) {
@@ -453,6 +459,25 @@ public class MultipleGenerationBarcodeDialog {
 
         // Look for any {{underaged_attributes.*}} patterns
         return description.contains("{{underaged_attributes.");
+    }
+
+    /**
+     * NEW: Check if template (description OR reference) contains underage placeholders
+     */
+    private boolean templateContainsUnderagedPlaceholders(PaymentTemplate template) {
+        if (template == null) {
+            return false;
+        }
+
+        // Check description for underage placeholders
+        boolean descriptionHasUnderage = templateContainsUnderagedPlaceholders(template.getDescription());
+
+        // Check reference template for underage placeholders
+        boolean referenceHasUnderage = templateContainsUnderagedPlaceholders(template.getPozivNaBroj());
+
+        System.out.println("🔍 Description has underage: " + descriptionHasUnderage + ", Reference has underage: " + referenceHasUnderage);
+
+        return descriptionHasUnderage || referenceHasUnderage;
     }
 
     /**
@@ -681,7 +706,9 @@ public class MultipleGenerationBarcodeDialog {
         saveIndividualUplatnica(contact, null);
     }
 
-    // Update your existing generateHUB3DataForContact method signature to:
+    /**
+     * UPDATED: Generate HUB-3 data for contact with dynamic reference support
+     */
     private String generateHUB3DataForContact(Contact contact, UnderagedMember underagedMember) {
         StringBuilder hub3Data = new StringBuilder();
 
@@ -751,13 +778,8 @@ public class MultipleGenerationBarcodeDialog {
         // 11. Payment model
         hub3Data.append(paymentTemplate.getModelOfPayment() != null ? paymentTemplate.getModelOfPayment() : "").append("\n");
 
-        // 12. Reference number
-        String reference = paymentTemplate.getPozivNaBroj();
-        if (reference == null || reference.trim().isEmpty()) {
-            reference = "";
-        } else {
-            reference = reference.replace("{contact_id}", String.valueOf(contact.getId()));
-        }
+        // 12. Reference number - UPDATED TO HANDLE DYNAMIC REFERENCES
+        String reference = processReferenceTemplate(paymentTemplate.getPozivNaBroj(), contact, underagedMember);
         hub3Data.append(reference).append("\n");
 
         // 13. Purpose code
@@ -769,6 +791,52 @@ public class MultipleGenerationBarcodeDialog {
         hub3Data.append(processedDescription);
 
         return hub3Data.toString();
+    }
+
+    /**
+     * UPDATED: Process reference template with dynamic field support
+     * @param referenceTemplate The reference template from PaymentTemplate
+     * @param contact The contact data
+     * @param underagedMember The underage member data (can be null)
+     * @return Processed reference string
+     */
+    private String processReferenceTemplate(String referenceTemplate, Contact contact, UnderagedMember underagedMember) {
+        if (referenceTemplate == null || referenceTemplate.trim().isEmpty()) {
+            return "";
+        }
+
+        String template = referenceTemplate.trim();
+
+        // Handle dynamic reference placeholders
+        if (template.startsWith("{{") && template.endsWith("}}")) {
+            String placeholder = template.substring(2, template.length() - 2);
+
+            if (placeholder.equals("contact_attributes.pin")) {
+                return contact.getPin() != null ? contact.getPin() : "";
+            } else if (placeholder.equals("underaged_attributes.pin")) {
+                if (underagedMember != null) {
+                    return underagedMember.getPin() != null ? underagedMember.getPin() : "";
+                }
+                return "";
+            }
+
+            // If it's an unknown placeholder, return empty
+            System.out.println("Warning: Unknown reference placeholder '" + placeholder + "', returning empty string");
+            return "";
+        } else {
+            // It's either a static number or contains old-style {contact_id} placeholder
+            // Handle backward compatibility with {contact_id}
+            String processedReference = template.replace("{contact_id}", String.valueOf(contact.getId()));
+
+            // Validate that the result contains only numbers (for banking compliance)
+            if (processedReference.matches("\\d*")) {
+                return processedReference;
+            } else {
+                // If it contains non-numeric characters, log warning and return contact ID as fallback
+                System.out.println("Warning: Reference template '" + template + "' contains non-numeric characters. Using contact ID as fallback.");
+                return String.valueOf(contact.getId());
+            }
+        }
     }
 
     // Add overload for backward compatibility

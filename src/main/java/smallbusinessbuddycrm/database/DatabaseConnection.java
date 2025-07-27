@@ -18,23 +18,28 @@ public class DatabaseConnection {
         return connection;
     }
 
-    // Migration method to fix existing database
+    // Migration method to fix existing database - updated to remove teacher_id from workshop_participants
     public static void fixWorkshopParticipantsForTeachers() {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
             System.out.println("Checking if database migration is needed...");
 
-            // Check if the table already supports teachers
+            // Check if the table still has teacher_id column (needs migration)
+            boolean needsMigration = false;
             try {
-                // Try to create a test teacher record - if it fails, we need migration
-                String testSQL = "SELECT participant_type FROM workshop_participants WHERE participant_type = 'TEACHER' LIMIT 1";
+                String testSQL = "SELECT teacher_id FROM workshop_participants LIMIT 1";
                 stmt.executeQuery(testSQL);
-                System.out.println("Database already supports teachers - no migration needed.");
-                return;
+                needsMigration = true; // If this succeeds, teacher_id exists and needs to be removed
+                System.out.println("Migration needed - removing teacher_id from workshop_participants...");
             } catch (SQLException e) {
-                // If this fails, it means we need to migrate
-                System.out.println("Migration needed - updating database schema...");
+                // If this fails, teacher_id column doesn't exist, no migration needed
+                System.out.println("Database already migrated - no migration needed.");
+                return;
+            }
+
+            if (!needsMigration) {
+                return;
             }
 
             // Step 1: Create a backup table with current data
@@ -46,37 +51,35 @@ public class DatabaseConnection {
             // Step 2: Drop the original table
             String dropOriginalSQL = "DROP TABLE IF EXISTS workshop_participants;";
 
-            // Step 3: Create new table with updated constraint that supports teachers
+            // Step 3: Create new table without teacher_id (teachers are now linked to workshops directly)
             String createNewTableSQL = """
                 CREATE TABLE workshop_participants (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     workshop_id INTEGER NOT NULL,
-                    teacher_id INTEGER,
                     underaged_id INTEGER,
                     contact_id INTEGER,
-                    participant_type TEXT NOT NULL CHECK (participant_type IN ('ADULT', 'CHILD', 'TEACHER')),
+                    participant_type TEXT NOT NULL CHECK (participant_type IN ('ADULT', 'CHILD')),
                     payment_status TEXT NOT NULL CHECK (payment_status IN ('PENDING', 'PAID', 'REFUNDED', 'CANCELLED')),
                     notes TEXT,
                     created_at TEXT,
                     updated_at TEXT,
                     FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
-                    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
                     FOREIGN KEY (underaged_id) REFERENCES underaged(id) ON DELETE CASCADE,
                     FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
                     CHECK (
-                        (underaged_id IS NOT NULL AND contact_id IS NULL AND teacher_id IS NULL AND participant_type = 'CHILD') OR
-                        (contact_id IS NOT NULL AND underaged_id IS NULL AND teacher_id IS NULL AND participant_type = 'ADULT') OR
-                        (teacher_id IS NOT NULL AND contact_id IS NULL AND underaged_id IS NULL AND participant_type = 'TEACHER')
+                        (underaged_id IS NOT NULL AND contact_id IS NULL AND participant_type = 'CHILD') OR
+                        (contact_id IS NOT NULL AND underaged_id IS NULL AND participant_type = 'ADULT')
                     )
                 );
                 """;
 
-            // Step 4: Restore data from backup (if backup exists)
+            // Step 4: Restore data from backup (excluding teacher_id and TEACHER participant_type)
             String restoreDataSQL = """
                 INSERT INTO workshop_participants 
-                (id, workshop_id, teacher_id, underaged_id, contact_id, participant_type, payment_status, notes, created_at, updated_at)
-                SELECT id, workshop_id, teacher_id, underaged_id, contact_id, participant_type, payment_status, notes, created_at, updated_at
-                FROM workshop_participants_backup;
+                (id, workshop_id, underaged_id, contact_id, participant_type, payment_status, notes, created_at, updated_at)
+                SELECT id, workshop_id, underaged_id, contact_id, participant_type, payment_status, notes, created_at, updated_at
+                FROM workshop_participants_backup
+                WHERE participant_type IN ('ADULT', 'CHILD');
                 """;
 
             // Step 5: Drop backup table
@@ -94,11 +97,11 @@ public class DatabaseConnection {
             System.out.println("✓ Dropped original table");
 
             stmt.execute(createNewTableSQL);
-            System.out.println("✓ Created new table with teacher support");
+            System.out.println("✓ Created new table without teacher_id");
 
             try {
                 stmt.execute(restoreDataSQL);
-                System.out.println("✓ Restored existing data");
+                System.out.println("✓ Restored existing data (excluding teacher records)");
             } catch (Exception e) {
                 System.out.println("Note: Data restore failed (table might have been empty): " + e.getMessage());
             }
@@ -111,10 +114,43 @@ public class DatabaseConnection {
             }
 
             System.out.println("🎉 Database migration completed successfully!");
-            System.out.println("Teacher assignment should now work!");
+            System.out.println("Teachers are now linked directly to workshops!");
 
         } catch (SQLException e) {
             System.err.println("❌ Error during migration: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    // Migration method to add teacher_id to workshops table
+    public static void addTeacherIdToWorkshops() {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+
+            System.out.println("Checking if workshops table needs teacher_id column...");
+
+            // Check if teacher_id column already exists
+            try {
+                String testSQL = "SELECT teacher_id FROM workshops LIMIT 1";
+                stmt.executeQuery(testSQL);
+                System.out.println("teacher_id column already exists in workshops table.");
+                return;
+            } catch (SQLException e) {
+                // Column doesn't exist, need to add it
+                System.out.println("Adding teacher_id column to workshops table...");
+            }
+
+            // Add teacher_id column to workshops table
+            String addColumnSQL = """
+                ALTER TABLE workshops 
+                ADD COLUMN teacher_id INTEGER REFERENCES teachers(id) ON DELETE SET NULL;
+                """;
+
+            stmt.execute(addColumnSQL);
+            System.out.println("✓ Added teacher_id column to workshops table");
+
+        } catch (SQLException e) {
+            System.err.println("❌ Error adding teacher_id to workshops: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -290,38 +326,38 @@ public class DatabaseConnection {
             );
             """;
 
+        // UPDATED: Now includes teacher_id as foreign key
         String createWorkshopsTableSQL = """
             CREATE TABLE IF NOT EXISTS workshops (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 from_date TEXT,
                 to_date TEXT,
+                teacher_id INTEGER,
                 created_at TEXT,
-                updated_at TEXT
+                updated_at TEXT,
+                FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL
             );
             """;
 
-        // UPDATED: This now includes TEACHER support
+        // UPDATED: Removed teacher_id and TEACHER participant type completely
         String createWorkshopParticipantsTableSQL = """
             CREATE TABLE IF NOT EXISTS workshop_participants (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 workshop_id INTEGER NOT NULL,
-                teacher_id INTEGER,
                 underaged_id INTEGER,
                 contact_id INTEGER,
-                participant_type TEXT NOT NULL CHECK (participant_type IN ('ADULT', 'CHILD', 'TEACHER')),
+                participant_type TEXT NOT NULL CHECK (participant_type IN ('ADULT', 'CHILD')),
                 payment_status TEXT NOT NULL CHECK (payment_status IN ('PENDING', 'PAID', 'REFUNDED', 'CANCELLED')),
                 notes TEXT,
                 created_at TEXT,
                 updated_at TEXT,
                 FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
-                FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
                 FOREIGN KEY (underaged_id) REFERENCES underaged(id) ON DELETE CASCADE,
                 FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
                 CHECK (
-                    (underaged_id IS NOT NULL AND contact_id IS NULL AND teacher_id IS NULL AND participant_type = 'CHILD') OR
-                    (contact_id IS NOT NULL AND underaged_id IS NULL AND teacher_id IS NULL AND participant_type = 'ADULT') OR
-                    (teacher_id IS NOT NULL AND contact_id IS NULL AND underaged_id IS NULL AND participant_type = 'TEACHER')
+                    (underaged_id IS NOT NULL AND contact_id IS NULL AND participant_type = 'CHILD') OR
+                    (contact_id IS NOT NULL AND underaged_id IS NULL AND participant_type = 'ADULT')
                 )
             );
             """;
@@ -496,8 +532,9 @@ public class DatabaseConnection {
             System.out.println("Payment system tables created successfully.");
             System.out.println("Payment attachment template table created successfully.");
 
-            // IMPORTANT: Run migration after table creation
-            fixWorkshopParticipantsForTeachers();
+            // IMPORTANT: Run migrations after table creation
+            addTeacherIdToWorkshops(); // Add teacher_id to workshops if not exists
+            fixWorkshopParticipantsForTeachers(); // Remove teacher_id from workshop_participants
 
             // Insert default payment template
             insertDefaultPaymentTemplate();

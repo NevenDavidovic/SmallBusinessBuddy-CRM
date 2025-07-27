@@ -7,6 +7,10 @@ import smallbusinessbuddycrm.model.UnderagedMember;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Base64;
 
 public class UplatnicaHtmlGenerator {
 
@@ -19,7 +23,7 @@ public class UplatnicaHtmlGenerator {
                         <title>Croatian Uplatnica</title>
                     </head>
                     <body style="font-family: Arial, sans-serif; margin: 0; padding: 0 20px; background-color: #f5f5f5;">
-                        <div style="border: 2px solid #ffffff; width: 931px; height: 380px; background-size: cover; background-image: url('https://raw.githubusercontent.com/NevenDavidovic/generator_uplatnica_dnd/refs/heads/main/jojo_crm/src/assets/images/uplatnica.png'); margin: 0 auto; position: relative;">
+                        <div style="border: 2px solid #ffffff; width: 931px; height: 380px; background-size: cover; background-image: url('data:image/png;base64,{{BACKGROUND_IMAGE_BASE64}}'); margin: 0 auto; position: relative;">
                             <!-- Payer Information -->
                             <div style="position: absolute; display: flex; flex-direction: column; max-width: 200px; left: 31px; top: 44px;">
                                 <div style="height: 20px; border: 0px solid #a26b6b; font-size: 12px; background: transparent; color: #000; margin-bottom: 2px;">{{PAYER_NAME}}</div>
@@ -100,8 +104,8 @@ public class UplatnicaHtmlGenerator {
         // Amount formatting
         String amount = paymentTemplate.getAmount().toString();
 
-        // Reference number
-        String reference = buildReference(paymentTemplate, contact);
+        // Reference number - UPDATED to handle dynamic references
+        String reference = buildReference(paymentTemplate, contact, underagedMember);
 
         // Description - USE THE TEMPLATEPROCESSOR UTILITY
         String description = TemplateProcessor.processTemplate(
@@ -109,6 +113,9 @@ public class UplatnicaHtmlGenerator {
 
         // Convert barcode to base64
         String barcodeBase64 = convertBarcodeToBase64(barcodeImage);
+
+        // Load background image as base64
+        String backgroundImageBase64 = getUplatnicaBackgroundBase64();
 
         // Replace all placeholders
         processedHtml = processedHtml.replace("{{PAYER_NAME}}", payerName);
@@ -124,6 +131,7 @@ public class UplatnicaHtmlGenerator {
         processedHtml = processedHtml.replace("{{PURPOSE}}", "");
         processedHtml = processedHtml.replace("{{DESCRIPTION}}", description);
         processedHtml = processedHtml.replace("{{BARCODE_BASE64}}", barcodeBase64);
+        processedHtml = processedHtml.replace("{{BACKGROUND_IMAGE_BASE64}}", backgroundImageBase64);
 
         return processedHtml;
     }
@@ -202,12 +210,60 @@ public class UplatnicaHtmlGenerator {
         return recipientCity;
     }
 
-    private static String buildReference(PaymentTemplate paymentTemplate, Contact contact) {
-        String reference = paymentTemplate.getPozivNaBroj();
-        if (reference == null || reference.trim().isEmpty()) {
+    /**
+     * UPDATED: Build reference number with dynamic field support
+     * @param paymentTemplate The payment template
+     * @param contact The contact data
+     * @param underagedMember The underage member data (can be null)
+     * @return Processed reference string
+     */
+    private static String buildReference(PaymentTemplate paymentTemplate, Contact contact, UnderagedMember underagedMember) {
+        String referenceTemplate = paymentTemplate.getPozivNaBroj();
+
+        if (referenceTemplate == null || referenceTemplate.trim().isEmpty()) {
             return "";
         }
-        return reference.replace("{contact_id}", String.valueOf(contact.getId()));
+
+        String template = referenceTemplate.trim();
+
+        // Handle dynamic reference placeholders
+        if (template.startsWith("{{") && template.endsWith("}}")) {
+            String placeholder = template.substring(2, template.length() - 2);
+
+            if (placeholder.equals("contact_attributes.pin")) {
+                return contact.getPin() != null ? contact.getPin() : "";
+            } else if (placeholder.equals("underaged_attributes.pin")) {
+                if (underagedMember != null) {
+                    return underagedMember.getPin() != null ? underagedMember.getPin() : "";
+                }
+                return "";
+            }
+
+            // Unknown placeholder
+            System.out.println("Warning: Unknown reference placeholder '" + placeholder + "', returning empty string");
+            return "";
+        } else {
+            // Handle backward compatibility with {contact_id} and static numbers
+            String processedReference = template.replace("{contact_id}", String.valueOf(contact.getId()));
+
+            // Validate numeric content for banking compliance
+            if (processedReference.matches("\\d*")) {
+                return processedReference;
+            } else {
+                System.out.println("Warning: Reference template '" + template + "' contains non-numeric characters. Using contact ID as fallback.");
+                return String.valueOf(contact.getId());
+            }
+        }
+    }
+
+    /**
+     * Backward compatibility method - calls the new method with null underagedMember
+     * @param paymentTemplate The payment template
+     * @param contact The contact data
+     * @return Processed reference string
+     */
+    private static String buildReference(PaymentTemplate paymentTemplate, Contact contact) {
+        return buildReference(paymentTemplate, contact, null);
     }
 
     private static String convertBarcodeToBase64(BufferedImage barcodeImage) {
@@ -226,5 +282,37 @@ public class UplatnicaHtmlGenerator {
         }
     }
 
+    /**
+     * Loads the uplatnica background image from local resources and converts it to base64
+     *
+     * @return Base64 encoded string of the background image, or empty string if loading fails
+     */
+    private static String getUplatnicaBackgroundBase64() {
+        try {
+            // Load the image from resources - same path as in your JavaFX controller
+            InputStream imageStream = UplatnicaHtmlGenerator.class.getResourceAsStream("/images/uplatnica.png");
+            if (imageStream == null) {
+                System.err.println("Uplatnica background image not found: /images/uplatnica.png");
+                return "";
+            }
 
+            // Read the image into a byte array
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = imageStream.read(buffer)) != -1) {
+                baos.write(buffer, 0, length);
+            }
+            imageStream.close();
+
+            // Convert to base64
+            String base64Image = Base64.getEncoder().encodeToString(baos.toByteArray());
+            return base64Image;
+
+        } catch (IOException e) {
+            System.err.println("Error loading uplatnica background image: " + e.getMessage());
+            e.printStackTrace();
+            return "";
+        }
+    }
 }

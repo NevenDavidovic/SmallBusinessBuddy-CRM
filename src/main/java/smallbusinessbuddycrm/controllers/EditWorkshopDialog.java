@@ -8,11 +8,14 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import smallbusinessbuddycrm.database.TeacherDAO;
 import smallbusinessbuddycrm.database.WorkshopDAO;
+import smallbusinessbuddycrm.model.Teacher;
 import smallbusinessbuddycrm.model.Workshop;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class EditWorkshopDialog {
 
@@ -24,16 +27,21 @@ public class EditWorkshopDialog {
     private TextField nameField;
     private DatePicker fromDatePicker;
     private DatePicker toDatePicker;
+    private ComboBox<Teacher> teacherComboBox; // NEW: Teacher selection
 
     // Error labels for validation
     private Label nameErrorLabel;
     private Label fromDateErrorLabel;
     private Label toDateErrorLabel;
 
+    // DAOs
+    private TeacherDAO teacherDAO = new TeacherDAO();
+
     public EditWorkshopDialog(Stage parentStage, Workshop workshop) {
         this.workshop = workshop;
         createDialogStage();
         dialogStage.initOwner(parentStage);
+        loadTeachers();
         populateFields();
     }
 
@@ -59,7 +67,7 @@ public class EditWorkshopDialog {
 
         mainLayout.getChildren().addAll(titleLabel, workshopSection, buttonBox);
 
-        Scene scene = new Scene(mainLayout, 450, 300);
+        Scene scene = new Scene(mainLayout, 500, 500); // Made bigger for teacher field
         dialogStage.setScene(scene);
     }
 
@@ -112,6 +120,38 @@ public class EditWorkshopDialog {
         toDateErrorLabel.setVisible(false);
         grid.add(toDateErrorLabel, 1, row++);
 
+        // NEW: Teacher Selection
+        grid.add(new Label("Teacher:"), 0, row);
+        teacherComboBox = new ComboBox<>();
+        teacherComboBox.setPrefWidth(280);
+        teacherComboBox.setPromptText("Select a teacher (optional)");
+
+        // Custom string converter for teacher display
+        teacherComboBox.setConverter(new javafx.util.StringConverter<Teacher>() {
+            @Override
+            public String toString(Teacher teacher) {
+                if (teacher == null) {
+                    return "No Teacher";
+                }
+                if (teacher.getId() == -1) {
+                    return "No Teacher";
+                }
+                return teacher.getFirstName() + " " + teacher.getLastName();
+            }
+
+            @Override
+            public Teacher fromString(String string) {
+                return null; // Not needed for this use case
+            }
+        });
+
+        grid.add(teacherComboBox, 1, row++);
+
+        // Add a note about teacher assignment
+        Label teacherNote = new Label("You can also manage teachers from the main workshops view");
+        teacherNote.setStyle("-fx-text-fill: #6c757d; -fx-font-size: 10px;");
+        grid.add(teacherNote, 1, row++);
+
         // Add date validation listeners
         fromDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && toDatePicker.getValue() != null && newVal.isAfter(toDatePicker.getValue())) {
@@ -129,11 +169,65 @@ public class EditWorkshopDialog {
         return section;
     }
 
+    // NEW: Load teachers for selection
+    private void loadTeachers() {
+        try {
+            List<Teacher> teachers = teacherDAO.getAllTeachers();
+
+            // Add "No Teacher" option
+            Teacher noTeacher = new Teacher();
+            noTeacher.setId(-1);
+            noTeacher.setFirstName("No");
+            noTeacher.setLastName("Teacher");
+
+            teacherComboBox.getItems().clear();
+            teacherComboBox.getItems().add(noTeacher);
+            teacherComboBox.getItems().addAll(teachers);
+
+            System.out.println("Loaded " + teachers.size() + " teachers for selection");
+        } catch (Exception e) {
+            System.err.println("Error loading teachers: " + e.getMessage());
+            e.printStackTrace();
+
+            // Add just the "No Teacher" option if loading fails
+            Teacher noTeacher = new Teacher();
+            noTeacher.setId(-1);
+            noTeacher.setFirstName("No");
+            noTeacher.setLastName("Teacher");
+            teacherComboBox.getItems().add(noTeacher);
+        }
+    }
+
     private void populateFields() {
         if (workshop != null) {
             nameField.setText(workshop.getName() != null ? workshop.getName() : "");
             fromDatePicker.setValue(workshop.getFromDate());
             toDatePicker.setValue(workshop.getToDate());
+
+            // NEW: Set current teacher selection
+            if (workshop.hasTeacher()) {
+                try {
+                    Teacher currentTeacher = teacherDAO.getTeacherById(workshop.getTeacherId());
+                    if (currentTeacher != null) {
+                        // Find and select the current teacher in the combo box
+                        for (Teacher teacher : teacherComboBox.getItems()) {
+                            if (teacher.getId() == currentTeacher.getId()) {
+                                teacherComboBox.setValue(teacher);
+                                break;
+                            }
+                        }
+                    } else {
+                        // Teacher not found, select "No Teacher"
+                        teacherComboBox.setValue(teacherComboBox.getItems().get(0)); // "No Teacher" is first
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error loading current teacher: " + e.getMessage());
+                    teacherComboBox.setValue(teacherComboBox.getItems().get(0)); // "No Teacher"
+                }
+            } else {
+                // No teacher assigned, select "No Teacher"
+                teacherComboBox.setValue(teacherComboBox.getItems().get(0)); // "No Teacher" is first
+            }
         }
     }
 
@@ -197,6 +291,9 @@ public class EditWorkshopDialog {
     private void handleUpdate() {
         if (validateInput()) {
             try {
+                // Store original teacher for comparison
+                Integer originalTeacherId = workshop.getTeacherId();
+
                 updateWorkshopFromInput();
                 WorkshopDAO workshopDAO = new WorkshopDAO();
 
@@ -206,11 +303,31 @@ public class EditWorkshopDialog {
                     okClicked = true;
                     dialogStage.close();
 
-                    // Show success message
+                    // Show success message with teacher change info
+                    String successMessage = "Workshop '" + workshop.getName() + "' has been updated successfully!";
+
+                    // Check if teacher assignment changed
+                    Teacher selectedTeacher = teacherComboBox.getValue();
+                    if (selectedTeacher != null) {
+                        if (selectedTeacher.getId() == -1) {
+                            // No teacher selected
+                            if (originalTeacherId != null) {
+                                successMessage += "\n\nTeacher assignment removed.";
+                            }
+                        } else {
+                            // Teacher selected
+                            if (originalTeacherId == null) {
+                                successMessage += "\n\nTeacher assigned: " + selectedTeacher.getFirstName() + " " + selectedTeacher.getLastName();
+                            } else if (!originalTeacherId.equals(selectedTeacher.getId())) {
+                                successMessage += "\n\nTeacher changed to: " + selectedTeacher.getFirstName() + " " + selectedTeacher.getLastName();
+                            }
+                        }
+                    }
+
                     Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
                     successAlert.setTitle("Success");
                     successAlert.setHeaderText("Workshop Updated");
-                    successAlert.setContentText("Workshop '" + workshop.getName() + "' has been updated successfully!");
+                    successAlert.setContentText(successMessage);
                     successAlert.showAndWait();
                 } else {
                     showErrorAlert("Failed to update workshop in database.");
@@ -262,6 +379,16 @@ public class EditWorkshopDialog {
         workshop.setName(nameField.getText().trim());
         workshop.setFromDate(fromDatePicker.getValue());
         workshop.setToDate(toDatePicker.getValue());
+
+        // NEW: Update teacher assignment
+        Teacher selectedTeacher = teacherComboBox.getValue();
+        if (selectedTeacher != null && selectedTeacher.getId() != -1) {
+            workshop.setTeacherId(selectedTeacher.getId());
+            System.out.println("Teacher updated: " + selectedTeacher.getFirstName() + " " + selectedTeacher.getLastName());
+        } else {
+            workshop.setTeacherId(null);
+            System.out.println("Teacher assignment removed");
+        }
 
         // Update the timestamp
         workshop.setUpdatedAt(LocalDateTime.now().toString());

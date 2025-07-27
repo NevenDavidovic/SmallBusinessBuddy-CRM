@@ -50,23 +50,17 @@
                                 <Font size="12.0" />
                             </font>
                         </Label>
-                        <!-- ADD THIS NEW TEACHER LABEL -->
+                        <!-- TEACHER LABEL (Read-only display) -->
                         <Separator orientation="VERTICAL" />
                         <Label fx:id="teacherLabel" text="Teacher: Not assigned" textFill="#dc3545">
                             <font>
                                 <Font size="12.0" />
                             </font>
                         </Label>
-                        <!-- END OF NEW TEACHER LABEL -->
+                        <!-- END OF TEACHER LABEL -->
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS" spacing="5.0">
                             <children>
-                                <!-- Your existing buttons -->
-                                <Button fx:id="manageTeachersButton" text="Manage Teachers"
-                                        style="-fx-background-color: #fd7e14; -fx-text-fill: white; -fx-border-radius: 4;">
-                                    <HBox.margin>
-                                        <Insets right="5.0" />
-                                    </HBox.margin>
-                                </Button>
+                                <!-- REMOVED: manageTeachersButton -->
                                 <Button fx:id="exportParticipantsButton" text="Export List"
                                         style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;">
                                     <HBox.margin>
@@ -260,17 +254,6 @@
                                             <Font name="System Bold" size="16.0" />
                                         </font>
                                     </Label>
-                                    <HBox spacing="10.0">
-                                        <children>
-                                            <Button fx:id="addFamilyButton" text="Add Entire Family"
-                                                    style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-border-radius: 4;" />
-                                            <Label text="Select a contact to add them + all their children" textFill="#71757a">
-                                                <font>
-                                                    <Font size="12.0" />
-                                                </font>
-                                            </Label>
-                                        </children>
-                                    </HBox>
                                 </children>
                             </VBox>
                         </children>

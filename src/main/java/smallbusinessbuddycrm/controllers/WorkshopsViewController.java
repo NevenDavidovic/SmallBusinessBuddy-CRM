@@ -11,8 +11,10 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import smallbusinessbuddycrm.database.DatabaseConnection;
+import smallbusinessbuddycrm.database.TeacherDAO;
 import smallbusinessbuddycrm.database.WorkshopDAO;
 import smallbusinessbuddycrm.database.WorkshopParticipantDAO;
+import smallbusinessbuddycrm.model.Teacher;
 import smallbusinessbuddycrm.model.Workshop;
 
 import java.net.URL;
@@ -39,8 +41,10 @@ public class WorkshopsViewController implements Initializable {
     @FXML private TableColumn<Workshop, String> toDateColumn;
     @FXML private TableColumn<Workshop, String> durationColumn;
     @FXML private TableColumn<Workshop, String> statusColumn;
+    @FXML private TableColumn<Workshop, String> teacherColumn; // NEW: Teacher column
     @FXML private TableColumn<Workshop, String> participantCountColumn;
     @FXML private TableColumn<Workshop, Void> manageParticipantsColumn;
+    @FXML private TableColumn<Workshop, Void> manageTeacherColumn; // NEW: Manage teacher column
     @FXML private TableColumn<Workshop, String> createdAtColumn;
 
     // UI Controls
@@ -61,6 +65,10 @@ public class WorkshopsViewController implements Initializable {
     // DAOs
     private WorkshopDAO workshopDAO = new WorkshopDAO();
     private WorkshopParticipantDAO participantDAO = new WorkshopParticipantDAO();
+    private TeacherDAO teacherDAO = new TeacherDAO(); // NEW: Teacher DAO
+
+    // Cache for teacher names
+    private Map<Integer, String> teacherNamesCache;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -69,12 +77,29 @@ public class WorkshopsViewController implements Initializable {
         // Initialize database first
         DatabaseConnection.initializeDatabase();
 
+        loadTeacherCache(); // NEW: Load teacher names for display
         setupTable();
         setupSearchAndFilters();
         loadWorkshops();
         setupEventHandlers();
 
         System.out.println("WorkshopsViewController initialized successfully");
+    }
+
+    // NEW: Load teacher names into cache for quick lookup
+    private void loadTeacherCache() {
+        try {
+            List<Teacher> teachers = teacherDAO.getAllTeachers();
+            teacherNamesCache = teachers.stream()
+                    .collect(Collectors.toMap(
+                            Teacher::getId,
+                            teacher -> teacher.getFirstName() + " " + teacher.getLastName()
+                    ));
+            System.out.println("Loaded " + teacherNamesCache.size() + " teachers into cache");
+        } catch (Exception e) {
+            System.err.println("Error loading teacher cache: " + e.getMessage());
+            teacherNamesCache = Map.of(); // Empty map as fallback
+        }
     }
 
     private void setupTable() {
@@ -129,14 +154,38 @@ public class WorkshopsViewController implements Initializable {
 
         // Set up manage participants column
         manageParticipantsColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
-            private final Button manageButton = new Button("Manage");
+            private final Button manageButton = new Button("Participants");
 
             {
                 manageButton.setStyle("-fx-background-color: #0099cc; -fx-text-fill: white; -fx-border-radius: 3; -fx-font-size: 10px;");
-                manageButton.setPrefWidth(60);
+                manageButton.setPrefWidth(80);
                 manageButton.setOnAction(event -> {
                     Workshop workshop = getTableView().getItems().get(getIndex());
                     handleManageParticipants(workshop);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(manageButton);
+                }
+            }
+        });
+
+        // NEW: Set up manage teacher column
+        manageTeacherColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
+            private final Button manageButton = new Button("Teacher");
+
+            {
+                manageButton.setStyle("-fx-background-color: #6f42c1; -fx-text-fill: white; -fx-border-radius: 3; -fx-font-size: 10px;");
+                manageButton.setPrefWidth(70);
+                manageButton.setOnAction(event -> {
+                    Workshop workshop = getTableView().getItems().get(getIndex());
+                    handleManageTeacher(workshop);
                 });
             }
 
@@ -192,6 +241,17 @@ public class WorkshopsViewController implements Initializable {
             return new SimpleStringProperty(status);
         });
 
+        // NEW: Set up teacher column
+        teacherColumn.setCellValueFactory(cellData -> {
+            Workshop workshop = cellData.getValue();
+            if (workshop.hasTeacher()) {
+                String teacherName = teacherNamesCache.get(workshop.getTeacherId());
+                return new SimpleStringProperty(teacherName != null ? teacherName : "Unknown Teacher");
+            } else {
+                return new SimpleStringProperty("No Teacher");
+            }
+        });
+
         participantCountColumn.setCellValueFactory(cellData -> {
             Workshop workshop = cellData.getValue();
             // Get participant count from database
@@ -228,9 +288,11 @@ public class WorkshopsViewController implements Initializable {
                 return matchesCurrentFilter(workshop);
             }
 
-            // Check if search text matches workshop name
-            boolean matchesSearch = workshop.getName() != null &&
-                    workshop.getName().toLowerCase().contains(searchText);
+            // Check if search text matches workshop name or teacher name
+            boolean matchesSearch = (workshop.getName() != null &&
+                    workshop.getName().toLowerCase().contains(searchText)) ||
+                    (workshop.hasTeacher() && teacherNamesCache.get(workshop.getTeacherId()) != null &&
+                            teacherNamesCache.get(workshop.getTeacherId()).toLowerCase().contains(searchText));
 
             // Return true only if matches both search and current filter
             return matchesSearch && matchesCurrentFilter(workshop);
@@ -321,6 +383,9 @@ public class WorkshopsViewController implements Initializable {
                     workshopsTable.getSelectionModel().select(newWorkshop);
                     workshopsTable.scrollTo(newWorkshop);
                     System.out.println("New workshop added: " + newWorkshop.getName());
+
+                    // Refresh teacher cache in case new teachers were added
+                    loadTeacherCache();
                 }
             }
         } catch (Exception e) {
@@ -345,6 +410,7 @@ public class WorkshopsViewController implements Initializable {
                 // Refresh the table to show updated data
                 workshopsTable.refresh();
                 updateFilters(); // Re-apply filters in case status changed
+                loadTeacherCache(); // Refresh teacher cache in case teacher assignments changed
                 System.out.println("Workshop updated: " + workshop.getName());
             }
         } catch (Exception e) {
@@ -356,6 +422,98 @@ public class WorkshopsViewController implements Initializable {
             errorAlert.setTitle("Error");
             errorAlert.setHeaderText("Edit Workshop Failed");
             errorAlert.setContentText("An error occurred while opening the edit dialog: " + e.getMessage());
+            errorAlert.showAndWait();
+        }
+    }
+
+    // NEW: Handle teacher management for a workshop
+    private void handleManageTeacher(Workshop workshop) {
+        try {
+            List<Teacher> availableTeachers = teacherDAO.getAllTeachers();
+
+            if (availableTeachers.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("No Teachers Available");
+                alert.setHeaderText("No teachers found");
+                alert.setContentText("Please create teachers first before assigning them to workshops.");
+                alert.showAndWait();
+                return;
+            }
+
+            // Create choice dialog for teacher selection
+            ChoiceDialog<Teacher> dialog = new ChoiceDialog<>();
+            dialog.setTitle("Assign Teacher");
+            dialog.setHeaderText("Assign Teacher to Workshop: " + workshop.getName());
+            dialog.setContentText("Choose a teacher:");
+
+            // Add "No Teacher" option
+            Teacher noTeacher = new Teacher();
+            noTeacher.setId(-1);
+            noTeacher.setFirstName("No");
+            noTeacher.setLastName("Teacher");
+
+            dialog.getItems().add(noTeacher);
+            dialog.getItems().addAll(availableTeachers);
+
+            // Set current selection
+            if (workshop.hasTeacher()) {
+                Teacher currentTeacher = availableTeachers.stream()
+                        .filter(t -> t.getId() == workshop.getTeacherId())
+                        .findFirst()
+                        .orElse(noTeacher);
+                dialog.setSelectedItem(currentTeacher);
+            } else {
+                dialog.setSelectedItem(noTeacher);
+            }
+
+            Optional<Teacher> result = dialog.showAndWait();
+
+            if (result.isPresent()) {
+                Teacher selectedTeacher = result.get();
+
+                boolean success;
+                if (selectedTeacher.getId() == -1) {
+                    // Remove teacher assignment
+                    success = workshopDAO.removeTeacherFromWorkshop(workshop.getId());
+                    workshop.setTeacherId(null);
+                } else {
+                    // Assign new teacher
+                    success = workshopDAO.assignTeacherToWorkshop(workshop.getId(), selectedTeacher.getId());
+                    workshop.setTeacherId(selectedTeacher.getId());
+                }
+
+                if (success) {
+                    // Refresh the table and teacher cache
+                    loadTeacherCache();
+                    workshopsTable.refresh();
+
+                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                    successAlert.setTitle("Success");
+                    successAlert.setHeaderText("Teacher Assignment Updated");
+                    if (selectedTeacher.getId() == -1) {
+                        successAlert.setContentText("Teacher removed from workshop successfully.");
+                    } else {
+                        successAlert.setContentText("Teacher " + selectedTeacher.getFirstName() + " " +
+                                selectedTeacher.getLastName() + " assigned to workshop successfully.");
+                    }
+                    successAlert.showAndWait();
+                } else {
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Error");
+                    errorAlert.setHeaderText("Teacher Assignment Failed");
+                    errorAlert.setContentText("Failed to update teacher assignment. Please try again.");
+                    errorAlert.showAndWait();
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error managing teacher: " + e.getMessage());
+            e.printStackTrace();
+
+            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("Error");
+            errorAlert.setHeaderText("Teacher Management Failed");
+            errorAlert.setContentText("An error occurred while managing teachers: " + e.getMessage());
             errorAlert.showAndWait();
         }
     }
@@ -477,6 +635,7 @@ public class WorkshopsViewController implements Initializable {
 
     private void handleRefresh() {
         loadWorkshops();
+        loadTeacherCache(); // Also refresh teacher cache
 
         Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
         successAlert.setTitle("Success");

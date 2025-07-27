@@ -603,6 +603,43 @@ public class BarcodePaymentDialog {
             StringBuilder info = new StringBuilder();
             info.append("Template: ").append(selectedTemplate.getName()).append("\n");
 
+            // Check if template uses underage data and show preview accordingly
+            boolean hasUnderagedDesc = templateContainsUnderagedPlaceholders(selectedTemplate.getDescription());
+            boolean hasUnderagedRef = templateContainsUnderagedPlaceholders(selectedTemplate.getPozivNaBroj());
+
+            if (hasUnderagedDesc || hasUnderagedRef) {
+                // Load potential underage members for preview
+                try {
+                    UnderagedDAO underagedDAO = new UnderagedDAO();
+                    List<UnderagedMember> membersList = underagedDAO.getUnderagedMembersByContactId(contact.getId())
+                            .stream()
+                            .filter(UnderagedMember::isMember)
+                            .toList();
+
+                    if (membersList.isEmpty()) {
+                        // No underage members - show with null
+                        currentUnderagedMember = null;
+                        info.append("⚠️ Template uses child data but no child members found\n");
+                    } else if (membersList.size() == 1) {
+                        // One child - use for preview
+                        currentUnderagedMember = membersList.get(0);
+                        info.append("👶 Child: ").append(currentUnderagedMember.getFirstName())
+                                .append(" ").append(currentUnderagedMember.getLastName()).append("\n");
+                    } else {
+                        // Multiple children - show count
+                        currentUnderagedMember = membersList.get(0); // Use first for preview
+                        info.append("👶 Multiple Children (").append(membersList.size())
+                                .append("): Preview with ").append(currentUnderagedMember.getFirstName())
+                                .append(" ").append(currentUnderagedMember.getLastName()).append("\n");
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error loading underage members for preview: " + e.getMessage());
+                    currentUnderagedMember = null;
+                }
+            } else {
+                currentUnderagedMember = null;
+            }
+
             // Process the description template and show the result using TemplateProcessor
             String processedDescription = processDescriptionTemplate(selectedTemplate.getDescription());
             info.append("Description: ").append(processedDescription).append("\n");
@@ -629,10 +666,15 @@ public class BarcodePaymentDialog {
             info.append("Amount: ").append(displayAmount).append(" EUR\n");
             info.append("Model of Payment: ").append(selectedTemplate.getModelOfPayment()).append("\n");
 
-            // Get reference number from template
+            // Show reference template info with dynamic support
             String reference = selectedTemplate.getPozivNaBroj();
             if (reference != null && !reference.trim().isEmpty()) {
-                info.append("Reference Number: ").append(reference).append("\n");
+                String processedReference = processReferenceTemplate(reference, contact, currentUnderagedMember);
+                info.append("Reference Number: ").append(reference);
+                if (!processedReference.equals(reference)) {
+                    info.append(" → ").append(processedReference);
+                }
+                info.append("\n");
             }
 
             paymentInfoLabel.setText(info.toString());
@@ -648,6 +690,52 @@ public class BarcodePaymentDialog {
 
         // Use the TemplateProcessor utility with the current underage member
         return TemplateProcessor.processTemplate(template, contact, currentUnderagedMember);
+    }
+
+    /**
+     * UPDATED: Process reference template with dynamic field support
+     * @param referenceTemplate The reference template from PaymentTemplate
+     * @param contact The contact data
+     * @param underagedMember The underage member data (can be null)
+     * @return Processed reference string
+     */
+    private String processReferenceTemplate(String referenceTemplate, Contact contact, UnderagedMember underagedMember) {
+        if (referenceTemplate == null || referenceTemplate.trim().isEmpty()) {
+            return "";
+        }
+
+        String template = referenceTemplate.trim();
+
+        // Handle dynamic reference placeholders
+        if (template.startsWith("{{") && template.endsWith("}}")) {
+            String placeholder = template.substring(2, template.length() - 2);
+
+            if (placeholder.equals("contact_attributes.pin")) {
+                return contact.getPin() != null ? contact.getPin() : "";
+            } else if (placeholder.equals("underaged_attributes.pin")) {
+                if (underagedMember != null) {
+                    return underagedMember.getPin() != null ? underagedMember.getPin() : "";
+                }
+                return "";
+            }
+
+            // If it's an unknown placeholder, return empty
+            System.out.println("Warning: Unknown reference placeholder '" + placeholder + "', returning empty string");
+            return "";
+        } else {
+            // It's either a static number or contains old-style {contact_id} placeholder
+            // Handle backward compatibility with {contact_id}
+            String processedReference = template.replace("{contact_id}", String.valueOf(contact.getId()));
+
+            // Validate that the result contains only numbers (for banking compliance)
+            if (processedReference.matches("\\d*")) {
+                return processedReference;
+            } else {
+                // If it contains non-numeric characters, log warning and return contact ID as fallback
+                System.out.println("Warning: Reference template '" + template + "' contains non-numeric characters. Using contact ID as fallback.");
+                return String.valueOf(contact.getId());
+            }
+        }
     }
 
     private UnderagedMember showChildSelectionDialog(List<UnderagedMember> underagedList) {
@@ -703,7 +791,8 @@ public class BarcodePaymentDialog {
 
         try {
             // Check if payment template contains underage placeholders
-            boolean templateHasUnderagedData = templateContainsUnderagedPlaceholders(selectedTemplate.getDescription());
+            boolean templateHasUnderagedData = templateContainsUnderagedPlaceholders(selectedTemplate.getDescription()) ||
+                    templateContainsUnderagedPlaceholders(selectedTemplate.getPozivNaBroj());
             System.out.println("🔍 Template contains underage data: " + templateHasUnderagedData);
 
             if (templateHasUnderagedData) {
@@ -721,6 +810,7 @@ public class BarcodePaymentDialog {
                     if (contact.isMember()) {
                         System.out.println("⚠️ Template has underage data but no underage members found. Generating for contact (member): " + contact.getId());
                         currentUnderagedMember = null;
+                        generateSingleUplatnica();
                     } else {
                         showAlert(Alert.AlertType.WARNING, "Cannot Generate",
                                 "This template requires underage member data, but no underage members found and contact is not a member.");
@@ -731,41 +821,25 @@ public class BarcodePaymentDialog {
                     currentUnderagedMember = membersList.get(0);
                     System.out.println("✅ Auto-selected single underage member: " +
                             currentUnderagedMember.getFirstName() + " " + currentUnderagedMember.getLastName());
+                    generateSingleUplatnica();
                 } else {
-                    // Multiple child members - show selection dialog
-                    UnderagedMember selectedChild = showChildSelectionDialog(membersList);
-                    if (selectedChild == null) {
-                        return; // User cancelled
-                    }
-                    currentUnderagedMember = selectedChild;
-                    System.out.println("✅ User selected underage member: " +
-                            currentUnderagedMember.getFirstName() + " " + currentUnderagedMember.getLastName());
+                    // Multiple child members - generate for ALL children automatically
+                    System.out.println("🔍 Found " + membersList.size() + " underage members. Opening multi-generation dialog...");
+                    showMultipleGenerationDialog(membersList);
+                    return;
                 }
             } else {
                 // Template doesn't use underage data - generate for contact only IF contact is member
                 if (contact.isMember()) {
                     currentUnderagedMember = null;
                     System.out.println("✅ Template doesn't use underage data, generating for contact (member): " + contact.getId());
+                    generateSingleUplatnica();
                 } else {
                     showAlert(Alert.AlertType.WARNING, "Cannot Generate",
                             "Contact is not a member. Only members can generate payment slips.");
                     return;
                 }
             }
-
-            // Generate HUB-3 data string
-            currentHUB3Data = generateHUB3Data();
-
-            // Generate PDF417 barcode image
-            generateBarcodeImage();
-
-            // Display the barcode and HTML
-            showGeneratedContent();
-
-            String successMessage = currentUnderagedMember != null
-                    ? "Croatian uplatnica generated for " + currentUnderagedMember.getFirstName() + " " + currentUnderagedMember.getLastName() + "!"
-                    : "Croatian uplatnica generated successfully!";
-            showAlert(Alert.AlertType.INFORMATION, "Success", successMessage);
 
         } catch (Exception e) {
             System.err.println("Error generating uplatnica: " + e.getMessage());
@@ -775,17 +849,104 @@ public class BarcodePaymentDialog {
     }
 
     /**
-     * Check if payment template description contains underage placeholders
+     * Generate a single uplatnica for the current contact and underage member
      */
-    private boolean templateContainsUnderagedPlaceholders(String description) {
-        if (description == null || description.trim().isEmpty()) {
+    private void generateSingleUplatnica() throws Exception {
+        // Generate HUB-3 data string
+        currentHUB3Data = generateHUB3Data();
+
+        // Generate PDF417 barcode image
+        generateBarcodeImage();
+
+        // Display the barcode and HTML
+        showGeneratedContent();
+
+        String successMessage = currentUnderagedMember != null
+                ? "Croatian uplatnica generated for " + currentUnderagedMember.getFirstName() + " " + currentUnderagedMember.getLastName() + "!"
+                : "Croatian uplatnica generated successfully!";
+        showAlert(Alert.AlertType.INFORMATION, "Success", successMessage);
+    }
+
+    /**
+     * Show multiple generation dialog for multiple underage members
+     */
+    /**
+     * Show multiple generation dialog for multiple underage members
+     */
+    private void showMultipleGenerationDialog(List<UnderagedMember> membersList) {
+        try {
+            Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmDialog.setTitle("Multiple Children Found");
+            confirmDialog.setHeaderText("Multiple child members found for " + contact.getFirstName() + " " + contact.getLastName());
+
+            StringBuilder content = new StringBuilder();
+            content.append("Found ").append(membersList.size()).append(" child members:\n\n");
+            for (UnderagedMember member : membersList) {
+                content.append("• ").append(member.getFirstName()).append(" ").append(member.getLastName())
+                        .append(" (Age: ").append(member.getAge()).append(")\n");
+            }
+            content.append("\nHow would you like to generate the uplatnicas?");
+
+            confirmDialog.setContentText(content.toString());
+            confirmDialog.initOwner(dialog);
+
+            ButtonType generateAllButton = new ButtonType("Generate All Children", ButtonBar.ButtonData.OK_DONE);
+            ButtonType selectOneButton = new ButtonType("Select One Child", ButtonBar.ButtonData.OTHER);
+            ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            confirmDialog.getButtonTypes().setAll(generateAllButton, selectOneButton, cancelButton);
+
+            Optional<ButtonType> result = confirmDialog.showAndWait();
+
+            if (result.isPresent()) {
+                if (result.get() == generateAllButton) {
+                    // FIX 1: Get the proper parent stage from this dialog
+                    Stage parentStage = (Stage) dialog.getScene().getWindow();
+
+                    List<Contact> contactList = List.of(contact);
+                    MultipleGenerationBarcodeDialog multiDialog = new MultipleGenerationBarcodeDialog(
+                            parentStage, contactList, selectedTemplate);
+
+                    // FIX 2: Don't hide/show - just let the modal dialog handle it
+                    multiDialog.showAndWait();
+
+                } else if (result.get() == selectOneButton) {
+                    // Show selection dialog for one child
+                    UnderagedMember selectedChild = showChildSelectionDialog(membersList);
+                    if (selectedChild != null) {
+                        currentUnderagedMember = selectedChild;
+                        System.out.println("✅ User selected underage member: " +
+                                currentUnderagedMember.getFirstName() + " " + currentUnderagedMember.getLastName());
+
+                        // Generate single uplatnica in this dialog
+                        generateSingleUplatnica();
+                    }
+                }
+                // If cancel, do nothing
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error showing multiple generation dialog: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Dialog Error", "Error showing multiple generation dialog: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Check if payment template description or reference contains underage placeholders
+     */
+    private boolean templateContainsUnderagedPlaceholders(String template) {
+        if (template == null || template.trim().isEmpty()) {
             return false;
         }
 
         // Look for any {{underaged_attributes.*}} patterns
-        return description.contains("{{underaged_attributes.");
+        return template.contains("{{underaged_attributes.");
     }
 
+    /**
+     * UPDATED: Generate HUB-3 data with dynamic reference support
+     */
     private String generateHUB3Data() {
         StringBuilder hub3Data = new StringBuilder();
 
@@ -860,12 +1021,10 @@ public class BarcodePaymentDialog {
         // 11. Payment model
         hub3Data.append(selectedTemplate.getModelOfPayment() != null ? selectedTemplate.getModelOfPayment() : "").append("\n");
 
-        // 12. Reference number
-        String reference = selectedTemplate.getPozivNaBroj();
-        if (reference == null || reference.trim().isEmpty()) {
+        // 12. Reference number - UPDATED TO HANDLE DYNAMIC REFERENCES
+        String reference = processReferenceTemplate(selectedTemplate.getPozivNaBroj(), contact, currentUnderagedMember);
+        if (reference.isEmpty()) {
             reference = generatePozivNaBroj(contact.getId());
-        } else {
-            reference = reference.replace("{contact_id}", String.valueOf(contact.getId()));
         }
         hub3Data.append(reference).append("\n");
 
@@ -1125,15 +1284,10 @@ public class BarcodePaymentDialog {
             amount = formatCurrency(templateAmountCents);
         }
 
-        // Reference number
-        String reference = "";
-        if (selectedTemplate != null) {
-            reference = selectedTemplate.getPozivNaBroj();
-            if (reference == null || reference.trim().isEmpty()) {
-                reference = generatePozivNaBroj(contact.getId());
-            } else {
-                reference = reference.replace("{contact_id}", String.valueOf(contact.getId()));
-            }
+        // Reference number - UPDATED to use dynamic processing
+        String reference = processReferenceTemplate(selectedTemplate.getPozivNaBroj(), contact, currentUnderagedMember);
+        if (reference.isEmpty()) {
+            reference = generatePozivNaBroj(contact.getId());
         }
 
         // Description - Use TemplateProcessor
