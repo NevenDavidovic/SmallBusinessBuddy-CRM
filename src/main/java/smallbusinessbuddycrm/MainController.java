@@ -4,12 +4,15 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TitledPane;
+import javafx.scene.effect.Glow;
 import javafx.scene.layout.StackPane;
 import javafx.scene.Node;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import smallbusinessbuddycrm.database.OrganizationDAO;
 import smallbusinessbuddycrm.model.Organization;
 
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.Optional;
 
@@ -280,6 +283,11 @@ public class MainController {
     }
 
     @FXML
+    private void handleHomeReportingScreen() {
+        navigateTo("/views/reporting/reporting-nav-dashboard-view.fxml");
+    }
+
+    @FXML
     private void handleContactsReportAction() {
         navigateTo("/views/reporting/contacts-report.fxml");
     }
@@ -302,6 +310,22 @@ public class MainController {
     @FXML
     private void handleListsReportAction() {
         navigateTo("/views/ListsReport.fxml");
+    }
+
+    @FXML
+    private void handleCardHover(MouseEvent event) {
+        VBox card = (VBox) event.getSource();
+        card.setEffect(new Glow(0.6));
+        card.setScaleX(1.05);
+        card.setScaleY(1.05);
+    }
+
+    @FXML
+    private void handleCardExit(MouseEvent event) {
+        VBox card = (VBox) event.getSource();
+        card.setEffect(new Glow(0.2));
+        card.setScaleX(1.0);
+        card.setScaleY(1.0);
     }
 
 }
