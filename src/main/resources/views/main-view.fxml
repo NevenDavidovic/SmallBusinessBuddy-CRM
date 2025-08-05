@@ -145,9 +145,8 @@
                             </ImageView>
                         </graphic>
                         <VBox spacing="5">
-                            <Button text="Contact statistics" styleClass="sidebar-sub-item" onAction="#handleContactStatisticsAction"/>
-                            <Button text="Workshop statistics" styleClass="sidebar-sub-item" onAction="#handleWorkshopsStatisticsAction"/>
-                            <Button text="Email Statistics" styleClass="sidebar-sub-item" onAction="#handleEStatisticsAction"/>
+                            <Button text="See more..." styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
+
                         </VBox>
                     </TitledPane>
 
