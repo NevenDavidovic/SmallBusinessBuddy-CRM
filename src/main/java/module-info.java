@@ -19,6 +19,10 @@ module smallbusinessbuddycrm {
     requires html2pdf;
     requires layout;
     requires io;
+    requires java.mail;
+    requires java.net.http;
+    requires jdk.httpserver;
+    requires java.dotenv;
 
     opens smallbusinessbuddycrm to javafx.fxml;
     exports smallbusinessbuddycrm;

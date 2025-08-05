@@ -27,6 +27,8 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.pdf417.PDF417Writer;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
+import smallbusinessbuddycrm.services.google.GoogleOAuthManager;
+import javafx.application.Platform;
 
 import smallbusinessbuddycrm.database.PaymentAttachmentDAO;
 import smallbusinessbuddycrm.model.*;
@@ -58,6 +60,9 @@ public class BarcodePaymentDialog {
     private PaymentAttachment selectedPaymentSlipTemplate;
     private PaymentAttachmentDAO paymentAttachmentDAO;
 
+    // OAuth manager for email services
+    private GoogleOAuthManager oauthManager;
+
     // Current data
     private String currentHUB3Data;
     private BufferedImage currentBarcodeImage;
@@ -71,6 +76,10 @@ public class BarcodePaymentDialog {
 
     public BarcodePaymentDialog(Stage parentStage, Contact contact) {
         this.contact = contact;
+
+        // Use the singleton OAuth manager instead of creating new services
+        this.oauthManager = GoogleOAuthManager.getInstance();
+
         loadOrganizationData();
         createDialog(parentStage);
     }
@@ -103,6 +112,16 @@ public class BarcodePaymentDialog {
         organization.setCity("Zagreb");
         organization.setEmail("info@yourcompany.com");
         organization.setPhoneNum("+385 1 234 5678");
+    }
+
+    // Check if Gmail is connected using OAuth manager
+    private boolean isGmailConnected() {
+        return oauthManager.isGmailConnected();
+    }
+
+    // Get current Gmail user email using OAuth manager
+    private String getGmailUserEmail() {
+        return oauthManager.getUserEmail();
     }
 
     private void createDialog(Stage parentStage) {
@@ -552,7 +571,12 @@ public class BarcodePaymentDialog {
         printButton.setStyle("-fx-background-color: #0099cc; -fx-text-fill: white; -fx-border-radius: 4;");
         printButton.setOnAction(e -> printUplatnica());
 
-        actionButtonsContainer.getChildren().addAll(saveHtmlButton, saveImageButton, copyDataButton, printButton);
+        // Add EMAIL BUTTON HERE
+        Button emailButton = new Button("📧 Send via Email");
+        emailButton.setStyle("-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-border-radius: 4;");
+        emailButton.setOnAction(e -> sendPaymentSlipEmail());
+
+        actionButtonsContainer.getChildren().addAll(saveHtmlButton, saveImageButton, copyDataButton, printButton, emailButton);
 
         barcodeSection.getChildren().addAll(barcodeTitle, tabPane, actionButtonsContainer);
 
@@ -571,6 +595,353 @@ public class BarcodePaymentDialog {
 
         return buttonBox;
     }
+
+    // EMAIL FUNCTIONALITY STARTS HERE
+
+    private void sendPaymentSlipEmail() {
+        if (selectedTemplate == null || currentBarcodeImage == null || currentHUB3Data == null) {
+            showAlert(Alert.AlertType.WARNING, "No Payment Slip",
+                    "Please generate a payment slip first before sending via email.");
+            return;
+        }
+
+        // Check if contact has email
+        if (contact.getEmail() == null || contact.getEmail().trim().isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "No Email Address",
+                    "Contact does not have an email address. Please add an email address first.");
+            return;
+        }
+
+        // Check Gmail connection using OAuth manager
+        if (!isGmailConnected()) {
+            showAlert(Alert.AlertType.INFORMATION, "Gmail Not Connected",
+                    "Gmail is not connected. Please go to Settings → Gmail to authenticate first.\n\n" +
+                            "Once connected, you can send payment slips via email.");
+            return;
+        }
+
+        // Show email composition dialog
+        showEmailCompositionDialog();
+    }
+
+    private void showEmailCompositionDialog() {
+        try {
+            // Create custom dialog
+            Dialog<ButtonType> emailDialog = new Dialog<>();
+            emailDialog.setTitle("Send Payment Slip via Email");
+            emailDialog.setHeaderText("Send Croatian payment slip to: " + contact.getEmail());
+            emailDialog.initOwner(dialog);
+
+            // Create form content
+            VBox content = new VBox(15);
+            content.setPadding(new Insets(20));
+
+            // Gmail status
+            VBox statusBox = new VBox(5);
+            statusBox.setStyle("-fx-border-color: #d4edda; -fx-border-radius: 5; -fx-padding: 10; -fx-background-color: #d1ecf1;");
+
+            Label statusTitle = new Label("📧 Gmail Status");
+            statusTitle.setFont(Font.font("System", FontWeight.BOLD, 12));
+            statusTitle.setStyle("-fx-text-fill: #155724;");
+
+            String statusText = "Connected as: " + getGmailUserEmail();
+            Label statusLabel = new Label(statusText);
+            statusLabel.setStyle("-fx-text-fill: #155724; -fx-font-size: 11px;");
+
+            statusBox.getChildren().addAll(statusTitle, statusLabel);
+
+            // Email fields
+            VBox emailFieldsBox = new VBox(10);
+            emailFieldsBox.setStyle("-fx-border-color: #e3f2fd; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #f8fdff;");
+
+            Label fieldsTitle = new Label("📝 Email Details");
+            fieldsTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
+            fieldsTitle.setStyle("-fx-text-fill: #1976d2;");
+
+            // To field (read-only)
+            TextField toField = new TextField(contact.getEmail());
+            toField.setEditable(false);
+            toField.setStyle("-fx-background-color: #f5f5f5;");
+
+            // Subject field (pre-filled, editable)
+            TextField subjectField = new TextField("Payment Slip - " + organization.getName());
+            subjectField.setPromptText("Enter email subject...");
+
+            // Message field (pre-filled, editable)
+            TextArea messageArea = new TextArea();
+            messageArea.setPrefRowCount(8);
+            messageArea.setWrapText(true);
+            messageArea.setText(generateDefaultEmailMessage());
+            messageArea.setPromptText("Enter your message...");
+
+            emailFieldsBox.getChildren().addAll(
+                    fieldsTitle,
+                    new Label("To:"), toField,
+                    new Label("Subject:"), subjectField,
+                    new Label("Message:"), messageArea
+            );
+
+            // Attachment options
+            VBox attachmentBox = new VBox(10);
+            attachmentBox.setStyle("-fx-border-color: #e8f5e8; -fx-border-radius: 5; -fx-padding: 15; -fx-background-color: #f8fff8;");
+
+            Label attachmentTitle = new Label("📎 Attachments");
+            attachmentTitle.setFont(Font.font("System", FontWeight.BOLD, 14));
+            attachmentTitle.setStyle("-fx-text-fill: #2e7d32;");
+
+            CheckBox includePdfCheckBox = new CheckBox("Include Payment Slip as PDF");
+            includePdfCheckBox.setSelected(true);
+
+            CheckBox includeBarcodeCheckBox = new CheckBox("Include Barcode Image (PNG)");
+            includeBarcodeCheckBox.setSelected(true);
+
+            // Template selection for PDF
+            ComboBox<PaymentAttachment> templateCombo = new ComboBox<>();
+            templateCombo.setPromptText("Select PDF template (optional)");
+            templateCombo.setPrefWidth(300);
+
+            // Load templates
+            try {
+                if (paymentAttachmentDAO == null) {
+                    paymentAttachmentDAO = new PaymentAttachmentDAO();
+                }
+                List<PaymentAttachment> templates = paymentAttachmentDAO.findAll();
+                templateCombo.getItems().addAll(templates);
+                if (selectedPaymentSlipTemplate != null) {
+                    templateCombo.setValue(selectedPaymentSlipTemplate);
+                }
+            } catch (Exception e) {
+                System.err.println("Error loading templates: " + e.getMessage());
+            }
+
+            attachmentBox.getChildren().addAll(
+                    attachmentTitle,
+                    includePdfCheckBox,
+                    includeBarcodeCheckBox,
+                    new Label("PDF Template:"),
+                    templateCombo
+            );
+
+            content.getChildren().addAll(statusBox, emailFieldsBox, attachmentBox);
+
+            emailDialog.getDialogPane().setContent(content);
+            emailDialog.getDialogPane().setPrefWidth(700);
+            emailDialog.getDialogPane().setPrefHeight(600);
+
+            // Add buttons
+            ButtonType sendButton = new ButtonType("Send Email", ButtonBar.ButtonData.OK_DONE);
+            ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+            emailDialog.getDialogPane().getButtonTypes().addAll(sendButton, cancelButton);
+
+            // Handle send button click
+            Optional<ButtonType> result = emailDialog.showAndWait();
+            if (result.isPresent() && result.get() == sendButton) {
+                // Validate fields
+                if (subjectField.getText().trim().isEmpty()) {
+                    showAlert(Alert.AlertType.WARNING, "Missing Subject", "Please enter an email subject.");
+                    return;
+                }
+
+                if (messageArea.getText().trim().isEmpty()) {
+                    showAlert(Alert.AlertType.WARNING, "Missing Message", "Please enter an email message.");
+                    return;
+                }
+
+                // Send the email with user's input
+                sendEmailWithUserInput(
+                        contact.getEmail(),
+                        subjectField.getText().trim(),
+                        messageArea.getText().trim(),
+                        includePdfCheckBox.isSelected(),
+                        includeBarcodeCheckBox.isSelected(),
+                        templateCombo.getValue()
+                );
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error showing email dialog: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Dialog Error",
+                    "Failed to show email dialog: " + e.getMessage());
+        }
+    }
+
+    private String generateDefaultEmailMessage() {
+        String payerName = contact.getFirstName() + " " + contact.getLastName();
+        String organizationName = organization.getName();
+
+        // Get amount for display
+        String amountDisplay = "";
+        if (amountField != null && !amountField.getText().isEmpty()) {
+            amountDisplay = amountField.getText();
+        } else if (selectedTemplate != null) {
+            String templateAmountCents = selectedTemplate.getAmount().multiply(new java.math.BigDecimal("100")).toBigInteger().toString();
+            amountDisplay = formatCurrency(templateAmountCents);
+        }
+
+        // Get description using TemplateProcessor
+        String description = "";
+        if (selectedTemplate != null) {
+            description = TemplateProcessor.processTemplate(
+                    selectedTemplate.getDescription(), contact, currentUnderagedMember);
+        }
+
+        return "Dear " + payerName + ",\n\n" +
+                "Please find attached your payment slip for " + organizationName + ".\n\n" +
+                "Payment Details:\n" +
+                "Amount: " + amountDisplay + " EUR\n" +
+                "Description: " + description + "\n" +
+                "Generated: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")) + "\n\n" +
+                "Instructions:\n" +
+                "1. You can print the attached PDF and use it at any bank in Croatia\n" +
+                "2. The barcode contains all payment information for easy processing\n" +
+                "3. Keep this email for your records\n\n" +
+                "If you have any questions about this payment, please contact " + organizationName + ".\n\n" +
+                "Best regards,\n" +
+                organizationName + "\n\n" +
+                "---\n" +
+                "This is an automated message. Please do not reply to this email.";
+    }
+
+    private void sendEmailWithUserInput(String to, String subject, String message,
+                                        boolean includePdf, boolean includeBarcode,
+                                        PaymentAttachment selectedTemplate) {
+        try {
+            // Show progress dialog
+            Alert progressAlert = new Alert(Alert.AlertType.INFORMATION);
+            progressAlert.setTitle("Sending Email");
+            progressAlert.setHeaderText("Sending payment slip via email...");
+            progressAlert.setContentText("Please wait while the email is being sent.");
+            progressAlert.getDialogPane().lookupButton(ButtonType.OK).setVisible(false);
+            progressAlert.initOwner(dialog);
+            progressAlert.show();
+
+            // Do the actual sending in a background thread
+            new Thread(() -> {
+                try {
+                    // Check connection using the OAuth manager
+                    if (!oauthManager.isGmailConnected()) {
+                        Platform.runLater(() -> {
+                            progressAlert.close();
+                            showAlert(Alert.AlertType.ERROR, "Authentication Error",
+                                    "Gmail authentication is no longer valid. Please re-authenticate in Settings.");
+                        });
+                        return;
+                    }
+
+                    // Prepare attachments
+                    byte[] pdfContent = null;
+                    java.awt.image.BufferedImage barcodeImage = null;
+
+                    if (includePdf) {
+                        pdfContent = generatePdfContent(selectedTemplate);
+                    }
+
+                    if (includeBarcode) {
+                        barcodeImage = currentBarcodeImage;
+                    }
+
+                    // Get payment details for the service call
+                    String payerName = contact.getFirstName() + " " + contact.getLastName();
+                    String organizationName = organization.getName();
+
+                    String amountDisplay = "";
+                    if (amountField != null && !amountField.getText().isEmpty()) {
+                        amountDisplay = amountField.getText();
+                    } else if (this.selectedTemplate != null) {
+                        String templateAmountCents = this.selectedTemplate.getAmount().multiply(new java.math.BigDecimal("100")).toBigInteger().toString();
+                        amountDisplay = formatCurrency(templateAmountCents);
+                    }
+
+                    String description = "";
+                    if (this.selectedTemplate != null) {
+                        description = TemplateProcessor.processTemplate(
+                                this.selectedTemplate.getDescription(), contact, currentUnderagedMember);
+                    }
+
+                    // Send email using OAuth Manager
+                    boolean success;
+                    if (includePdf || includeBarcode) {
+                        // Use the OAuth manager to send payment slip with attachments
+                        success = oauthManager.sendPaymentSlip(
+                                to, payerName, organizationName,
+                                amountDisplay, description, pdfContent, barcodeImage
+                        );
+                    } else {
+                        // Send simple email with user's custom message
+                        success = oauthManager.sendEmail(to, subject, message);
+                    }
+
+                    // Update UI on JavaFX thread
+                    Platform.runLater(() -> {
+                        progressAlert.close();
+
+                        if (success) {
+                            showAlert(Alert.AlertType.INFORMATION, "Email Sent Successfully",
+                                    "Payment slip has been sent to " + to + " successfully!\n\n" +
+                                            "The email includes:\n" +
+                                            "• Your custom message\n" +
+                                            (includePdf ? "• Croatian payment slip (PDF)\n" : "") +
+                                            (includeBarcode ? "• Payment barcode (PNG)\n" : "") +
+                                            "• Complete payment information");
+                        } else {
+                            showAlert(Alert.AlertType.ERROR, "Email Failed",
+                                    "Failed to send payment slip email.\n\n" +
+                                            "This may be due to:\n" +
+                                            "• Network connectivity issues\n" +
+                                            "• Gmail API quotas\n" +
+                                            "• Authentication problems\n\n" +
+                                            "Please check the console for more details and try again.");
+                        }
+                    });
+
+                } catch (Exception e) {
+                    System.err.println("Error sending payment slip email: " + e.getMessage());
+                    e.printStackTrace();
+                    Platform.runLater(() -> {
+                        progressAlert.close();
+                        showAlert(Alert.AlertType.ERROR, "Email Error",
+                                "Failed to send payment slip email: " + e.getMessage() + "\n\n" +
+                                        "Please check your Gmail authentication and try again.");
+                    });
+                }
+            }).start();
+
+        } catch (Exception e) {
+            System.err.println("Error preparing email: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Email Error",
+                    "Failed to prepare email: " + e.getMessage());
+        }
+    }
+
+    private byte[] generatePdfContent(PaymentAttachment template) throws Exception {
+        String htmlContent;
+
+        // Use selected template or fallback to Croatian template
+        if (template != null && template.getHtmlContent() != null && !template.getHtmlContent().trim().isEmpty()) {
+            htmlContent = generateUplatnicaHTMLWithTemplate(template);
+        } else {
+            // Use the Croatian template from UplatnicaHtmlGenerator utility
+            htmlContent = UplatnicaHtmlGenerator.generateUplatnicaHtml(
+                    contact, organization, selectedTemplate, currentBarcodeImage, currentUnderagedMember);
+        }
+
+        // Convert HTML to PDF bytes
+        ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
+        try {
+            HtmlConverter.convertToPdf(htmlContent, pdfOutputStream);
+            return pdfOutputStream.toByteArray();
+        } catch (Exception e) {
+            System.err.println("PDF conversion failed: " + e.getMessage());
+            throw new Exception("Failed to convert HTML to PDF: " + e.getMessage());
+        } finally {
+            pdfOutputStream.close();
+        }
+    }
+
+    // EMAIL FUNCTIONALITY ENDS HERE
+
+    // REST OF YOUR EXISTING METHODS (unchanged)
 
     private void loadPaymentTemplates() {
         try {
@@ -870,9 +1241,6 @@ public class BarcodePaymentDialog {
     /**
      * Show multiple generation dialog for multiple underage members
      */
-    /**
-     * Show multiple generation dialog for multiple underage members
-     */
     private void showMultipleGenerationDialog(List<UnderagedMember> membersList) {
         try {
             Alert confirmDialog = new Alert(Alert.AlertType.CONFIRMATION);
@@ -1046,7 +1414,7 @@ public class BarcodePaymentDialog {
         PDF417Writer writer = new PDF417Writer();
 
         Map<EncodeHintType, Object> hints = new HashMap<>();
-        hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
+        hints.put(EncodeHintType.CHARACTER_SET, "ISO-8859-2");
         hints.put(EncodeHintType.ERROR_CORRECTION, 2);
         hints.put(EncodeHintType.PDF417_COMPACT, false);
         hints.put(EncodeHintType.MARGIN, 10);

@@ -51,7 +51,7 @@
                     </graphic>
                 </Button>
                 <!-- Settings Gear -->
-                <Button styleClass="icon-button">
+                <Button styleClass="icon-button" onAction="#handleSettingsAction">
                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0">
                             <Image url="@../images/icons/settings-icon.png"/>
@@ -93,6 +93,7 @@
                             <Button text="Lists" styleClass="sidebar-sub-item" onAction="#handleListsAction"/>
                             <Button text="Workshops" styleClass="sidebar-sub-item" onAction="#handleWorkshopsAction"/>
                             <Button text="Teachers" styleClass="sidebar-sub-item" onAction="#handleTeachersAction"/>
+
                         </VBox>
                     </TitledPane>
 
@@ -104,9 +105,8 @@
                         </graphic>
                         <VBox spacing="5">
 
-                            <Button text="Email" styleClass="sidebar-sub-item" onAction="#handleEmailAction"/>
+                            <Button text="Create Email&#10;Campaign " styleClass="sidebar-sub-item" onAction="#handleEmailAction"/>
                             <Button text="Email Statistics" styleClass="sidebar-sub-item" onAction="#handleEmailStatisticsAction"/>
-                            <Button text="Email Template&#10;Builder" styleClass="sidebar-sub-item" onAction="#handleEmailTemplateAction"/>
 
                         </VBox>
                     </TitledPane>
@@ -121,6 +121,7 @@
                             <Button text="Barcode&#10;generator app" styleClass="sidebar-sub-item" onAction="#handleBarcodeAppAction"/>
                             <Button text="Send payment slips" styleClass="sidebar-sub-item" onAction="#handlePaymentSlipsAction"/>
                             <Button text="Payment history" styleClass="sidebar-sub-item" onAction="#handlePaymentHistoryAction"/>
+                            <Button text="Bulk generation&#10;(Workshops/lists)" styleClass="sidebar-sub-item" onAction="#handleBulkGenerationAction"/>
                         </VBox>
                     </TitledPane>
 
@@ -132,7 +133,7 @@
                         </graphic>
                         <VBox spacing="5">
                             <Button text="Payment&#10;template designer" styleClass="sidebar-sub-item" onAction="#handlePaymentTemplateAction"/>
-                            <Button text="Newsletter&#10;template designer" styleClass="sidebar-sub-item"/>
+                            <Button text="Newsletter&#10;template designer" styleClass="sidebar-sub-item" onAction="#handleEmailTemplateAction"/>
                             <Button text="Payment&#10;attachments designer" styleClass="sidebar-sub-item" onAction="#handlePaymentAttachmentAction"/>
                         </VBox>
                     </TitledPane>
