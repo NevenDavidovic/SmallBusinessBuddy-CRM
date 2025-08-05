@@ -326,7 +326,7 @@ public class DatabaseConnection {
             );
             """;
 
-        // UPDATED: Now includes teacher_id as foreign key
+
         String createWorkshopsTableSQL = """
             CREATE TABLE IF NOT EXISTS workshops (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -340,7 +340,7 @@ public class DatabaseConnection {
             );
             """;
 
-        // UPDATED: Removed teacher_id and TEACHER participant type completely
+
         String createWorkshopParticipantsTableSQL = """
             CREATE TABLE IF NOT EXISTS workshop_participants (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

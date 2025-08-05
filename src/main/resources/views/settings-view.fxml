@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.web.WebView?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.GoogleOAuthController" style="-fx-background-color: linear-gradient(to bottom, #f8f9fa, #e9ecef);">
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" style="-fx-background-color: transparent; -fx-background: transparent;">
+            <content>
+                <VBox fx:id="mainContent" spacing="30.0" style="-fx-background-color: transparent;">
+                    <padding>
+                        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+                    </padding>
+                    <children>
+                        <!-- Stylish Header -->
+                        <VBox spacing="12.0" style="-fx-alignment: center;">
+                            <children>
+                                <Label style="-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: linear-gradient(to right, #667eea, #764ba2);" text="Gmail Integration" />
+                                <Label style="-fx-font-size: 18px; -fx-text-fill: #6c757d; -fx-font-weight: 300;" text="Seamless Google Account Connection" />
+                                <Separator style="-fx-background-color: linear-gradient(to right, #667eea, #764ba2); -fx-pref-height: 3px; -fx-border-radius: 2px;" />
+                            </children>
+                        </VBox>
+
+                        <!-- Modern Connection Status Card -->
+                        <VBox spacing="20.0" style="-fx-background-color: white; -fx-padding: 35; -fx-background-radius: 16; -fx-border-radius: 16; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 20, 0, 0, 5);">
+                            <children>
+                                <!-- Status Header -->
+                                <HBox spacing="20.0" style="-fx-alignment: center-left;">
+                                    <children>
+                                        <VBox fx:id="statusIndicator" prefHeight="16.0" prefWidth="16.0" style="-fx-background-color: #dc3545; -fx-background-radius: 8; -fx-effect: dropshadow(three-pass-box, rgba(220,53,69,0.4), 8, 0, 0, 2);" />
+                                        <VBox spacing="4.0">
+                                            <children>
+                                                <Label style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Google Account Status" />
+                                                <Label fx:id="statusText" style="-fx-font-size: 14px; -fx-text-fill: #6c757d; -fx-font-weight: 500;" text="Not Connected" />
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+
+                                <Label fx:id="statusLabel" style="-fx-font-size: 16px; -fx-text-fill: #495057; -fx-wrap-text: true; -fx-padding: 15 0 0 0;" text="Connect your Google account to enable Gmail integration" />
+                            </children>
+                        </VBox>
+
+                        <!-- Sign In Section -->
+                        <VBox fx:id="signInSection" spacing="25.0">
+                            <children>
+                                <!-- Main Sign-in Card -->
+                                <VBox spacing="25.0" style="-fx-background-color: white; -fx-padding: 40; -fx-background-radius: 20; -fx-border-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.12), 25, 0, 0, 8);">
+                                    <children>
+                                        <!-- Icon and Title -->
+                                        <VBox spacing="15.0" style="-fx-alignment: center;">
+                                            <children>
+                                                <Label style="-fx-font-size: 48px;" text="🔐" />
+                                                <Label style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Secure Authentication" />
+                                                <Label style="-fx-font-size: 16px; -fx-text-fill: #6c757d; -fx-wrap-text: true; -fx-text-alignment: center;" text="Connect with your Google account using industry-standard OAuth 2.0 security" />
+                                            </children>
+                                        </VBox>
+
+                                        <!-- Features Grid -->
+                                        <VBox spacing="12.0" style="-fx-background-color: #f8f9fa; -fx-padding: 25; -fx-background-radius: 12; -fx-border-radius: 12;">
+                                            <children>
+                                                <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #495057;" text="✨ What You Get:" />
+                                                <HBox spacing="20.0">
+                                                    <children>
+                                                        <VBox spacing="8.0" style="-fx-pref-width: 200;">
+                                                            <children>
+                                                                <Label style="-fx-font-size: 14px; -fx-text-fill: #28a745; -fx-font-weight: 600;" text="🚀 Instant Access" />
+                                                                <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="Send emails directly from your Gmail account" />
+                                                            </children>
+                                                        </VBox>
+                                                        <VBox spacing="8.0" style="-fx-pref-width: 200;">
+                                                            <children>
+                                                                <Label style="-fx-font-size: 14px; -fx-text-fill: #007bff; -fx-font-weight: 600;" text="🔒 Bank-Level Security" />
+                                                                <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="OAuth 2.0 with encrypted token storage" />
+                                                            </children>
+                                                        </VBox>
+                                                    </children>
+                                                </HBox>
+                                                <HBox spacing="20.0">
+                                                    <children>
+                                                        <VBox spacing="8.0" style="-fx-pref-width: 200;">
+                                                            <children>
+                                                                <Label style="-fx-font-size: 14px; -fx-text-fill: #6f42c1; -fx-font-weight: 600;" text="💾 Stay Connected" />
+                                                                <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="Persistent login across app sessions" />
+                                                            </children>
+                                                        </VBox>
+                                                        <VBox spacing="8.0" style="-fx-pref-width: 200;">
+                                                            <children>
+                                                                <Label style="-fx-font-size: 14px; -fx-text-fill: #fd7e14; -fx-font-weight: 600;" text="⚡ Auto-Refresh" />
+                                                                <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="Smart token renewal when needed" />
+                                                            </children>
+                                                        </VBox>
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </VBox>
+
+                                        <!-- Sign In Button -->
+                                        <VBox spacing="15.0" style="-fx-alignment: center;">
+                                            <children>
+                                                <Button fx:id="signInButton" mnemonicParsing="false" onAction="#handleSignIn" prefHeight="60.0" prefWidth="300.0" style="-fx-background-color: linear-gradient(to right, #4285f4, #34a853); -fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold; -fx-background-radius: 30; -fx-border-radius: 30; -fx-effect: dropshadow(three-pass-box, rgba(66,133,244,0.4), 15, 0, 0, 5); -fx-cursor: hand;" text="🚀 Connect with Google" />
+                                                <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-text-alignment: center;" text="Opens securely in your default browser" />
+                                            </children>
+                                        </VBox>
+
+                                        <!-- Development Tools -->
+                                        <VBox spacing="10.0" style="-fx-background-color: #fff3cd; -fx-padding: 20; -fx-background-radius: 12; -fx-border-radius: 12;">
+                                            <children>
+                                                <Label style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #856404;" text="🛠️ Development Tools" />
+                                                <HBox spacing="12.0" style="-fx-alignment: center;">
+                                                    <children>
+                                                        <Button mnemonicParsing="false" onAction="#handleTestDemoMode" style="-fx-background-color: #ffc107; -fx-text-fill: #212529; -fx-font-size: 12px; -fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 16 8 16;" text="🎭 Demo Mode" />
+                                                        <Button mnemonicParsing="false" onAction="#testCallback" style="-fx-background-color: #6f42c1; -fx-text-fill: white; -fx-font-size: 12px; -fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 16 8 16;" text="🔧 Test Server" />
+                                                        <Button mnemonicParsing="false" onAction="#debugConnectionState" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 12px; -fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 16 8 16;" text="🧪 Debug" />
+                                                        <Button mnemonicParsing="false" onAction="#forceGetUserInfo" style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-font-size: 12px; -fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 16 8 16;" text="🔍 Get User Info" />
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+
+                        <!-- Connected Account Section -->
+                        <VBox fx:id="connectedSection" spacing="25.0" visible="false">
+                            <children>
+                                <!-- Connection Success Card -->
+                                <VBox spacing="25.0" style="-fx-background-color: linear-gradient(to bottom right, #d4edda, #c3e6cb); -fx-padding: 40; -fx-background-radius: 20; -fx-border-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(40,167,69,0.2), 25, 0, 0, 8);">
+                                    <children>
+                                        <!-- Success Header -->
+                                        <VBox spacing="15.0" style="-fx-alignment: center;">
+                                            <children>
+                                                <Label style="-fx-font-size: 48px;" text="✅" />
+                                                <Label style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #155724;" text="Successfully Connected!" />
+                                            </children>
+                                        </VBox>
+
+                                        <!-- User Info Display -->
+                                        <VBox spacing="15.0" style="-fx-background-color: rgba(255,255,255,0.8); -fx-padding: 25; -fx-background-radius: 16; -fx-border-radius: 16;">
+                                            <children>
+                                                <Label fx:id="connectedEmailLabel" style="-fx-font-size: 20px; -fx-text-fill: #155724; -fx-font-weight: bold; -fx-text-alignment: center;" text="📧 Connected as: user@gmail.com" />
+                                                <Label fx:id="connectedNameLabel" style="-fx-font-size: 16px; -fx-text-fill: #155724; -fx-text-alignment: center;" text="👤 User Name" />
+                                                <Separator style="-fx-background-color: #c3e6cb; -fx-pref-height: 2px;" />
+                                                <Label style="-fx-font-size: 14px; -fx-text-fill: #155724; -fx-text-alignment: center; -fx-wrap-text: true;" text="Your account is securely connected and ready for email integration" />
+                                            </children>
+                                        </VBox>
+
+                                        <!-- Action Buttons -->
+                                        <HBox spacing="20.0" style="-fx-alignment: center;">
+                                            <children>
+                                                <Button fx:id="sendTestEmailButton" mnemonicParsing="false" onAction="#handleSendTestEmail" prefHeight="50.0" prefWidth="180.0" style="-fx-background-color: linear-gradient(to right, #28a745, #20c997); -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 25; -fx-border-radius: 25; -fx-effect: dropshadow(three-pass-box, rgba(40,167,69,0.3), 12, 0, 0, 3); -fx-cursor: hand;" text="📧 Send Test Email" />
+                                                <Button mnemonicParsing="false" onAction="#handleQuickTestEmail" prefHeight="50.0" prefWidth="180.0" style="-fx-background-color: linear-gradient(to right, #17a2b8, #20c997); -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 25; -fx-border-radius: 25; -fx-effect: dropshadow(three-pass-box, rgba(23,162,184,0.3), 12, 0, 0, 3); -fx-cursor: hand;" text="⚡ Quick Test" />
+                                            </children>
+                                        </HBox>
+
+                                        <!-- Management Buttons -->
+                                        <HBox spacing="15.0" style="-fx-alignment: center;">
+                                            <children>
+                                                <Button mnemonicParsing="false" onAction="#testConnection" style="-fx-background-color: #6f42c1; -fx-text-fill: white; -fx-font-size: 13px; -fx-background-radius: 12; -fx-border-radius: 12; -fx-padding: 10 20 10 20; -fx-cursor: hand;" text="🔍 Test Connection" />
+                                                <Button mnemonicParsing="false" onAction="#checkTokenStatus" style="-fx-background-color: #fd7e14; -fx-text-fill: white; -fx-font-size: 13px; -fx-background-radius: 12; -fx-border-radius: 12; -fx-padding: 10 20 10 20; -fx-cursor: hand;" text="🔄 Check Status" />
+                                                <Button fx:id="signOutButton" mnemonicParsing="false" onAction="#handleSignOut" style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-size: 13px; -fx-background-radius: 12; -fx-border-radius: 12; -fx-padding: 10 20 10 20; -fx-cursor: hand;" text="🚪 Sign Out" />
+                                            </children>
+                                        </HBox>
+
+                                        <!-- Connection Stats -->
+                                        <VBox spacing="10.0" style="-fx-background-color: #e2f4e8; -fx-padding: 20; -fx-background-radius: 12; -fx-border-radius: 12;">
+                                            <children>
+                                                <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #155724;" text="🎯 Integration Ready!" />
+                                                <HBox spacing="30.0" style="-fx-alignment: center;">
+                                                    <children>
+                                                        <VBox spacing="5.0" style="-fx-alignment: center;">
+                                                            <children>
+                                                                <Label style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #155724;" text="✅ OAuth 2.0" />
+                                                                <Label style="-fx-font-size: 11px; -fx-text-fill: #155724;" text="Authenticated" />
+                                                            </children>
+                                                        </VBox>
+                                                        <VBox spacing="5.0" style="-fx-alignment: center;">
+                                                            <children>
+                                                                <Label style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #155724;" text="💾 Persistent" />
+                                                                <Label style="-fx-font-size: 11px; -fx-text-fill: #155724;" text="Saved Locally" />
+                                                            </children>
+                                                        </VBox>
+                                                        <VBox spacing="5.0" style="-fx-alignment: center;">
+                                                            <children>
+                                                                <Label style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #155724;" text="📧 Gmail API" />
+                                                                <Label style="-fx-font-size: 11px; -fx-text-fill: #155724;" text="Ready to Send" />
+                                                            </children>
+                                                        </VBox>
+                                                        <VBox spacing="5.0" style="-fx-alignment: center;">
+                                                            <children>
+                                                                <Label style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #155724;" text="🔄 Auto-Refresh" />
+                                                                <Label style="-fx-font-size: 11px; -fx-text-fill: #155724;" text="No Re-auth Needed" />
+                                                            </children>
+                                                        </VBox>
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+
+                        <!-- Status Messages -->
+                        <VBox spacing="20.0">
+                            <children>
+                                <!-- Main Status -->
+                                <Label fx:id="statusMessageLabel" style="-fx-font-size: 16px; -fx-text-fill: #495057; -fx-background-color: white; -fx-padding: 20 25 20 25; -fx-background-radius: 12; -fx-border-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 15, 0, 0, 3); -fx-text-alignment: center;" text="Ready to connect..." wrapText="true" />
+
+                                <!-- Info Cards Row -->
+                                <HBox spacing="20.0">
+                                    <children>
+                                        <!-- Security Info -->
+                                        <VBox spacing="12.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 16; -fx-border-radius: 16; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 15, 0, 0, 3); -fx-pref-width: 200;">
+                                            <children>
+                                                <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #007bff;" text="🛡️ Security" />
+                                                <VBox spacing="6.0">
+                                                    <children>
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• No passwords stored" />
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• Encrypted HTTPS only" />
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• Revoke access anytime" />
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• CSRF protection" />
+                                                    </children>
+                                                </VBox>
+                                            </children>
+                                        </VBox>
+
+                                        <!-- Storage Info -->
+                                        <VBox spacing="12.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 16; -fx-border-radius: 16; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 15, 0, 0, 3); -fx-pref-width: 200;">
+                                            <children>
+                                                <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #28a745;" text="💾 Storage" />
+                                                <VBox spacing="6.0">
+                                                    <children>
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• Local file storage" />
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• User directory only" />
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• Auto-backup tokens" />
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• Easy to clear" />
+                                                    </children>
+                                                </VBox>
+                                            </children>
+                                        </VBox>
+
+                                        <!-- Features Info -->
+                                        <VBox spacing="12.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 16; -fx-border-radius: 16; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 15, 0, 0, 3); -fx-pref-width: 200;">
+                                            <children>
+                                                <Label style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #6f42c1;" text="⚡ Features" />
+                                                <VBox spacing="6.0">
+                                                    <children>
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• Instant reconnection" />
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• Beautiful success page" />
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• Smart error handling" />
+                                                        <Label style="-fx-font-size: 12px; -fx-text-fill: #6c757d; -fx-wrap-text: true;" text="• Development tools" />
+                                                    </children>
+                                                </VBox>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <!-- Bottom Spacing -->
+                        <VBox prefHeight="30.0" />
+                    </children>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+
+    <!-- OAuth WebView Overlay (Modern Design) -->
+    <fx:define>
+        <VBox fx:id="oauthOverlay" style="-fx-background-color: rgba(0,0,0,0.85);" visible="false">
+            <children>
+                <VBox spacing="20.0" style="-fx-background-color: white; -fx-padding: 30; -fx-background-radius: 20; -fx-border-radius: 20; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 30, 0, 0, 10);">
+                    <VBox.margin>
+                        <Insets bottom="60.0" left="60.0" right="60.0" top="60.0" />
+                    </VBox.margin>
+                    <children>
+                        <!-- Overlay Header -->
+                        <HBox spacing="20.0" style="-fx-alignment: center-left;">
+                            <children>
+                                <Label style="-fx-font-size: 24px;" text="🔐" />
+                                <VBox spacing="5.0">
+                                    <children>
+                                        <Label style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #333;" text="Google Authentication" />
+                                        <Label style="-fx-font-size: 14px; -fx-text-fill: #6c757d;" text="Complete the sign-in process below" />
+                                    </children>
+                                </VBox>
+                                <Button fx:id="closeOAuthButton" mnemonicParsing="false" onAction="#handleCloseOAuth" style="-fx-background-color: #f8f9fa; -fx-text-fill: #6c757d; -fx-background-radius: 8; -fx-border-radius: 8; -fx-padding: 8 12 8 12; -fx-cursor: hand;" text="✕ Close" />
+                            </children>
+                        </HBox>
+
+                        <WebView fx:id="oauthWebView" prefHeight="500.0" prefWidth="700.0" style="-fx-background-radius: 12; -fx-border-radius: 12;" />
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+    </fx:define>
+</BorderPane>

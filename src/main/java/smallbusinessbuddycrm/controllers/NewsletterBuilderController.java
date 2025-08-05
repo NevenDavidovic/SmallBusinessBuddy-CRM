@@ -1,175 +1,439 @@
 package smallbusinessbuddycrm.controllers;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
-import javafx.scene.web.HTMLEditor;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Clipboard;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.TransferMode;
+
+import smallbusinessbuddycrm.model.NewsletterTemplate;
+import smallbusinessbuddycrm.services.*;
+import smallbusinessbuddycrm.services.newsletter.NewsletterComponentBuilder;
+import smallbusinessbuddycrm.services.newsletter.NewsletterHtmlGenerator;
+import smallbusinessbuddycrm.services.newsletter.NewsletterService;
+import smallbusinessbuddycrm.services.newsletter.TemplateManager;
 
 import java.io.*;
 import java.net.URL;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
+import java.util.Optional;
 
 public class NewsletterBuilderController implements Initializable {
 
-    // Header Section Controls
-    @FXML private TextField newsletterTitleField;
+    // FXML Fields
+    @FXML private Button newNewsletterButton;
+    @FXML private Button refreshButton;
+    @FXML private TextField searchField;
+    @FXML private Button clearSearchButton;
+    @FXML private ComboBox<String> typeFilterCombo;
+    @FXML private TableView<NewsletterTemplate> newsletterTable;
+    @FXML private TableColumn<NewsletterTemplate, String> nameColumn;
+    @FXML private TableColumn<NewsletterTemplate, String> typeColumn;
+    @FXML private TableColumn<NewsletterTemplate, String> statusColumn;
+    @FXML private TableColumn<NewsletterTemplate, String> createdColumn;
+    @FXML private Button editButton;
+    @FXML private Button duplicateButton;
+    @FXML private Button deleteButton;
+    @FXML private TabPane editorTabPane;
+    @FXML private TextField newsletterNameField;
+    @FXML private TextField subjectField;
     @FXML private TextField companyNameField;
     @FXML private ColorPicker headerColorPicker;
+    @FXML private ComboBox<String> typeCombo;
     @FXML private ComboBox<String> templateCombo;
-
-    // Content Building Controls
-    @FXML private VBox componentsPanel;
-    @FXML private ScrollPane contentCanvas;
-    @FXML private VBox contentContainer;
-    @FXML private HTMLEditor contentEditor;
-
-    // Component Buttons
+    @FXML private TextArea contentEditor;
+    @FXML private WebView previewWebView;
     @FXML private Button addTextButton;
-    @FXML private Button addImageButton;
     @FXML private Button addHeadingButton;
+    @FXML private Button addImageButton;
     @FXML private Button addButtonButton;
     @FXML private Button addDividerButton;
-
-    // Action Buttons
-    @FXML private Button previewButton;
-    @FXML private Button saveButton;
-    @FXML private Button loadButton;
+    @FXML private Button refreshPreviewButton;
     @FXML private Button exportHtmlButton;
     @FXML private Button sendButton;
+    @FXML private Button saveButton;
+    @FXML private Button cancelButton;
+    @FXML private Label statusLabel;
+    @FXML private Label itemCountLabel;
 
-    // Preview Controls
-    @FXML private WebView previewWebView;
-    @FXML private VBox previewContainer;
+    // Services
+    private NewsletterService newsletterService;
+    private TemplateManager templateManager;
+    private NewsletterHtmlGenerator htmlGenerator;
+    private NewsletterComponentBuilder componentBuilder;
 
-    // Newsletter Data
+    // State
+    private Connection dbConnection;
+    private ObservableList<NewsletterTemplate> newsletterList;
+    private NewsletterTemplate currentNewsletter;
+    private boolean isEditing = false;
     private StringBuilder newsletterHTML;
-    private String currentTemplate = "modern";
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("NewsletterBuilderController.initialize() called");
 
-        setupInitialValues();
-        setupEventHandlers();
-        setupDragAndDrop();
-        generatePreview();
+        try {
+            initializeServices();
+            initializeUI();
+            loadInitialData();
 
-        System.out.println("Newsletter Builder initialized successfully");
-    }
-
-    private void setupInitialValues() {
-        // Setup template options
-        templateCombo.getItems().addAll(
-                "Modern Clean",
-                "Professional Blue",
-                "Elegant Dark",
-                "Colorful Marketing",
-                "Minimalist White"
-        );
-        templateCombo.setValue("Modern Clean");
-
-        // Setup default values
-        newsletterTitleField.setText("Weekly Newsletter");
-        companyNameField.setText("Your Company Name");
-
-        // Initialize HTML content
-        newsletterHTML = new StringBuilder();
-
-        // Setup content editor with some default content
-        contentEditor.setHtmlText("<p>Start building your newsletter content here...</p>");
-    }
-
-    private void setupEventHandlers() {
-        // Template selection
-        templateCombo.setOnAction(e -> {
-            currentTemplate = templateCombo.getValue().toLowerCase().replace(" ", "");
-            generatePreview();
-        });
-
-        // Header controls
-        newsletterTitleField.textProperty().addListener((obs, old, newVal) -> generatePreview());
-        companyNameField.textProperty().addListener((obs, old, newVal) -> generatePreview());
-        headerColorPicker.setOnAction(e -> generatePreview());
-
-        // Component addition buttons
-        addTextButton.setOnAction(e -> addTextComponent());
-        addImageButton.setOnAction(e -> addImageComponent());
-        addHeadingButton.setOnAction(e -> addHeadingComponent());
-        addButtonButton.setOnAction(e -> addButtonComponent());
-        addDividerButton.setOnAction(e -> addDividerComponent());
-
-        // Action buttons
-        previewButton.setOnAction(e -> generatePreview());
-        saveButton.setOnAction(e -> saveNewsletter());
-        loadButton.setOnAction(e -> loadNewsletter());
-        exportHtmlButton.setOnAction(e -> exportToHTML());
-        sendButton.setOnAction(e -> sendNewsletter());
-
-        // Content editor updates
-        contentEditor.setOnKeyReleased(e -> generatePreview());
-    }
-
-    private void setupDragAndDrop() {
-        // Make component buttons draggable
-        setupDraggableButton(addTextButton, "text");
-        setupDraggableButton(addImageButton, "image");
-        setupDraggableButton(addHeadingButton, "heading");
-        setupDraggableButton(addButtonButton, "button");
-        setupDraggableButton(addDividerButton, "divider");
-
-        // Make content container accept drops
-        contentContainer.setOnDragOver(event -> {
-            if (event.getGestureSource() != contentContainer && event.getDragboard().hasString()) {
-                event.acceptTransferModes(TransferMode.COPY);
-            }
-            event.consume();
-        });
-
-        contentContainer.setOnDragDropped(event -> {
-            Dragboard db = event.getDragboard();
-            boolean success = false;
-            if (db.hasString()) {
-                String componentType = db.getString();
-                addComponentByType(componentType);
-                success = true;
-            }
-            event.setDropCompleted(success);
-            event.consume();
-        });
-    }
-
-    private void setupDraggableButton(Button button, String componentType) {
-        button.setOnDragDetected(event -> {
-            Dragboard db = button.startDragAndDrop(TransferMode.COPY);
-            ClipboardContent content = new ClipboardContent();
-            content.putString(componentType);
-            db.setContent(content);
-            event.consume();
-        });
-    }
-
-    private void addComponentByType(String type) {
-        switch (type) {
-            case "text": addTextComponent(); break;
-            case "image": addImageComponent(); break;
-            case "heading": addHeadingComponent(); break;
-            case "button": addButtonComponent(); break;
-            case "divider": addDividerComponent(); break;
+            System.out.println("Newsletter Builder initialized successfully");
+        } catch (Exception e) {
+            showError("Failed to initialize Newsletter Builder: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
+    private void initializeServices() {
+        // Initialize database connection
+        initializeDatabase();
+
+        // Initialize services
+        newsletterService = new NewsletterService(dbConnection);
+        templateManager = new TemplateManager();
+        htmlGenerator = new NewsletterHtmlGenerator();
+        componentBuilder = new NewsletterComponentBuilder();
+
+        // Initialize data structures
+        newsletterList = FXCollections.observableArrayList();
+        newsletterHTML = new StringBuilder();
+    }
+
+    private void initializeDatabase() {
+        try {
+            String dbPath = "newsletter_builder.db";
+            String url = "jdbc:sqlite:" + dbPath;
+
+            this.dbConnection = DriverManager.getConnection(url);
+            createTablesIfNotExist();
+
+            System.out.println("Database connection initialized successfully");
+        } catch (SQLException e) {
+            System.err.println("Database initialization failed: " + e.getMessage());
+            e.printStackTrace();
+            showError("Database connection failed. Newsletter saving will be disabled.\n" + e.getMessage());
+        }
+    }
+
+    private void createTablesIfNotExist() throws SQLException {
+        String createTableSQL = """
+            CREATE TABLE IF NOT EXISTS newsletter_template (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name VARCHAR(255) NOT NULL,
+                subject VARCHAR(500),
+                content TEXT,
+                template_type VARCHAR(100),
+                is_active INTEGER DEFAULT 1,
+                created_at TEXT,
+                updated_at TEXT,
+                description TEXT,
+                status VARCHAR(50) DEFAULT 'DRAFT'
+            )
+            """;
+
+        try (Statement stmt = dbConnection.createStatement()) {
+            stmt.execute(createTableSQL);
+
+            // Add status column if it doesn't exist (for existing databases)
+            try {
+                stmt.execute("ALTER TABLE newsletter_template ADD COLUMN status VARCHAR(50) DEFAULT 'DRAFT'");
+            } catch (SQLException e) {
+                // Column might already exist, ignore error
+                System.out.println("Status column already exists or couldn't be added: " + e.getMessage());
+            }
+
+            System.out.println("Database tables created/verified successfully");
+        }
+    }
+
+    private void initializeUI() {
+        setupTableColumns();
+        setupComboBoxes();
+        setupEventHandlers();
+        setupFormValidation();
+        setupInitialValues();
+    }
+
+    private void setupComboBoxes() {
+        // Template combo
+        templateCombo.getItems().addAll(templateManager.getAvailableTemplates());
+        templateCombo.setValue("Modern Clean");
+
+        // Type/Status combo (using template type as status)
+        typeCombo.getItems().addAll(newsletterService.getAvailableStatuses());
+        typeCombo.setValue("DRAFT");
+
+        // Filter combo
+        typeFilterCombo.getItems().addAll("All Items", "Templates", "Newsletters");
+        typeFilterCombo.setValue("All Items");
+    }
+
+    private void setupTableColumns() {
+        nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        typeColumn.setCellValueFactory(new PropertyValueFactory<>("templateType"));
+
+        // Use a custom cell value factory for status column
+        statusColumn.setCellValueFactory(cellData -> {
+            NewsletterTemplate template = cellData.getValue();
+            String status = newsletterService.getNewsletterStatus(template);
+            return new SimpleStringProperty(status);
+        });
+
+        createdColumn.setCellValueFactory(cellData -> {
+            LocalDateTime created = cellData.getValue().getCreatedAt();
+            if (created != null) {
+                return new SimpleStringProperty(created.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")));
+            }
+            return new SimpleStringProperty("");
+        });
+
+        newsletterTable.setItems(newsletterList);
+        newsletterTable.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldSelection, newSelection) -> {
+                    updateActionButtons(newSelection != null);
+                    if (newSelection != null && !isEditing) {
+                        loadNewsletterForViewing(newSelection);
+                    }
+                }
+        );
+    }
+
+    private void setupEventHandlers() {
+        // Header buttons
+        newNewsletterButton.setOnAction(e -> createNewNewsletter());
+        refreshButton.setOnAction(e -> refreshNewsletters());
+        clearSearchButton.setOnAction(e -> clearSearch());
+
+        // Search and filter
+        searchField.textProperty().addListener((obs, oldText, newText) -> performSearch());
+        typeFilterCombo.setOnAction(e -> performSearch());
+
+        // Table actions
+        editButton.setOnAction(e -> editSelectedNewsletter());
+        duplicateButton.setOnAction(e -> duplicateSelectedNewsletter());
+        deleteButton.setOnAction(e -> deleteSelectedNewsletter());
+
+        // Component buttons
+        addTextButton.setOnAction(e -> addTextComponent());
+        addHeadingButton.setOnAction(e -> addHeadingComponent());
+        addImageButton.setOnAction(e -> addImageComponent());
+        addButtonButton.setOnAction(e -> addButtonComponent());
+        addDividerButton.setOnAction(e -> addDividerComponent());
+
+        // Editor buttons
+        refreshPreviewButton.setOnAction(e -> generatePreview());
+        exportHtmlButton.setOnAction(e -> exportToHTML());
+        sendButton.setOnAction(e -> sendNewsletter());
+        saveButton.setOnAction(e -> saveCurrentNewsletter());
+        cancelButton.setOnAction(e -> cancelEditing());
+
+        // Template selection
+        templateCombo.setOnAction(e -> loadSelectedTemplate());
+
+        // Auto-refresh preview
+        contentEditor.textProperty().addListener((obs, oldText, newText) -> {
+            if (isEditing) generatePreview();
+        });
+        subjectField.textProperty().addListener((obs, old, newVal) -> generatePreview());
+        companyNameField.textProperty().addListener((obs, old, newVal) -> generatePreview());
+        headerColorPicker.setOnAction(e -> generatePreview());
+    }
+
+    private void setupFormValidation() {
+        newsletterNameField.textProperty().addListener((obs, oldText, newText) -> updateSaveButtonState());
+        subjectField.textProperty().addListener((obs, oldText, newText) -> updateSaveButtonState());
+        contentEditor.textProperty().addListener((obs, oldText, newText) -> updateSaveButtonState());
+    }
+
+    private void setupInitialValues() {
+        companyNameField.setText("Your Company Name");
+        headerColorPicker.setValue(javafx.scene.paint.Color.web("#007bff"));
+        contentEditor.setText("<p>Start building your newsletter content here...</p>");
+    }
+
+    private void loadInitialData() {
+        loadNewsletters();
+        clearEditor();
+        updateUI();
+    }
+
+    // Newsletter Management Methods
+    private void loadNewsletters() {
+        try {
+            newsletterList.clear();
+            newsletterList.addAll(newsletterService.getAllNewsletters());
+            updateStatusLabel("Loaded " + newsletterList.size() + " items");
+            updateItemCount();
+        } catch (Exception e) {
+            showError("Failed to load newsletters: " + e.getMessage());
+        }
+    }
+
+    private void performSearch() {
+        try {
+            String searchTerm = searchField.getText();
+            String typeFilter = typeFilterCombo.getValue();
+
+            newsletterList.clear();
+            newsletterList.addAll(newsletterService.searchNewsletters(searchTerm, typeFilter));
+            updateItemCount();
+        } catch (Exception e) {
+            showError("Search failed: " + e.getMessage());
+        }
+    }
+
+    private void clearSearch() {
+        searchField.clear();
+        typeFilterCombo.setValue("All Items");
+        loadNewsletters();
+    }
+
+    private void refreshNewsletters() {
+        loadNewsletters();
+        clearEditor();
+        updateStatusLabel("Items refreshed");
+    }
+
+    // Newsletter Editing Methods
+    private void createNewNewsletter() {
+        clearEditor();
+        isEditing = true;
+        currentNewsletter = new NewsletterTemplate();
+
+        newsletterNameField.setText("");
+        subjectField.setText("");
+        companyNameField.setText("Your Company Name");
+        typeCombo.setValue("DRAFT"); // Start as draft
+        templateCombo.setValue("Modern Clean");
+
+        loadSelectedTemplate();
+        updateUI();
+        newsletterNameField.requestFocus();
+        updateStatusLabel("Creating new newsletter");
+    }
+
+    private void editSelectedNewsletter() {
+        NewsletterTemplate selected = newsletterTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            loadNewsletterForEditing(selected);
+        }
+    }
+
+    private void loadNewsletterForEditing(NewsletterTemplate newsletter) {
+        isEditing = true;
+        currentNewsletter = newsletter;
+
+        newsletterNameField.setText(newsletter.getName());
+        subjectField.setText(newsletter.getSubject());
+        typeCombo.setValue(newsletter.getTemplateType());
+        contentEditor.setText(htmlGenerator.extractContentFromHtml(newsletter.getContent()));
+
+        htmlGenerator.extractDetailsFromContent(newsletter.getContent(),
+                companyName -> companyNameField.setText(companyName));
+
+        generatePreview();
+        updateUI();
+        updateStatusLabel("Editing: " + newsletter.getName());
+    }
+
+    private void loadNewsletterForViewing(NewsletterTemplate newsletter) {
+        isEditing = false;
+        currentNewsletter = newsletter;
+
+        newsletterNameField.setText(newsletter.getName());
+        subjectField.setText(newsletter.getSubject());
+        typeCombo.setValue(newsletter.getTemplateType());
+        contentEditor.setText(htmlGenerator.extractContentFromHtml(newsletter.getContent()));
+
+        htmlGenerator.extractDetailsFromContent(newsletter.getContent(),
+                companyName -> companyNameField.setText(companyName));
+
+        generatePreview();
+        updateUI();
+        updateStatusLabel("Viewing: " + newsletter.getName());
+    }
+
+    private void loadSelectedTemplate() {
+        String selectedTemplate = templateCombo.getValue();
+        if (selectedTemplate != null && isEditing) {
+            String templateContent = templateManager.getTemplateContent(selectedTemplate);
+            contentEditor.setText(templateContent);
+            generatePreview();
+        }
+    }
+
+    private void duplicateSelectedNewsletter() {
+        NewsletterTemplate selected = newsletterTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            TextInputDialog dialog = new TextInputDialog("Copy of " + selected.getName());
+            dialog.setTitle("Duplicate Newsletter");
+            dialog.setHeaderText("Create a copy of: " + selected.getName());
+            dialog.setContentText("New name:");
+
+            Optional<String> result = dialog.showAndWait();
+            if (result.isPresent() && !result.get().trim().isEmpty()) {
+                String newName = result.get().trim();
+                try {
+                    NewsletterTemplate duplicate = newsletterService.duplicateNewsletter(selected.getId(), newName);
+                    if (duplicate != null) {
+                        loadNewsletters();
+                        selectNewsletterInTable(duplicate);
+                        updateStatusLabel("Newsletter duplicated successfully");
+                    } else {
+                        showError("Failed to duplicate newsletter");
+                    }
+                } catch (Exception e) {
+                    showError("Duplication failed: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    private void deleteSelectedNewsletter() {
+        NewsletterTemplate selected = newsletterTable.getSelectionModel().getSelectedItem();
+        if (selected != null) {
+            Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmation.setTitle("Delete Newsletter");
+            confirmation.setHeaderText("Delete: " + selected.getName());
+            confirmation.setContentText("This action cannot be undone. Are you sure?");
+
+            Optional<ButtonType> result = confirmation.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                try {
+                    if (newsletterService.deleteNewsletter(selected.getId())) {
+                        loadNewsletters();
+                        clearEditor();
+                        updateStatusLabel("Newsletter deleted");
+                    } else {
+                        if (!newsletterService.isDatabaseConnected()) {
+                            newsletterList.remove(selected);
+                            updateStatusLabel("Newsletter removed (demo mode)");
+                        } else {
+                            showError("Failed to delete newsletter");
+                        }
+                    }
+                } catch (Exception e) {
+                    showError("Deletion failed: " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    // Component Addition Methods
     private void addTextComponent() {
         TextInputDialog dialog = new TextInputDialog("Enter your text content here...");
         dialog.setTitle("Add Text Component");
@@ -177,36 +441,9 @@ public class NewsletterBuilderController implements Initializable {
         dialog.setContentText("Text:");
 
         dialog.showAndWait().ifPresent(text -> {
-            String currentContent = contentEditor.getHtmlText();
-            String newContent = currentContent.replace("</body>",
-                    "<div class='text-component' style='margin: 15px 0; padding: 10px; border-left: 3px solid #007bff;'>" +
-                            "<p>" + text + "</p>" +
-                            "</div></body>");
-            contentEditor.setHtmlText(newContent);
-            generatePreview();
+            String component = componentBuilder.createTextComponent(text);
+            insertComponent(component);
         });
-    }
-
-    private void addImageComponent() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Select Image");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
-        );
-
-        Stage stage = (Stage) addImageButton.getScene().getWindow();
-        File file = fileChooser.showOpenDialog(stage);
-
-        if (file != null) {
-            String imagePath = file.toURI().toString();
-            String currentContent = contentEditor.getHtmlText();
-            String newContent = currentContent.replace("</body>",
-                    "<div class='image-component' style='margin: 20px 0; text-align: center;'>" +
-                            "<img src='" + imagePath + "' style='max-width: 100%; height: auto; border-radius: 8px;' alt='Newsletter Image'>" +
-                            "</div></body>");
-            contentEditor.setHtmlText(newContent);
-            generatePreview();
-        }
     }
 
     private void addHeadingComponent() {
@@ -216,26 +453,32 @@ public class NewsletterBuilderController implements Initializable {
         dialog.setContentText("Heading:");
 
         dialog.showAndWait().ifPresent(heading -> {
-            String currentContent = contentEditor.getHtmlText();
-            String newContent = currentContent.replace("</body>",
-                    "<div class='heading-component' style='margin: 25px 0 15px 0;'>" +
-                            "<h2 style='color: #333; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; margin: 0;'>" +
-                            heading + "</h2>" +
-                            "</div></body>");
-            contentEditor.setHtmlText(newContent);
-            generatePreview();
+            String component = componentBuilder.createHeadingComponent(heading);
+            insertComponent(component);
+        });
+    }
+
+    private void addImageComponent() {
+        TextInputDialog dialog = new TextInputDialog("https://");
+        dialog.setTitle("Add Image Component");
+        dialog.setHeaderText("Image URL");
+        dialog.setContentText("Enter image URL:");
+
+        dialog.showAndWait().ifPresent(imageUrl -> {
+            String component = componentBuilder.createImageComponent(imageUrl);
+            insertComponent(component);
         });
     }
 
     private void addButtonComponent() {
-        Dialog<ButtonResult> dialog = new Dialog<>();
+        Dialog<NewsletterComponentBuilder.ButtonResult> dialog = new Dialog<>();
         dialog.setTitle("Add Button Component");
         dialog.setHeaderText("Button Configuration");
 
-        // Create form fields
-        GridPane grid = new GridPane();
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
+        grid.setPadding(new javafx.geometry.Insets(20));
 
         TextField buttonText = new TextField("Click Here");
         TextField buttonUrl = new TextField("https://");
@@ -255,173 +498,137 @@ public class NewsletterBuilderController implements Initializable {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == ButtonType.OK) {
-                return new ButtonResult(buttonText.getText(), buttonUrl.getText(), buttonColor.getValue());
+                return new NewsletterComponentBuilder.ButtonResult(
+                        buttonText.getText(), buttonUrl.getText(), buttonColor.getValue());
             }
             return null;
         });
 
         dialog.showAndWait().ifPresent(result -> {
-            String colorStyle = getButtonColorStyle(result.color);
-            String currentContent = contentEditor.getHtmlText();
-            String newContent = currentContent.replace("</body>",
-                    "<div class='button-component' style='margin: 20px 0; text-align: center;'>" +
-                            "<a href='" + result.url + "' style='" + colorStyle +
-                            " text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block; font-weight: bold;'>" +
-                            result.text + "</a>" +
-                            "</div></body>");
-            contentEditor.setHtmlText(newContent);
-            generatePreview();
+            String colorStyle = componentBuilder.getButtonColorStyle(result.getColor());
+            String component = componentBuilder.createButtonComponent(
+                    result.getText(), result.getUrl(), colorStyle);
+            insertComponent(component);
         });
     }
 
     private void addDividerComponent() {
-        String currentContent = contentEditor.getHtmlText();
-        String newContent = currentContent.replace("</body>",
-                "<div class='divider-component' style='margin: 30px 0;'>" +
-                        "<hr style='border: none; height: 2px; background: linear-gradient(to right, #007bff, #6c757d); margin: 0;'>" +
-                        "</div></body>");
-        contentEditor.setHtmlText(newContent);
+        String component = componentBuilder.createDividerComponent();
+        insertComponent(component);
+    }
+
+    private void insertComponent(String component) {
+        String currentContent = contentEditor.getText();
+        int caretPosition = contentEditor.getCaretPosition();
+        String newContent = currentContent.substring(0, caretPosition) + component +
+                currentContent.substring(caretPosition);
+        contentEditor.setText(newContent);
+        contentEditor.positionCaret(caretPosition + component.length());
         generatePreview();
     }
 
-    private String getButtonColorStyle(String color) {
-        switch (color) {
-            case "Success Green": return "background-color: #28a745; color: white;";
-            case "Warning Orange": return "background-color: #fd7e14; color: white;";
-            case "Danger Red": return "background-color: #dc3545; color: white;";
-            default: return "background-color: #007bff; color: white;";
-        }
-    }
-
+    // HTML Generation and Preview
     private void generatePreview() {
-        String template = getNewsletterTemplate();
-        String content = contentEditor.getHtmlText();
-
-        // Extract body content from editor
-        String bodyContent = extractBodyContent(content);
-
-        // Replace template placeholders
-        String finalHTML = template
-                .replace("{{TITLE}}", newsletterTitleField.getText())
-                .replace("{{COMPANY}}", companyNameField.getText())
-                .replace("{{CONTENT}}", bodyContent)
-                .replace("{{DATE}}", LocalDateTime.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy")));
+        String finalHTML = htmlGenerator.generateNewsletterHtml(
+                subjectField.getText(),
+                companyNameField.getText(),
+                contentEditor.getText(),
+                headerColorPicker.getValue()
+        );
 
         previewWebView.getEngine().loadContent(finalHTML);
         newsletterHTML = new StringBuilder(finalHTML);
     }
 
-    private String extractBodyContent(String htmlText) {
-        if (htmlText == null) return "";
+    // Save and Export Methods
+    private void saveCurrentNewsletter() {
+        if (!isEditing || currentNewsletter == null) return;
 
-        // Remove HTML and BODY tags, keep content
-        String content = htmlText.replaceAll("(?i)<html[^>]*>", "")
-                .replaceAll("(?i)</html>", "")
-                .replaceAll("(?i)<body[^>]*>", "")
-                .replaceAll("(?i)</body>", "")
-                .trim();
+        String name = newsletterNameField.getText().trim();
+        String subject = subjectField.getText().trim();
+        String type = typeCombo.getValue();
 
-        return content;
-    }
-
-    private String getNewsletterTemplate() {
-        // Modern, responsive email template
-        return "<!DOCTYPE html>" +
-                "<html lang='en'>" +
-                "<head>" +
-                "<meta charset='UTF-8'>" +
-                "<meta name='viewport' content='width=device-width, initial-scale=1.0'>" +
-                "<title>{{TITLE}}</title>" +
-                "<style>" +
-                "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; }" +
-                ".container { max-width: 600px; margin: 0 auto; background-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }" +
-                ".header { background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 30px; text-align: center; }" +
-                ".header h1 { margin: 0; font-size: 28px; font-weight: 300; }" +
-                ".header p { margin: 5px 0 0 0; opacity: 0.9; }" +
-                ".content { padding: 30px; line-height: 1.6; }" +
-                ".footer { background-color: #f8f9fa; padding: 20px; text-align: center; color: #6c757d; font-size: 14px; }" +
-                ".text-component { margin: 15px 0; }" +
-                ".heading-component { margin: 25px 0 15px 0; }" +
-                ".image-component { margin: 20px 0; text-align: center; }" +
-                ".button-component { margin: 20px 0; text-align: center; }" +
-                ".divider-component { margin: 30px 0; }" +
-                "@media only screen and (max-width: 600px) {" +
-                "  .container { width: 100% !important; }" +
-                "  .content { padding: 20px !important; }" +
-                "}" +
-                "</style>" +
-                "</head>" +
-                "<body>" +
-                "<div class='container'>" +
-                "<div class='header'>" +
-                "<h1>{{TITLE}}</h1>" +
-                "<p>{{COMPANY}} • {{DATE}}</p>" +
-                "</div>" +
-                "<div class='content'>" +
-                "{{CONTENT}}" +
-                "</div>" +
-                "<div class='footer'>" +
-                "<p>&copy; 2025 {{COMPANY}}. All rights reserved.</p>" +
-                "<p>You're receiving this newsletter because you subscribed to our updates.</p>" +
-                "</div>" +
-                "</div>" +
-                "</body>" +
-                "</html>";
-    }
-
-    private void saveNewsletter() {
-        try {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Save Newsletter");
-            fileChooser.setInitialFileName("newsletter_" + System.currentTimeMillis() + ".html");
-            fileChooser.getExtensionFilters().add(
-                    new FileChooser.ExtensionFilter("HTML Files", "*.html")
-            );
-
-            Stage stage = (Stage) saveButton.getScene().getWindow();
-            File file = fileChooser.showSaveDialog(stage);
-
-            if (file != null) {
-                try (FileWriter writer = new FileWriter(file)) {
-                    writer.write(newsletterHTML.toString());
-                    showSuccess("Newsletter saved successfully!");
-                }
-            }
-        } catch (Exception e) {
-            showAlert("Save Error", "Failed to save newsletter: " + e.getMessage(), Alert.AlertType.ERROR);
+        if (name.isEmpty()) {
+            showError("Newsletter name is required");
+            newsletterNameField.requestFocus();
+            return;
         }
-    }
 
-    private void loadNewsletter() {
+        if (subject.isEmpty()) {
+            showError("Subject line is required");
+            subjectField.requestFocus();
+            return;
+        }
+
         try {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Load Newsletter");
-            fileChooser.getExtensionFilters().add(
-                    new FileChooser.ExtensionFilter("HTML Files", "*.html")
-            );
+            currentNewsletter.setName(name);
+            currentNewsletter.setSubject(subject);
+            currentNewsletter.setContent(newsletterHTML.toString());
+            currentNewsletter.setTemplateType(type);
 
-            Stage stage = (Stage) loadButton.getScene().getWindow();
-            File file = fileChooser.showOpenDialog(stage);
-
-            if (file != null) {
-                try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-                    StringBuilder content = new StringBuilder();
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        content.append(line).append("\n");
+            NewsletterTemplate saved = newsletterService.saveNewsletter(currentNewsletter);
+            if (saved != null) {
+                if (newsletterService.isDatabaseConnected()) {
+                    loadNewsletters();
+                    selectNewsletterInTable(saved);
+                } else {
+                    // Demo mode
+                    if (!newsletterList.contains(currentNewsletter)) {
+                        newsletterList.add(currentNewsletter);
                     }
-
-                    previewWebView.getEngine().loadContent(content.toString());
-                    newsletterHTML = content;
-                    showSuccess("Newsletter loaded successfully!");
                 }
+                isEditing = false;
+                updateUI();
+                updateStatusLabel("Newsletter saved successfully" +
+                        (newsletterService.isDatabaseConnected() ? "" : " (demo mode)"));
+            } else {
+                showError("Failed to save newsletter");
             }
         } catch (Exception e) {
-            showAlert("Load Error", "Failed to load newsletter: " + e.getMessage(), Alert.AlertType.ERROR);
+            showError("Save failed: " + e.getMessage());
         }
+    }
+
+    private void cancelEditing() {
+        if (isEditing) {
+            Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmation.setTitle("Cancel Editing");
+            confirmation.setHeaderText("Discard changes?");
+            confirmation.setContentText("Any unsaved changes will be lost.");
+
+            Optional<ButtonType> result = confirmation.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.OK) {
+                isEditing = false;
+                NewsletterTemplate selected = newsletterTable.getSelectionModel().getSelectedItem();
+                if (selected != null) {
+                    loadNewsletterForViewing(selected);
+                } else {
+                    clearEditor();
+                }
+                updateUI();
+                updateStatusLabel("Editing cancelled");
+            }
+        }
+    }
+
+    private void clearEditor() {
+        isEditing = false;
+        currentNewsletter = null;
+        newsletterNameField.clear();
+        subjectField.clear();
+        companyNameField.setText("Your Company Name");
+        typeCombo.setValue("DRAFT");
+        templateCombo.setValue("Modern Clean");
+        contentEditor.setText("<p>Start building your newsletter content here...</p>");
+        previewWebView.getEngine().loadContent("");
+        updateUI();
     }
 
     private void exportToHTML() {
+        if (newsletterHTML == null || newsletterHTML.toString().trim().isEmpty()) {
+            generatePreview();
+        }
+
         try {
             FileChooser fileChooser = new FileChooser();
             fileChooser.setTitle("Export Newsletter as HTML");
@@ -437,21 +644,21 @@ public class NewsletterBuilderController implements Initializable {
                 try (FileWriter writer = new FileWriter(file)) {
                     writer.write(newsletterHTML.toString());
 
-                    // Also copy to clipboard
                     ClipboardContent clipboardContent = new ClipboardContent();
                     clipboardContent.putString(newsletterHTML.toString());
                     Clipboard.getSystemClipboard().setContent(clipboardContent);
 
-                    showSuccess("Newsletter exported and copied to clipboard!");
+                    updateStatusLabel("Newsletter exported and copied to clipboard!");
                 }
             }
         } catch (Exception e) {
-            showAlert("Export Error", "Failed to export newsletter: " + e.getMessage(), Alert.AlertType.ERROR);
+            showError("Failed to export newsletter: " + e.getMessage());
         }
     }
 
     private void sendNewsletter() {
-        // Placeholder for email sending functionality
+        generatePreview();
+
         Alert info = new Alert(Alert.AlertType.INFORMATION);
         info.setTitle("Send Newsletter");
         info.setHeaderText("Email Integration");
@@ -459,46 +666,100 @@ public class NewsletterBuilderController implements Initializable {
                 "The newsletter HTML has been copied to your clipboard.\n" +
                 "You can paste it into your email marketing platform.");
 
-        // Copy to clipboard
-        ClipboardContent clipboardContent = new ClipboardContent();
-        clipboardContent.putString(newsletterHTML.toString());
-        Clipboard.getSystemClipboard().setContent(clipboardContent);
+        if (newsletterHTML != null) {
+            ClipboardContent clipboardContent = new ClipboardContent();
+            clipboardContent.putString(newsletterHTML.toString());
+            Clipboard.getSystemClipboard().setContent(clipboardContent);
+        }
 
         info.showAndWait();
+        updateStatusLabel("Newsletter copied to clipboard for sending");
     }
 
-    private void showAlert(String title, String message, Alert.AlertType type) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    // UI Helper Methods
+    private void updateSaveButtonState() {
+        boolean isValid = !newsletterNameField.getText().trim().isEmpty() &&
+                !subjectField.getText().trim().isEmpty() &&
+                !contentEditor.getText().trim().isEmpty();
+        saveButton.setDisable(!isValid || !isEditing);
     }
 
-    private void showSuccess(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Success");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.show();
+    private void updateActionButtons(boolean hasSelection) {
+        editButton.setDisable(!hasSelection);
+        duplicateButton.setDisable(!hasSelection);
+        deleteButton.setDisable(!hasSelection);
+    }
 
-        // Auto-close after 3 seconds
+    private void updateUI() {
+        newsletterNameField.setEditable(isEditing);
+        subjectField.setEditable(isEditing);
+        companyNameField.setEditable(isEditing);
+        typeCombo.setDisable(!isEditing);
+        templateCombo.setDisable(!isEditing);
+        headerColorPicker.setDisable(!isEditing);
+        contentEditor.setEditable(isEditing);
+
+        addTextButton.setDisable(!isEditing);
+        addHeadingButton.setDisable(!isEditing);
+        addImageButton.setDisable(!isEditing);
+        addButtonButton.setDisable(!isEditing);
+        addDividerButton.setDisable(!isEditing);
+        saveButton.setDisable(!isEditing);
+        cancelButton.setDisable(!isEditing);
+
+        updateSaveButtonState();
+
+        if (isEditing && editorTabPane.getSelectionModel().getSelectedIndex() == 2) {
+            editorTabPane.getSelectionModel().select(0);
+        }
+    }
+
+    private void selectNewsletterInTable(NewsletterTemplate newsletter) {
+        if (newsletter != null) {
+            newsletterTable.getSelectionModel().select(newsletter);
+            newsletterTable.scrollTo(newsletter);
+        }
+    }
+
+    private void updateItemCount() {
+        int count = newsletterList.size();
+        itemCountLabel.setText(count + " item" + (count != 1 ? "s" : ""));
+    }
+
+    private void updateStatusLabel(String message) {
+        statusLabel.setText(message);
+
         javafx.animation.Timeline timeline = new javafx.animation.Timeline(
-                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(3), e -> alert.close())
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(5), e -> {
+                    if (statusLabel.getText().equals(message)) {
+                        statusLabel.setText("Ready");
+                    }
+                })
         );
         timeline.play();
     }
 
-    // Helper class for button component dialog
-    private static class ButtonResult {
-        String text;
-        String url;
-        String color;
+    private void showError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+        updateStatusLabel("Error: " + message);
+    }
 
-        ButtonResult(String text, String url, String color) {
-            this.text = text;
-            this.url = url;
-            this.color = color;
-        }
+    // Public API Methods
+    public void setDatabaseConnection(Connection connection) {
+        this.dbConnection = connection;
+        this.newsletterService = new NewsletterService(connection);
+        loadNewsletters();
+    }
+
+    public void refreshData() {
+        loadNewsletters();
+    }
+
+    public NewsletterTemplate getSelectedNewsletter() {
+        return newsletterTable.getSelectionModel().getSelectedItem();
     }
 }

@@ -2,7 +2,6 @@ package smallbusinessbuddycrm;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.Accordion;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.StackPane;
@@ -268,20 +267,41 @@ public class MainController {
     }
 
     @FXML
+    private void handleBulkGenerationAction() {
+        navigateTo("/views/commerce/bulk-generation.fxml");
+    }
+
+
+    @FXML
     private void handlePaymentAttachmentAction(){navigateTo("/views/commerce/payment-attachment-view.fxml");}
     @FXML
     private void handleSettingsAction() {
-        navigateTo("/views/settings_view.fxml");
+        navigateTo("/views/settings-view.fxml");
     }
 
     @FXML
-    private void handleProfileAction() {
-        navigateTo("/views/profile_view.fxml");
+    private void handleContactsReportAction() {
+        navigateTo("/views/reporting/contacts-report.fxml");
     }
 
     @FXML
-    private void handleLogoutAction() {
-        // Handle logout logic
-        System.out.println("Logout requested");
+    private void handleUnderagedReportAction() {
+        navigateTo("/views/underaged-report.fxml");
     }
+
+    @FXML
+    private void handleWorkshopsReportAction() {
+        navigateTo("/views/workshops-report.fxml");
+    }
+
+    @FXML
+    private void handleTeachersReportAction() {
+        navigateTo("/views/teachers-report.fxml");
+    }
+
+    @FXML
+    private void handleListsReportAction() {
+        navigateTo("/views/ListsReport.fxml");
+    }
+
 }
