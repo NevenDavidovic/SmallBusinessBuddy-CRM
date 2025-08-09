@@ -225,8 +225,11 @@ public class MainController {
     @FXML private void handlePaymentAttachmentAction() { navigateTo("/views/commerce/payment-attachment-view.fxml"); }
     @FXML private void handleSettingsAction() { navigateTo("/views/settings-view.fxml"); }
     @FXML private void handleHomeReportingScreen() { navigateTo("/views/reporting/reporting-nav-dashboard-view.fxml"); }
+    @FXML private void handleContactReportingScreen() { navigateTo("/views/reporting/contacts-report.fxml"); }
+    @FXML private void handleUnderagedReportingScreen() { navigateTo("/views/reporting/underaged-report.fxml"); }
+    @FXML private void handleWorkshopReportingScreen() { navigateTo("/views/reporting/workshops-report.fxml"); }
 
-    // Keep all your existing organization methods exactly as they are
+
     private void loadOrganizationName() {
         try {
             Optional<Organization> organization = organizationDAO.getFirst();

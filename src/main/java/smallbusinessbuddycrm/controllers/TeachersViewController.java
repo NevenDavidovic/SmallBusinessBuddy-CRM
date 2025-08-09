@@ -8,17 +8,20 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
-import smallbusinessbuddycrm.utilities.LanguageManager;
+import javafx.stage.Stage;
+import smallbusinessbuddycrm.database.DatabaseConnection;
 import smallbusinessbuddycrm.database.TeacherDAO;
 import smallbusinessbuddycrm.model.Teacher;
+import smallbusinessbuddycrm.utilities.LanguageManager;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-public class TeachersViewController {
+public class TeachersViewController implements Initializable {
 
     @FXML private TableView<Teacher> teachersTable;
     @FXML private TableColumn<Teacher, Boolean> selectColumn;
@@ -34,6 +37,7 @@ public class TeachersViewController {
     // UI Controls
     @FXML private Button createTeacherButton;
     @FXML private Button deleteSelectedButton;
+    @FXML private Button exportButton;
     @FXML private Button refreshButton;
     @FXML private TextField searchField;
     @FXML private Label recordCountLabel;
@@ -45,14 +49,23 @@ public class TeachersViewController {
     // DAO
     private TeacherDAO teacherDAO = new TeacherDAO();
 
+    @Override
     public void initialize(URL location, ResourceBundle resources) {
-        LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
-        updateTexts();
+        System.out.println("TeachersViewController.initialize() called");
+
+        // Initialize database first
+        DatabaseConnection.initializeDatabase();
 
         setupTable();
         setupSearchAndFilters();
         loadTeachers();
         setupEventHandlers();
+
+        // ADD LANGUAGE MANAGER SETUP LAST
+        LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
+        updateTexts();
+
+        System.out.println("TeachersViewController initialized successfully");
     }
 
     private void updateTexts() {
@@ -110,7 +123,7 @@ public class TeachersViewController {
 
         // Set up edit button column
         editColumn.setCellFactory(tc -> new TableCell<Teacher, Void>() {
-            private final Button editButton = new Button("Edit");
+            private final Button editButton = new Button();
 
             {
                 editButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 3; -fx-font-size: 10px;");
@@ -119,6 +132,9 @@ public class TeachersViewController {
                     Teacher teacher = getTableView().getItems().get(getIndex());
                     handleEditTeacher(teacher);
                 });
+
+                // Set initial text
+                editButton.setText(LanguageManager.getInstance().getText("teachers.action.edit"));
             }
 
             @Override
@@ -127,6 +143,8 @@ public class TeachersViewController {
                 if (empty) {
                     setGraphic(null);
                 } else {
+                    // Update button text when table refreshes
+                    editButton.setText(LanguageManager.getInstance().getText("teachers.action.edit"));
                     setGraphic(editButton);
                 }
             }
@@ -215,6 +233,7 @@ public class TeachersViewController {
 
         createTeacherButton.setOnAction(e -> handleCreateTeacher());
         deleteSelectedButton.setOnAction(e -> handleDeleteSelected());
+        exportButton.setOnAction(e -> handleExportTeachers());
         refreshButton.setOnAction(e -> handleRefresh());
 
         System.out.println("Event handlers setup completed");
@@ -222,32 +241,34 @@ public class TeachersViewController {
 
     private void handleCreateTeacher() {
         try {
+            LanguageManager languageManager = LanguageManager.getInstance();
+
             // Create a dialog for adding a new teacher
             Dialog<Teacher> dialog = new Dialog<>();
-            dialog.setTitle("Add New Teacher");
-            dialog.setHeaderText("Enter teacher information");
+            dialog.setTitle(languageManager.getText("teachers.dialog.add.title"));
+            dialog.setHeaderText(languageManager.getText("teachers.dialog.add.header"));
 
             // Create the dialog content
             VBox content = new VBox(10);
             content.setPadding(new javafx.geometry.Insets(10));
 
             TextField firstNameField = new TextField();
-            firstNameField.setPromptText("First Name");
+            firstNameField.setPromptText(languageManager.getText("teachers.field.first.name.placeholder"));
 
             TextField lastNameField = new TextField();
-            lastNameField.setPromptText("Last Name");
+            lastNameField.setPromptText(languageManager.getText("teachers.field.last.name.placeholder"));
 
             TextField emailField = new TextField();
-            emailField.setPromptText("Email");
+            emailField.setPromptText(languageManager.getText("teachers.field.email.placeholder"));
 
             TextField phoneField = new TextField();
-            phoneField.setPromptText("Phone Number");
+            phoneField.setPromptText(languageManager.getText("teachers.field.phone.placeholder"));
 
             content.getChildren().addAll(
-                    new Label("First Name:"), firstNameField,
-                    new Label("Last Name:"), lastNameField,
-                    new Label("Email:"), emailField,
-                    new Label("Phone:"), phoneField
+                    new Label(languageManager.getText("teachers.field.first.name") + ":"), firstNameField,
+                    new Label(languageManager.getText("teachers.field.last.name") + ":"), lastNameField,
+                    new Label(languageManager.getText("teachers.field.email") + ":"), emailField,
+                    new Label(languageManager.getText("teachers.field.phone") + ":"), phoneField
             );
 
             dialog.getDialogPane().setContent(content);
@@ -292,17 +313,18 @@ public class TeachersViewController {
                     teachersTable.scrollTo(newTeacher);
 
                     Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                    successAlert.setTitle("Success");
-                    successAlert.setHeaderText("Teacher Added");
-                    successAlert.setContentText("Teacher " + newTeacher.getFullName() + " has been added successfully!");
+                    successAlert.setTitle(languageManager.getText("common.success"));
+                    successAlert.setHeaderText(languageManager.getText("teachers.message.teacher.added"));
+                    successAlert.setContentText(languageManager.getText("teachers.message.teacher.added.success")
+                            .replace("{0}", newTeacher.getFullName()));
                     successAlert.showAndWait();
 
                     System.out.println("New teacher added: " + newTeacher.getFullName());
                 } else {
                     Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                    errorAlert.setTitle("Error");
-                    errorAlert.setHeaderText("Failed to Add Teacher");
-                    errorAlert.setContentText("Could not save the teacher to the database.");
+                    errorAlert.setTitle(languageManager.getText("common.error"));
+                    errorAlert.setHeaderText(languageManager.getText("teachers.message.add.failed"));
+                    errorAlert.setContentText(languageManager.getText("teachers.message.save.database.error"));
                     errorAlert.showAndWait();
                 }
             }
@@ -310,20 +332,23 @@ public class TeachersViewController {
             System.err.println("Error creating teacher: " + e.getMessage());
             e.printStackTrace();
 
+            LanguageManager languageManager = LanguageManager.getInstance();
             Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-            errorAlert.setTitle("Error");
-            errorAlert.setHeaderText("Create Teacher Failed");
-            errorAlert.setContentText("An error occurred while creating the teacher: " + e.getMessage());
+            errorAlert.setTitle(languageManager.getText("common.error"));
+            errorAlert.setHeaderText(languageManager.getText("teachers.message.create.failed"));
+            errorAlert.setContentText(languageManager.getText("teachers.message.error.occurred") + ": " + e.getMessage());
             errorAlert.showAndWait();
         }
     }
 
     private void handleEditTeacher(Teacher teacher) {
         try {
+            LanguageManager languageManager = LanguageManager.getInstance();
+
             // Create a dialog for editing the teacher
             Dialog<Teacher> dialog = new Dialog<>();
-            dialog.setTitle("Edit Teacher");
-            dialog.setHeaderText("Edit teacher: " + teacher.getFullName());
+            dialog.setTitle(languageManager.getText("teachers.dialog.edit.title"));
+            dialog.setHeaderText(languageManager.getText("teachers.dialog.edit.header") + ": " + teacher.getFullName());
 
             // Create the dialog content
             VBox content = new VBox(10);
@@ -335,10 +360,10 @@ public class TeachersViewController {
             TextField phoneField = new TextField(teacher.getPhoneNum() != null ? teacher.getPhoneNum() : "");
 
             content.getChildren().addAll(
-                    new Label("First Name:"), firstNameField,
-                    new Label("Last Name:"), lastNameField,
-                    new Label("Email:"), emailField,
-                    new Label("Phone:"), phoneField
+                    new Label(languageManager.getText("teachers.field.first.name") + ":"), firstNameField,
+                    new Label(languageManager.getText("teachers.field.last.name") + ":"), lastNameField,
+                    new Label(languageManager.getText("teachers.field.email") + ":"), emailField,
+                    new Label(languageManager.getText("teachers.field.phone") + ":"), phoneField
             );
 
             dialog.getDialogPane().setContent(content);
@@ -377,17 +402,18 @@ public class TeachersViewController {
                     teachersTable.refresh();
 
                     Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                    successAlert.setTitle("Success");
-                    successAlert.setHeaderText("Teacher Updated");
-                    successAlert.setContentText("Teacher " + teacher.getFullName() + " has been updated successfully!");
+                    successAlert.setTitle(languageManager.getText("common.success"));
+                    successAlert.setHeaderText(languageManager.getText("teachers.message.teacher.updated"));
+                    successAlert.setContentText(languageManager.getText("teachers.message.teacher.updated.success")
+                            .replace("{0}", teacher.getFullName()));
                     successAlert.showAndWait();
 
                     System.out.println("Teacher updated: " + teacher.getFullName());
                 } else {
                     Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                    errorAlert.setTitle("Error");
-                    errorAlert.setHeaderText("Failed to Update Teacher");
-                    errorAlert.setContentText("Could not save the changes to the database.");
+                    errorAlert.setTitle(languageManager.getText("common.error"));
+                    errorAlert.setHeaderText(languageManager.getText("teachers.message.update.failed"));
+                    errorAlert.setContentText(languageManager.getText("teachers.message.save.changes.error"));
                     errorAlert.showAndWait();
                 }
             }
@@ -395,16 +421,18 @@ public class TeachersViewController {
             System.err.println("Error editing teacher: " + e.getMessage());
             e.printStackTrace();
 
+            LanguageManager languageManager = LanguageManager.getInstance();
             Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-            errorAlert.setTitle("Error");
-            errorAlert.setHeaderText("Edit Teacher Failed");
-            errorAlert.setContentText("An error occurred while editing the teacher: " + e.getMessage());
+            errorAlert.setTitle(languageManager.getText("common.error"));
+            errorAlert.setHeaderText(languageManager.getText("teachers.message.edit.failed"));
+            errorAlert.setContentText(languageManager.getText("teachers.message.error.occurred") + ": " + e.getMessage());
             errorAlert.showAndWait();
         }
     }
 
     private void handleDeleteSelected() {
         System.out.println("Delete selected teachers clicked"); // Debug
+        LanguageManager languageManager = LanguageManager.getInstance();
 
         // Debug: Print all teachers and their selection status
         System.out.println("=== Current Teacher Selection Status ===");
@@ -421,19 +449,22 @@ public class TeachersViewController {
 
         if (selectedTeachers.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("No Selection");
-            alert.setHeaderText("No teachers selected");
-            alert.setContentText("Please select one or more teachers to delete using the checkboxes.");
+            alert.setTitle(languageManager.getText("teachers.dialog.no.selection.title"));
+            alert.setHeaderText(languageManager.getText("teachers.dialog.no.selection.header"));
+            alert.setContentText(languageManager.getText("teachers.dialog.no.selection.content"));
             alert.showAndWait();
             return;
         }
 
         // Confirm deletion
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmAlert.setTitle("Confirm Deletion");
-        confirmAlert.setHeaderText("Delete selected teachers?");
-        confirmAlert.setContentText("Are you sure you want to delete " + selectedTeachers.size() +
-                " teacher" + (selectedTeachers.size() > 1 ? "s" : "") + "? This action cannot be undone.");
+        confirmAlert.setTitle(languageManager.getText("teachers.dialog.confirm.delete.title"));
+        confirmAlert.setHeaderText(languageManager.getText("teachers.dialog.confirm.delete.header"));
+
+        String contentText = languageManager.getText("teachers.dialog.confirm.delete.content")
+                .replace("{0}", String.valueOf(selectedTeachers.size()))
+                .replace("{1}", selectedTeachers.size() > 1 ? "s" : "");
+        confirmAlert.setContentText(contentText);
 
         if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
             try {
@@ -451,15 +482,16 @@ public class TeachersViewController {
                     updateRecordCount();
 
                     Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                    successAlert.setTitle("Success");
-                    successAlert.setHeaderText("Teachers deleted");
-                    successAlert.setContentText("Successfully deleted " + selectedTeachers.size() + " teacher(s).");
+                    successAlert.setTitle(languageManager.getText("common.success"));
+                    successAlert.setHeaderText(languageManager.getText("teachers.message.teachers.deleted"));
+                    successAlert.setContentText(languageManager.getText("teachers.message.teachers.deleted.success")
+                            .replace("{0}", String.valueOf(selectedTeachers.size())));
                     successAlert.showAndWait();
                 } else {
                     Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                    errorAlert.setTitle("Error");
-                    errorAlert.setHeaderText("Delete Failed");
-                    errorAlert.setContentText("Failed to delete the selected teachers from the database.");
+                    errorAlert.setTitle(languageManager.getText("common.error"));
+                    errorAlert.setHeaderText(languageManager.getText("teachers.message.delete.failed"));
+                    errorAlert.setContentText(languageManager.getText("teachers.message.delete.database.error"));
                     errorAlert.showAndWait();
                 }
 
@@ -468,21 +500,53 @@ public class TeachersViewController {
                 e.printStackTrace();
 
                 Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                errorAlert.setTitle("Error");
-                errorAlert.setHeaderText("Delete Failed");
-                errorAlert.setContentText("An error occurred while deleting teachers: " + e.getMessage());
+                errorAlert.setTitle(languageManager.getText("common.error"));
+                errorAlert.setHeaderText(languageManager.getText("teachers.message.delete.failed"));
+                errorAlert.setContentText(languageManager.getText("teachers.message.error.occurred") + ": " + e.getMessage());
                 errorAlert.showAndWait();
             }
         }
     }
 
+    private void handleExportTeachers() {
+        try {
+            LanguageManager languageManager = LanguageManager.getInstance();
+
+            // Get currently visible teachers (filtered/searched)
+            List<Teacher> teachersToExport = new ArrayList<>(filteredTeachersList);
+
+            if (teachersToExport.isEmpty()) {
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle(languageManager.getText("teachers.export.no.data.title"));
+                alert.setHeaderText(languageManager.getText("teachers.export.no.data.header"));
+                alert.setContentText(languageManager.getText("teachers.export.no.data.content"));
+                alert.showAndWait();
+                return;
+            }
+
+            // For now, show export info. Later implement actual CSV export
+            Alert info = new Alert(Alert.AlertType.INFORMATION);
+            info.setTitle(languageManager.getText("teachers.export.title"));
+            info.setHeaderText(languageManager.getText("teachers.export.header"));
+            info.setContentText(languageManager.getText("teachers.export.content")
+                    .replace("{0}", String.valueOf(teachersToExport.size())));
+            info.showAndWait();
+
+        } catch (Exception e) {
+            System.err.println("Error exporting teachers: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
     private void handleRefresh() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
         loadTeachers();
 
         Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-        successAlert.setTitle("Success");
-        successAlert.setHeaderText("Data Refreshed");
-        successAlert.setContentText("Teacher data has been refreshed successfully!");
+        successAlert.setTitle(languageManager.getText("common.success"));
+        successAlert.setHeaderText(languageManager.getText("teachers.message.data.refreshed"));
+        successAlert.setContentText(languageManager.getText("teachers.message.data.refreshed.success"));
         successAlert.showAndWait();
     }
 }

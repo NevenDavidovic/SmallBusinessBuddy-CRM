@@ -116,8 +116,6 @@
                         </graphic>
                         <VBox spacing="5">
                             <Button fx:id="barcodeButton" styleClass="sidebar-sub-item" onAction="#handleBarcodeAppAction"/>
-                            <Button fx:id="paymentSlipsButton" styleClass="sidebar-sub-item" onAction="#handlePaymentSlipsAction"/>
-                            <Button fx:id="paymentHistoryButton" styleClass="sidebar-sub-item" onAction="#handlePaymentHistoryAction"/>
                             <Button fx:id="bulkGenerationButton" styleClass="sidebar-sub-item" onAction="#handleBulkGenerationAction"/>
                         </VBox>
                     </TitledPane>
@@ -143,9 +141,9 @@
                         </graphic>
                         <VBox spacing="5">
                             <Button fx:id="overviewButton" styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
-                            <Button fx:id="underagedStatsButton" styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
-                            <Button fx:id="contactStatsButton" styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
-                            <Button fx:id="workshopStatsButton" styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
+                            <Button fx:id="underagedStatsButton" styleClass="sidebar-sub-item" onAction="#handleUnderagedReportingScreen"/>
+                            <Button fx:id="contactStatsButton" styleClass="sidebar-sub-item" onAction="#handleContactReportingScreen"/>
+                            <Button fx:id="workshopStatsButton" styleClass="sidebar-sub-item" onAction="#handleWorkshopReportingScreen"/>
                         </VBox>
                     </TitledPane>
 

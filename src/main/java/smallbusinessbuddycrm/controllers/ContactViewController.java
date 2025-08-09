@@ -345,7 +345,7 @@ public class ContactViewController {
         setupEventHandlers();
         applyDefaultColumnVisibility();
 
-        System.out.println("ContactViewController initialized successfully");
+
     }
 
     private void initializeColumnMapping() {

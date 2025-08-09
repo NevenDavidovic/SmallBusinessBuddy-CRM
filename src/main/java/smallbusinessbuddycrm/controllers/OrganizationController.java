@@ -1,6 +1,7 @@
 package smallbusinessbuddycrm.controllers;
 
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -14,7 +15,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-public class OrganizationController {
+public class OrganizationController implements Initializable {
 
     @FXML private Button editButton;
     @FXML private Button saveButton;
@@ -54,6 +55,7 @@ public class OrganizationController {
 
     private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
+    @Override
     public void initialize(URL location, ResourceBundle resources) {
         organizationDAO = new OrganizationDAO();
         setupImageView();
@@ -243,40 +245,37 @@ public class OrganizationController {
     private void setEditMode(boolean editMode) {
         this.isEditMode = editMode;
 
-        // Toggle visibility of buttons (with null checks)
-        if (editButton != null) editButton.setVisible(!editMode);
-        if (saveButton != null) saveButton.setVisible(editMode);
-        if (cancelButton != null) cancelButton.setVisible(editMode);
-        if (changeImageButton != null) changeImageButton.setVisible(editMode);
-        if (removeImageButton != null) {
-            removeImageButton.setVisible(editMode && currentOrganization != null &&
-                    currentOrganization.getImage() != null && currentOrganization.getImage().length > 0);
-        }
+        // Toggle visibility of buttons
+        editButton.setVisible(!editMode);
+        saveButton.setVisible(editMode);
+        cancelButton.setVisible(editMode);
+        changeImageButton.setVisible(editMode);
+        removeImageButton.setVisible(editMode && currentOrganization.getImage() != null && currentOrganization.getImage().length > 0);
 
-        // Toggle visibility of labels vs fields (with null checks)
-        if (nameLabel != null) nameLabel.setVisible(!editMode);
-        if (nameField != null) nameField.setVisible(editMode);
+        // Toggle visibility of labels vs fields
+        nameLabel.setVisible(!editMode);
+        nameField.setVisible(editMode);
 
-        if (ibanLabel != null) ibanLabel.setVisible(!editMode);
-        if (ibanField != null) ibanField.setVisible(editMode);
+        ibanLabel.setVisible(!editMode);
+        ibanField.setVisible(editMode);
 
-        if (emailLabel != null) emailLabel.setVisible(!editMode);
-        if (emailField != null) emailField.setVisible(editMode);
+        emailLabel.setVisible(!editMode);
+        emailField.setVisible(editMode);
 
-        if (phoneLabel != null) phoneLabel.setVisible(!editMode);
-        if (phoneField != null) phoneField.setVisible(editMode);
+        phoneLabel.setVisible(!editMode);
+        phoneField.setVisible(editMode);
 
-        if (streetNameLabel != null) streetNameLabel.setVisible(!editMode);
-        if (streetNameField != null) streetNameField.setVisible(editMode);
+        streetNameLabel.setVisible(!editMode);
+        streetNameField.setVisible(editMode);
 
-        if (streetNumLabel != null) streetNumLabel.setVisible(!editMode);
-        if (streetNumField != null) streetNumField.setVisible(editMode);
+        streetNumLabel.setVisible(!editMode);
+        streetNumField.setVisible(editMode);
 
-        if (postalCodeLabel != null) postalCodeLabel.setVisible(!editMode);
-        if (postalCodeField != null) postalCodeField.setVisible(editMode);
+        postalCodeLabel.setVisible(!editMode);
+        postalCodeField.setVisible(editMode);
 
-        if (cityLabel != null) cityLabel.setVisible(!editMode);
-        if (cityField != null) cityField.setVisible(editMode);
+        cityLabel.setVisible(!editMode);
+        cityField.setVisible(editMode);
 
         if (editMode) {
             // Populate fields with current values

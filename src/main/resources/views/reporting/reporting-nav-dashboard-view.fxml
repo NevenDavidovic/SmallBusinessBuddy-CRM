@@ -20,18 +20,17 @@
                 <!-- Header Section -->
                 <HBox alignment="CENTER" spacing="20" style="-fx-background-color: #34495e; -fx-padding: 20;">
 
-
                     <ImageView fitWidth="60" fitHeight="60">
                         <Image url="@../../images/icons/reporting-icon.png"/>
                     </ImageView>
 
                     <VBox alignment="CENTER" spacing="5">
-                        <Label text="Analytics Overview" style="-fx-text-fill: white; -fx-font-size: 32px; -fx-font-weight: bold;">
+                        <Label fx:id="analyticsOverviewTitle" text="Analytics Overview" style="-fx-text-fill: white; -fx-font-size: 32px; -fx-font-weight: bold;">
                             <font>
                                 <Font name="System Bold" size="32.0"/>
                             </font>
                         </Label>
-                        <Label text="Real-time Business Insights" style="-fx-text-fill: #bdc3c7; -fx-font-size: 16px;">
+                        <Label fx:id="realtimeInsightsSubtitle" text="Real-time Business Insights" style="-fx-text-fill: #bdc3c7; -fx-font-size: 16px;">
                             <font>
                                 <Font size="16.0"/>
                             </font>
@@ -55,12 +54,12 @@
                                 </ImageView>
                             </VBox>
                             <VBox spacing="3">
-                                <Label text="CONTACTS" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
+                                <Label fx:id="contactsLabel" text="CONTACTS" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="12.0"/>
                                     </font>
                                 </Label>
-                                <Label text="Pulse Monitor" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
+                                <Label fx:id="pulseMonitorLabel" text="Pulse Monitor" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="18.0"/>
                                     </font>
@@ -77,7 +76,7 @@
                                         </font>
                                     </Label>
                                 </VBox>
-                                <Label text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
+                                <Label fx:id="totalRecordsLabel1" text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
                                     <font>
                                         <Font size="14.0"/>
                                     </font>
@@ -91,7 +90,7 @@
                                         </font>
                                     </Label>
                                 </VBox>
-                                <Label text="Active Members" style="-fx-text-fill: #ecf0f1; -fx-font-size: 12px;">
+                                <Label fx:id="activeMembersLabel1" text="Active Members" style="-fx-text-fill: #ecf0f1; -fx-font-size: 12px;">
                                     <font>
                                         <Font size="12.0"/>
                                     </font>
@@ -119,12 +118,12 @@
                                 </ImageView>
                             </VBox>
                             <VBox spacing="3">
-                                <Label text="YOUTH" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
+                                <Label fx:id="youthLabel" text="YOUTH" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="12.0"/>
                                     </font>
                                 </Label>
-                                <Label text="Insights Hub" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
+                                <Label fx:id="insightsHubLabel" text="Insights Hub" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="18.0"/>
                                     </font>
@@ -141,7 +140,7 @@
                                         </font>
                                     </Label>
                                 </VBox>
-                                <Label text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
+                                <Label fx:id="totalRecordsLabel2" text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
                                     <font>
                                         <Font size="14.0"/>
                                     </font>
@@ -155,7 +154,7 @@
                                         </font>
                                     </Label>
                                 </VBox>
-                                <Label text="Active Members" style="-fx-text-fill: #ecf0f1; -fx-font-size: 12px;">
+                                <Label fx:id="activeMembersLabel2" text="Active Members" style="-fx-text-fill: #ecf0f1; -fx-font-size: 12px;">
                                     <font>
                                         <Font size="12.0"/>
                                     </font>
@@ -183,12 +182,12 @@
                                 </ImageView>
                             </VBox>
                             <VBox spacing="3">
-                                <Label text="WORKSHOPS" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
+                                <Label fx:id="workshopsLabel" text="WORKSHOPS" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="12.0"/>
                                     </font>
                                 </Label>
-                                <Label text="Activity Pulse" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
+                                <Label fx:id="activityPulseLabel" text="Activity Pulse" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="18.0"/>
                                     </font>
@@ -205,7 +204,7 @@
                                         </font>
                                     </Label>
                                 </VBox>
-                                <Label text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
+                                <Label fx:id="totalRecordsLabel3" text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
                                     <font>
                                         <Font size="14.0"/>
                                     </font>
@@ -219,7 +218,7 @@
                                         </font>
                                     </Label>
                                 </VBox>
-                                <Label text="Active Sessions" style="-fx-text-fill: #ecf0f1; -fx-font-size: 12px;">
+                                <Label fx:id="activeSessionsLabel" text="Active Sessions" style="-fx-text-fill: #ecf0f1; -fx-font-size: 12px;">
                                     <font>
                                         <Font size="12.0"/>
                                     </font>
@@ -247,12 +246,12 @@
                                 </ImageView>
                             </VBox>
                             <VBox spacing="3">
-                                <Label text="TEACHERS" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
+                                <Label fx:id="teachersLabel" text="TEACHERS" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="12.0"/>
                                     </font>
                                 </Label>
-                                <Label text="Educator Hub" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
+                                <Label fx:id="educatorHubLabel" text="Educator Hub" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="18.0"/>
                                     </font>
@@ -269,13 +268,12 @@
                                         </font>
                                     </Label>
                                 </VBox>
-                                <Label text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
+                                <Label fx:id="totalRecordsLabel4" text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
                                     <font>
                                         <Font size="14.0"/>
                                     </font>
                                 </Label>
                             </HBox>
-
                         </VBox>
 
                         <Button fx:id="teachersReportButton" text="View Analytics" style="-fx-background-color: #d35400; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px; -fx-font-weight: bold;" onAction="#handleTeachersReportAction">
@@ -298,12 +296,12 @@
                                 </ImageView>
                             </VBox>
                             <VBox spacing="3">
-                                <Label text="LISTS" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
+                                <Label fx:id="listsLabel" text="LISTS" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="12.0"/>
                                     </font>
                                 </Label>
-                                <Label text="Data Manager" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
+                                <Label fx:id="dataManagerLabel" text="Data Manager" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="18.0"/>
                                     </font>
@@ -320,7 +318,7 @@
                                         </font>
                                     </Label>
                                 </VBox>
-                                <Label text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
+                                <Label fx:id="totalRecordsLabel5" text="Total Records" style="-fx-text-fill: white; -fx-font-size: 14px;">
                                     <font>
                                         <Font size="14.0"/>
                                     </font>
@@ -334,7 +332,7 @@
                                         </font>
                                     </Label>
                                 </VBox>
-                                <Label text="Active Lists" style="-fx-text-fill: #ecf0f1; -fx-font-size: 12px;">
+                                <Label fx:id="activeListsLabel" text="Active Lists" style="-fx-text-fill: #ecf0f1; -fx-font-size: 12px;">
                                     <font>
                                         <Font size="12.0"/>
                                     </font>
@@ -362,12 +360,12 @@
                                 </ImageView>
                             </VBox>
                             <VBox spacing="3">
-                                <Label text="SUPPORT" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
+                                <Label fx:id="supportLabel" text="SUPPORT" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="12.0"/>
                                     </font>
                                 </Label>
-                                <Label text="Help Center" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
+                                <Label fx:id="helpCenterLabel" text="Help Center" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="18.0"/>
                                     </font>
@@ -385,12 +383,12 @@
                                     </Label>
                                 </VBox>
                                 <VBox>
-                                    <Label text="Reports manual" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
+                                    <Label fx:id="reportsManualLabel" text="Reports manual" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
                                         <font>
                                             <Font name="System Bold" size="14.0"/>
                                         </font>
                                     </Label>
-                                    <Label text="How to use reports" style="-fx-text-fill: #ecf0f1; -fx-font-size: 11px;">
+                                    <Label fx:id="howToUseReportsLabel" text="How to use reports" style="-fx-text-fill: #ecf0f1; -fx-font-size: 11px;">
                                         <font>
                                             <Font size="11.0"/>
                                         </font>
@@ -407,12 +405,12 @@
                                     </Label>
                                 </VBox>
                                 <VBox>
-                                    <Label text="Useful information" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
+                                    <Label fx:id="usefulInfoLabel" text="Useful information" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
                                         <font>
                                             <Font name="System Bold" size="14.0"/>
                                         </font>
                                     </Label>
-                                    <Label text="Contacts, workshops etc..." style="-fx-text-fill: #ecf0f1; -fx-font-size: 11px;">
+                                    <Label fx:id="contactsWorkshopsLabel" text="Contacts, workshops etc..." style="-fx-text-fill: #ecf0f1; -fx-font-size: 11px;">
                                         <font>
                                             <Font size="11.0"/>
                                         </font>
@@ -427,7 +425,7 @@
                                     <Font size="12.0"/>
                                 </font>
                             </Button>
-                            <Button text="Export Data" style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px;">
+                            <Button  text="Export Data" style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px;">
                                 <font>
                                     <Font size="12.0"/>
                                 </font>
@@ -442,20 +440,20 @@
                         <VBox alignment="CENTER" style="-fx-background-color: #27ae60; -fx-background-radius: 10; -fx-padding: 3;">
                             <Label text="●" style="-fx-text-fill: white; -fx-font-size: 8px;"/>
                         </VBox>
-                        <Label text="All Systems Operational" style="-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;">
+                        <Label fx:id="systemStatusLabel" text="All Systems Operational" style="-fx-text-fill: white; -fx-font-size: 13px; -fx-font-weight: bold;">
                             <font>
                                 <Font name="System Bold" size="13.0"/>
                             </font>
                         </Label>
                     </HBox>
                     <Label text="•" style="-fx-text-fill: #bdc3c7; -fx-font-size: 16px;"/>
-                    <Label text="Last Updated: Just Now" style="-fx-text-fill: #bdc3c7; -fx-font-size: 12px;">
+                    <Label fx:id="lastUpdatedLabel" text="Last Updated: Just Now" style="-fx-text-fill: #bdc3c7; -fx-font-size: 12px;">
                         <font>
                             <Font size="12.0"/>
                         </font>
                     </Label>
                     <Label text="•" style="-fx-text-fill: #bdc3c7; -fx-font-size: 16px;"/>
-                    <Label text="Data Sync: Active" style="-fx-text-fill: #bdc3c7; -fx-font-size: 12px;">
+                    <Label fx:id="dataSyncLabel" text="Data Sync: Active" style="-fx-text-fill: #bdc3c7; -fx-font-size: 12px;">
                         <font>
                             <Font size="12.0"/>
                         </font>
