@@ -394,4 +394,26 @@ public class ContactDAO {
 
         return contacts;
     }
+
+    public Contact getContactById(int contactId) {
+        String query = "SELECT * FROM contacts WHERE id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, contactId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                Contact contact = createContactFromResultSet(rs);
+                System.out.println("Loaded contact with ID: " + contactId);
+                return contact;
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting contact by ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        System.out.println("No contact found with ID: " + contactId);
+        return null;
+    }
 }

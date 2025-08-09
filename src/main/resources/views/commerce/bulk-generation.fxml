@@ -14,12 +14,12 @@
                 <!-- Main Title Section -->
                 <VBox spacing="10.0" style="-fx-background-color: #f8fdff; -fx-border-color: #e3f2fd; -fx-border-radius: 8; -fx-padding: 20;">
                     <children>
-                        <Label fx:id="pageTitle" style="-fx-text-fill: #0099cc; -fx-font-weight: bold;">
+                        <Label style="-fx-text-fill: #0099cc; -fx-font-weight: bold;" text="🎓 Workshop Payment Slips Generator">
                             <font>
                                 <Font size="20.0" />
                             </font>
                         </Label>
-                        <Label fx:id="pageSubtitle" style="-fx-text-fill: #666666;" wrapText="true">
+                        <Label style="-fx-text-fill: #666666;" text="Generate HUB-3 payment slips for workshop participants" wrapText="true">
                             <font>
                                 <Font size="12.0" />
                             </font>
@@ -33,7 +33,7 @@
                 <!-- Workshop Selection Section -->
                 <VBox spacing="15.0" style="-fx-border-color: #e8f5e8; -fx-border-radius: 5; -fx-background-color: #fafffe; -fx-padding: 15;">
                     <children>
-                        <Label fx:id="workshopSelectionTitle" style="-fx-text-fill: #2e7d32; -fx-font-weight: bold;">
+                        <Label style="-fx-text-fill: #2e7d32; -fx-font-weight: bold;" text="🎯 Workshop Selection">
                             <font>
                                 <Font size="14.0" />
                             </font>
@@ -41,9 +41,9 @@
 
                         <HBox alignment="CENTER_LEFT" spacing="15.0">
                             <children>
-                                <Label fx:id="selectWorkshopLabel" />
-                                <ComboBox fx:id="workshopComboBox" prefWidth="300.0" />
-                                <Button fx:id="loadParticipantsButton" onAction="#onLoadParticipants" style="-fx-background-color: #17a2b8; -fx-text-fill: white;" />
+                                <Label text="Select Workshop:" />
+                                <ComboBox fx:id="workshopComboBox" prefWidth="300.0" promptText="Choose a workshop..." />
+                                <Button fx:id="loadParticipantsButton" onAction="#onLoadParticipants" style="-fx-background-color: #17a2b8; -fx-text-fill: white;" text="📋 Load Participants" />
                             </children>
                         </HBox>
 
@@ -66,7 +66,7 @@
                 <!-- Payment Template Selection -->
                 <VBox spacing="15.0" style="-fx-border-color: #e3f2fd; -fx-border-radius: 5; -fx-background-color: #f8fdff; -fx-padding: 15;">
                     <children>
-                        <Label fx:id="paymentTemplateTitle" style="-fx-text-fill: #1976d2; -fx-font-weight: bold;">
+                        <Label style="-fx-text-fill: #1976d2; -fx-font-weight: bold;" text="💳 Payment Template">
                             <font>
                                 <Font size="14.0" />
                             </font>
@@ -74,8 +74,8 @@
 
                         <HBox alignment="CENTER_LEFT" spacing="15.0">
                             <children>
-                                <Label fx:id="selectTemplateLabel" />
-                                <ComboBox fx:id="paymentTemplateComboBox" prefWidth="300.0" />
+                                <Label text="Select Template:" />
+                                <ComboBox fx:id="paymentTemplateComboBox" prefWidth="300.0" promptText="Choose payment template..." />
                             </children>
                         </HBox>
 
@@ -101,20 +101,20 @@
                         <!-- Header with select all -->
                         <HBox alignment="CENTER_LEFT" spacing="15.0">
                             <children>
-                                <Label fx:id="participantsTitle" style="-fx-text-fill: #e65100; -fx-font-weight: bold;">
+                                <Label style="-fx-text-fill: #e65100; -fx-font-weight: bold;" text="👥 Workshop Participants">
                                     <font>
                                         <Font size="14.0" />
                                     </font>
                                 </Label>
                                 <Region HBox.hgrow="ALWAYS" />
-                                <CheckBox fx:id="selectAllParticipantsCheckBox" onAction="#onSelectAllParticipants" style="-fx-font-weight: bold;" />
+                                <CheckBox fx:id="selectAllParticipantsCheckBox" onAction="#onSelectAllParticipants" style="-fx-font-weight: bold;" text="Select All" />
                             </children>
                         </HBox>
 
                         <!-- Participants Filter -->
                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                             <children>
-                                <Label fx:id="filterByTypeLabel" />
+                                <Label text="Filter by Type:" />
                                 <ComboBox fx:id="participantTypeFilterComboBox" onAction="#onFilterParticipants" prefWidth="150.0">
                                     <items>
                                         <FXCollections fx:factory="observableArrayList">
@@ -128,7 +128,7 @@
                                     </value>
                                 </ComboBox>
 
-                                <Label fx:id="paymentStatusLabel" />
+                                <Label text="Payment Status:" />
                                 <ComboBox fx:id="paymentStatusFilterComboBox" onAction="#onFilterParticipants" prefWidth="150.0">
                                     <items>
                                         <FXCollections fx:factory="observableArrayList">
@@ -156,8 +156,8 @@
                         <VBox fx:id="noParticipantsContainer" alignment="CENTER" prefHeight="200.0" style="-fx-border-color: #eeeeee; -fx-border-style: dashed; -fx-background-color: #f9f9f9;" visible="false">
                             <children>
                                 <Label style="-fx-text-fill: #999999; -fx-font-size: 16px;" text="📝" />
-                                <Label fx:id="noParticipantsMainText" style="-fx-text-fill: #999999;" />
-                                <Label fx:id="noParticipantsSubText" style="-fx-text-fill: #999999; -fx-font-size: 11px;" />
+                                <Label style="-fx-text-fill: #999999;" text="No participants loaded" />
+                                <Label style="-fx-text-fill: #999999; -fx-font-size: 11px;" text="Select a workshop to load participants" />
                             </children>
                         </VBox>
                     </children>
@@ -169,10 +169,12 @@
                 <!-- Action Buttons -->
                 <HBox alignment="CENTER" spacing="15.0" style="-fx-background-color: #f5f5f5; -fx-padding: 20;">
                     <children>
-                        <Button fx:id="previewSelectedButton" disable="true" onAction="#onPreviewSelected" style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 10 20;" />
-                        <Button fx:id="previewAllButton" disable="true" onAction="#onPreviewAll" style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 10 20;" />
-                        <Button fx:id="generateAllButton" disable="true" onAction="#onGenerateAll" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 10 20;" />
-                        <Button fx:id="exportSelectedButton" disable="true" onAction="#onExportSelected" style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 10 20;" />
+                        <Button fx:id="previewSelectedButton" disable="true" onAction="#onPreviewSelected" style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 10 20;" text="👁️ Preview Selected" />
+                        <Button fx:id="previewAllButton" disable="true" onAction="#onPreviewAll" style="-fx-background-color: #17a2b8; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 10 20;" text="👁️ Preview All" />
+                        <Button fx:id="generateAllButton" disable="true" onAction="#onGenerateAll" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 10 20;" text="🔢 Generate Payment Slips" />
+                        <Button fx:id="exportSelectedButton" disable="true" onAction="#onExportSelected" style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 10 20;" text="💾 Export Selected" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button onAction="#onClose" style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-font-size: 13px; -fx-padding: 10 20;" text="❌ Close" />
                     </children>
                     <VBox.margin>
                         <Insets />

@@ -14,8 +14,11 @@ import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.concurrent.Worker;
+
 import smallbusinessbuddycrm.database.PaymentAttachmentDAO;
 import smallbusinessbuddycrm.model.PaymentAttachment;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -28,7 +31,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-public class PaymentAttachmentController implements Initializable {
+public class PaymentAttachmentController {
 
     // Header Controls
     @FXML private Button newTemplateButton;
@@ -77,10 +80,6 @@ public class PaymentAttachmentController implements Initializable {
     private PaymentAttachment currentTemplate;
     private boolean isEditing = false;
 
-
-
-
-    @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("PaymentAttachmentController.initialize() called");
 

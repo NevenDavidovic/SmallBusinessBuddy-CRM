@@ -1,21 +1,94 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Button?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
 
-<VBox spacing="20" style="-fx-background-color: #f3f4f6;" stylesheets="@/styles/main-style.css" xmlns:fx="http://javafx.com/fxml/1">
+<VBox fx:id="root" prefWidth="800" prefHeight="800" spacing="15" style="-fx-background-color: #f4f4f4;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.ContactsReportController">
     <padding>
         <Insets top="20" right="20" bottom="20" left="20"/>
     </padding>
 
-    <HBox alignment="CENTER" style="-fx-background-color: #1e3a8a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;">
-        <Label text="Hello World - Underaged Report" style="-fx-text-fill: white; -fx-font-size: 24px; -fx-font-weight: bold; -fx-font-family: 'Arial';"/>
-    </HBox>
+    <!-- Title -->
+    <Label text="Contacts Report" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
 
-    <HBox alignment="CENTER" spacing="10">
-        <Button text="Back to Dashboard" style="-fx-background-color: #2563eb; -fx-text-fill: white; -fx-font-size: 14px; -fx-padding: 8 16; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+    <!-- Filter Section -->
+    <VBox spacing="10">
+        <Label text="Filters" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Name:"/>
+            <TextField fx:id="nameFilterField" promptText="Enter name" prefWidth="150"/>
+            <Label text="Age Range:"/>
+            <TextField fx:id="minAgeField" promptText="Min age" prefWidth="60"/>
+            <Label text="-"/>
+            <TextField fx:id="maxAgeField" promptText="Max age" prefWidth="60"/>
+            <Label text="Upcoming Birthdays (days):"/>
+            <TextField fx:id="birthdayDaysField" promptText="Days ahead" prefWidth="80"/>
+            <Label text="List:"/>
+            <ComboBox fx:id="listComboBox" prefWidth="150"/>
+            <Button fx:id="applyFilterButton" text="Apply Filters" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+            <Button fx:id="clearFilterButton" text="Clear Filters" style="-fx-background-color: #ff6b6b; -fx-text-fill: white;"/>
+        </HBox>
+    </VBox>
+
+    <!-- Summary Statistics -->
+    <VBox spacing="5">
+        <Label text="Summary Statistics" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+        <HBox spacing="20">
+            <Label fx:id="totalContactsLabel" text="Total Contacts: 0" style="-fx-font-size: 12px;"/>
+            <Label fx:id="totalMembersLabel" text="Total Members: 0" style="-fx-font-size: 12px;"/>
+            <Label fx:id="totalNonMembersLabel" text="Total Non-Members: 0" style="-fx-font-size: 12px;"/>
+            <Label fx:id="averageAgeLabel" text="Average Age: 0" style="-fx-font-size: 12px;"/>
+        </HBox>
+    </VBox>
+
+    <!-- Charts Section -->
+    <VBox spacing="10">
+        <Label text="Visual Analytics" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+        <HBox spacing="20">
+            <!-- Pie Chart for Member Distribution -->
+            <PieChart fx:id="memberPieChart" prefWidth="350" prefHeight="200" title="Member Distribution"/>
+            <!-- Bar Chart for Age Distribution -->
+            <BarChart fx:id="ageBarChart" prefWidth="350" prefHeight="200" title="Age Distribution">
+                <xAxis>
+                    <CategoryAxis label="Age Group"/>
+                </xAxis>
+                <yAxis>
+                    <NumberAxis label="Number of Contacts"/>
+                </yAxis>
+            </BarChart>
+        </HBox>
+    </VBox>
+
+    <!-- Table View -->
+    <TableView fx:id="contactsTable" prefHeight="300">
+        <columns>
+            <TableColumn fx:id="firstNameColumn" text="First Name" prefWidth="100"/>
+            <TableColumn fx:id="lastNameColumn" text="Last Name" prefWidth="100"/>
+            <TableColumn fx:id="emailColumn" text="Email" prefWidth="150"/>
+            <TableColumn fx:id="phoneColumn" text="Phone" prefWidth="100"/>
+            <TableColumn fx:id="addressColumn" text="Address" prefWidth="150"/>
+            <TableColumn fx:id="birthdayColumn" text="Birthday" prefWidth="100"/>
+            <TableColumn fx:id="ageColumn" text="Age" prefWidth="50"/>
+            <TableColumn fx:id="pinColumn" text="PIN" prefWidth="100"/>
+            <TableColumn fx:id="memberColumn" text="Member" prefWidth="80"/>
+            <TableColumn fx:id="memberSinceColumn" text="Member Since" prefWidth="100"/>
+            <TableColumn fx:id="memberUntilColumn" text="Member Until" prefWidth="100"/>
+        </columns>
+    </TableView>
+
+    <!-- Export Button -->
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button fx:id="exportButton" text="Export to CSV" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
     </HBox>
 </VBox>

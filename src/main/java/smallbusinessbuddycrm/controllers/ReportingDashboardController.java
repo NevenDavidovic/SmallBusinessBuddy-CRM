@@ -2,11 +2,16 @@ package smallbusinessbuddycrm.controllers;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.Node;
 import javafx.scene.layout.VBox;
+import smallbusinessbuddycrm.utilities.LanguageManager;
+
 import java.io.IOException;
+import java.net.URL;
+import java.util.ResourceBundle;
 
 // Import your DAO classes
 import smallbusinessbuddycrm.database.ContactDAO;
@@ -30,7 +35,7 @@ import java.sql.ResultSet;
  * Controller class for the Reporting Analytics Dashboard
  * Handles data population and button actions for the main dashboard view
  */
-public class ReportingDashboardController {
+public class ReportingDashboardController implements Initializable {
 
     // FXML injected labels for displaying counts
     @FXML private Label totalContacts;
@@ -50,8 +55,42 @@ public class ReportingDashboardController {
     @FXML private Button teachersReportButton;
     @FXML private Button listsReportButton;
 
+    // FXML injected labels for text content
+    @FXML private Label analyticsOverviewTitle;
+    @FXML private Label realtimeInsightsSubtitle;
+    @FXML private Label contactsLabel;
+    @FXML private Label pulseMonitorLabel;
+    @FXML private Label totalRecordsLabel1;
+    @FXML private Label activeMembersLabel1;
+    @FXML private Label youthLabel;
+    @FXML private Label insightsHubLabel;
+    @FXML private Label totalRecordsLabel2;
+    @FXML private Label activeMembersLabel2;
+    @FXML private Label workshopsLabel;
+    @FXML private Label activityPulseLabel;
+    @FXML private Label totalRecordsLabel3;
+    @FXML private Label activeSessionsLabel;
+    @FXML private Label teachersLabel;
+    @FXML private Label educatorHubLabel;
+    @FXML private Label totalRecordsLabel4;
+    @FXML private Label listsLabel;
+    @FXML private Label dataManagerLabel;
+    @FXML private Label totalRecordsLabel5;
+    @FXML private Label activeListsLabel;
+    @FXML private Label supportLabel;
+    @FXML private Label helpCenterLabel;
+    @FXML private Label reportsManualLabel;
+    @FXML private Label howToUseReportsLabel;
+    @FXML private Label usefulInfoLabel;
+    @FXML private Label contactsWorkshopsLabel;
+    @FXML private Label viewHelpButton;
+    @FXML private Label exportDataButton;
+    @FXML private Label systemStatusLabel;
+    @FXML private Label lastUpdatedLabel;
+    @FXML private Label dataSyncLabel;
+
     // FXML injected content area for navigation
-    @FXML private VBox contentArea; // Add this if you have a content area to navigate to
+    @FXML private VBox contentArea;
 
     // DAO instances - all sections
     private ContactDAO contactDAO;
@@ -60,18 +99,80 @@ public class ReportingDashboardController {
     private TeacherDAO teacherDAO;
     private ListsDAO listsDAO;
 
-    /**
-     * Initialize the controller and load dashboard data
-     * Call this method after FXML loading is complete
-     */
-    public void initialize() {
-
-
-        // Initialize DAO instance
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        // Initialize DAO instances
         initializeDAOs();
 
         // Load and display dashboard data
         loadDashboardData();
+
+        // Set up language support
+        LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
+        updateTexts();
+    }
+
+    private void updateTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Header section
+        if (analyticsOverviewTitle != null) {
+            analyticsOverviewTitle.setText(languageManager.getText("dashboard.analytics.overview"));
+        }
+        if (realtimeInsightsSubtitle != null) {
+            realtimeInsightsSubtitle.setText(languageManager.getText("dashboard.realtime.insights"));
+        }
+
+        // Contacts card
+        if (contactsLabel != null) contactsLabel.setText(languageManager.getText("dashboard.contacts"));
+        if (pulseMonitorLabel != null) pulseMonitorLabel.setText(languageManager.getText("dashboard.pulse.monitor"));
+        if (totalRecordsLabel1 != null) totalRecordsLabel1.setText(languageManager.getText("dashboard.total.records"));
+        if (activeMembersLabel1 != null) activeMembersLabel1.setText(languageManager.getText("dashboard.active.members"));
+        if (contactsReportButton != null) contactsReportButton.setText(languageManager.getText("dashboard.view.analytics"));
+
+        // Youth card
+        if (youthLabel != null) youthLabel.setText(languageManager.getText("dashboard.youth"));
+        if (insightsHubLabel != null) insightsHubLabel.setText(languageManager.getText("dashboard.insights.hub"));
+        if (totalRecordsLabel2 != null) totalRecordsLabel2.setText(languageManager.getText("dashboard.total.records"));
+        if (activeMembersLabel2 != null) activeMembersLabel2.setText(languageManager.getText("dashboard.active.members"));
+        if (underagedReportButton != null) underagedReportButton.setText(languageManager.getText("dashboard.view.analytics"));
+
+        // Workshops card
+        if (workshopsLabel != null) workshopsLabel.setText(languageManager.getText("dashboard.workshops"));
+        if (activityPulseLabel != null) activityPulseLabel.setText(languageManager.getText("dashboard.activity.pulse"));
+        if (totalRecordsLabel3 != null) totalRecordsLabel3.setText(languageManager.getText("dashboard.total.records"));
+        if (activeSessionsLabel != null) activeSessionsLabel.setText(languageManager.getText("dashboard.active.sessions"));
+        if (workshopsReportButton != null) workshopsReportButton.setText(languageManager.getText("dashboard.view.analytics"));
+
+        // Teachers card
+        if (teachersLabel != null) teachersLabel.setText(languageManager.getText("dashboard.teachers"));
+        if (educatorHubLabel != null) educatorHubLabel.setText(languageManager.getText("dashboard.educator.hub"));
+        if (totalRecordsLabel4 != null) totalRecordsLabel4.setText(languageManager.getText("dashboard.total.records"));
+        if (teachersReportButton != null) teachersReportButton.setText(languageManager.getText("dashboard.view.analytics"));
+
+        // Lists card
+        if (listsLabel != null) listsLabel.setText(languageManager.getText("dashboard.lists"));
+        if (dataManagerLabel != null) dataManagerLabel.setText(languageManager.getText("dashboard.data.manager"));
+        if (totalRecordsLabel5 != null) totalRecordsLabel5.setText(languageManager.getText("dashboard.total.records"));
+        if (activeListsLabel != null) activeListsLabel.setText(languageManager.getText("dashboard.active.lists"));
+        if (listsReportButton != null) listsReportButton.setText(languageManager.getText("dashboard.view.analytics"));
+
+        // Support card
+        if (supportLabel != null) supportLabel.setText(languageManager.getText("dashboard.support"));
+        if (helpCenterLabel != null) helpCenterLabel.setText(languageManager.getText("dashboard.help.center"));
+        if (reportsManualLabel != null) reportsManualLabel.setText(languageManager.getText("dashboard.reports.manual"));
+        if (howToUseReportsLabel != null) howToUseReportsLabel.setText(languageManager.getText("dashboard.how.to.use.reports"));
+        if (usefulInfoLabel != null) usefulInfoLabel.setText(languageManager.getText("dashboard.useful.information"));
+        if (contactsWorkshopsLabel != null) contactsWorkshopsLabel.setText(languageManager.getText("dashboard.contacts.workshops.etc"));
+        if (viewHelpButton != null) viewHelpButton.setText(languageManager.getText("dashboard.view.help"));
+        if (exportDataButton != null) exportDataButton.setText(languageManager.getText("dashboard.export.data"));
+
+        // Footer
+        if (systemStatusLabel != null) systemStatusLabel.setText(languageManager.getText("dashboard.all.systems.operational"));
+        if (lastUpdatedLabel != null) lastUpdatedLabel.setText(languageManager.getText("dashboard.last.updated.now"));
+        if (dataSyncLabel != null) dataSyncLabel.setText(languageManager.getText("dashboard.data.sync.active"));
+
+        System.out.println("Dashboard texts updated");
     }
 
     /**
@@ -234,19 +335,16 @@ public class ReportingDashboardController {
                 // Update UI labels
                 totalTeachers.setText(String.valueOf(totalTeachersCount));
 
-
                 System.out.println("Loaded teachers data - Total: " + totalTeachersCount + ", Active: " + activeTeachersCount);
             } else {
                 // Fallback values if DAO is null
                 totalTeachers.setText("0");
-
                 System.out.println("TeacherDAO is null, using fallback values");
             }
         } catch (Exception e) {
             System.err.println("Error loading teachers data: " + e.getMessage());
             e.printStackTrace();
             totalTeachers.setText("0");
-
         }
     }
 
