@@ -8,19 +8,17 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-import smallbusinessbuddycrm.database.DatabaseConnection;
+import smallbusinessbuddycrm.utilities.LanguageManager;
 import smallbusinessbuddycrm.database.TeacherDAO;
 import smallbusinessbuddycrm.model.Teacher;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-public class TeachersViewController implements Initializable {
+public class TeachersViewController {
 
     @FXML private TableView<Teacher> teachersTable;
     @FXML private TableColumn<Teacher, Boolean> selectColumn;
@@ -31,6 +29,7 @@ public class TeachersViewController implements Initializable {
     @FXML private TableColumn<Teacher, String> phoneColumn;
     @FXML private TableColumn<Teacher, String> createdAtColumn;
     @FXML private TableColumn<Teacher, String> updatedAtColumn;
+    @FXML private Label teachersPageTitle;
 
     // UI Controls
     @FXML private Button createTeacherButton;
@@ -46,19 +45,41 @@ public class TeachersViewController implements Initializable {
     // DAO
     private TeacherDAO teacherDAO = new TeacherDAO();
 
-    @Override
     public void initialize(URL location, ResourceBundle resources) {
-        System.out.println("TeachersViewController.initialize() called");
-
-        // Initialize database first
-        DatabaseConnection.initializeDatabase();
+        LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
+        updateTexts();
 
         setupTable();
         setupSearchAndFilters();
         loadTeachers();
         setupEventHandlers();
+    }
 
-        System.out.println("TeachersViewController initialized successfully");
+    private void updateTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Update labels and buttons
+        if (teachersPageTitle != null) teachersPageTitle.setText(languageManager.getText("teachers.page.title"));
+        if (deleteSelectedButton != null) deleteSelectedButton.setText(languageManager.getText("teachers.delete.selected"));
+        if (createTeacherButton != null) createTeacherButton.setText(languageManager.getText("teachers.add.teacher"));
+        if (refreshButton != null) refreshButton.setText(languageManager.getText("teachers.refresh"));
+        if (searchField != null) searchField.setPromptText(languageManager.getText("teachers.search.placeholder"));
+
+        // Update table columns
+        if (editColumn != null) editColumn.setText(languageManager.getText("teachers.column.edit"));
+        if (firstNameColumn != null) firstNameColumn.setText(languageManager.getText("teachers.column.first.name"));
+        if (lastNameColumn != null) lastNameColumn.setText(languageManager.getText("teachers.column.last.name"));
+        if (emailColumn != null) emailColumn.setText(languageManager.getText("teachers.column.email"));
+        if (phoneColumn != null) phoneColumn.setText(languageManager.getText("teachers.column.phone"));
+        if (createdAtColumn != null) createdAtColumn.setText(languageManager.getText("teachers.column.created"));
+        if (updatedAtColumn != null) updatedAtColumn.setText(languageManager.getText("teachers.column.updated"));
+
+        // Update table placeholder if exists
+        if (teachersTable != null) {
+            teachersTable.setPlaceholder(new Label(languageManager.getText("teachers.no.teachers.found")));
+        }
+
+        System.out.println("Teachers view texts updated");
     }
 
     private void setupTable() {

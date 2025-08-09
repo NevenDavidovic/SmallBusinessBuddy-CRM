@@ -14,11 +14,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.concurrent.Worker;
-
 import smallbusinessbuddycrm.database.PaymentAttachmentDAO;
 import smallbusinessbuddycrm.model.PaymentAttachment;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;

@@ -2,330 +2,286 @@ package smallbusinessbuddycrm;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.TitledPane;
-import javafx.scene.effect.Glow;
+import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.Node;
-import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
 import smallbusinessbuddycrm.database.OrganizationDAO;
 import smallbusinessbuddycrm.model.Organization;
+import smallbusinessbuddycrm.utilities.LanguageManager;
 
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.Optional;
 
 public class MainController {
 
-    @FXML
-    private StackPane contentArea;
+    @FXML private StackPane contentArea;
+    @FXML private TitledPane bookmarks;
+    @FXML private MenuButton userProfileButton;
+    @FXML private Circle userAvatar;
 
-    @FXML
-    private TitledPane bookmarks;
+    // Language chooser buttons
+    @FXML private Button englishButton;
+    @FXML private Button croatianButton;
 
-    @FXML
-    private MenuButton userProfileButton; // Reference to the MenuButton in FXML
+    // Navigation sections
+    @FXML private TitledPane crmPane;
+    @FXML private TitledPane marketingPane;
+    @FXML private TitledPane commercePane;
+    @FXML private TitledPane designManagerPane;
+    @FXML private TitledPane reportingPane;
+    @FXML private TitledPane dataManagementPane;
+    @FXML private TitledPane libraryPane;
 
-    @FXML
-    private Circle userAvatar; // Reference to the Circle for organization logo
+    // Menu items (NEW)
+    @FXML private MenuItem profileMenuItem;
+    @FXML private MenuItem settingsMenuItem;
+
+    // Language label
+    @FXML private Label languageLabel;
+
+    // CRM section buttons
+    @FXML private Button contactsButton;
+    @FXML private Button listsButton;
+    @FXML private Button workshopsButton;
+    @FXML private Button teachersButton;
+
+    // Marketing section buttons
+    @FXML private Button createEmailButton;
+    @FXML private Button emailStatsButton;
+
+    // Commerce section buttons
+    @FXML private Button barcodeButton;
+    @FXML private Button paymentSlipsButton;
+    @FXML private Button paymentHistoryButton;
+    @FXML private Button bulkGenerationButton;
+
+    // Design Manager section buttons
+    @FXML private Button paymentTemplateButton;
+    @FXML private Button newsletterTemplateButton;
+    @FXML private Button paymentAttachmentButton;
+
+    // Reporting section buttons (NEW)
+    @FXML private Button overviewButton;
+    @FXML private Button underagedStatsButton;
+    @FXML private Button contactStatsButton;
+    @FXML private Button workshopStatsButton;
+
+    // Data Management section buttons
+    @FXML private Button propertiesButton;
+    @FXML private Button importsButton;
+    @FXML private Button exportButton;
+
+    // Library section buttons
+    @FXML private Button documentsButton;
+    @FXML private Button tasksButton;
+    @FXML private Button resourcesButton;
+
+    // Remove this - not needed anymore
+    @FXML private Button seeMoreButton;
 
     private OrganizationDAO organizationDAO = new OrganizationDAO();
+    private LanguageManager languageManager;
 
-    /**
-     * Initializes the controller class.
-     */
     @FXML
     public void initialize() {
+        languageManager = LanguageManager.getInstance();
 
-
-      loadOrganizationName();
-
-
-    }
-
-    /**
-     * Loads the organization name and image, sets them to the user profile button
-     */
-    private void loadOrganizationName() {
-
-        try {
-            Optional<Organization> organization = organizationDAO.getFirst();
-
-            if (organization.isPresent()) {
-                Organization org = organization.get();
-                String orgName = org.getName();
-
-                System.out.println("Organization found: " + orgName);
-                System.out.println("Organization has image: " + (org.getImage() != null));
-                if (org.getImage() != null) {
-                    System.out.println("Image size: " + org.getImage().length + " bytes");
-                }
-
-                // Set organization name
-                if (userProfileButton != null) {
-                    userProfileButton.setText(orgName);
-                    System.out.println("Organization name set to button: " + orgName);
-                } else {
-                    System.err.println("ERROR: userProfileButton is null - check FXML fx:id");
-                }
-
-                // Set organization image
-                loadOrganizationImage(org);
-
-            } else {
-                // No organization found - set default
-                System.out.println("No organization found in database");
-                if (userProfileButton != null) {
-                    userProfileButton.setText("No Organization");
-                }
-                setDefaultAvatar();
-            }
-
-        } catch (Exception e) {
-            System.err.println("Error loading organization data: " + e.getMessage());
-            e.printStackTrace();
-
-            // Set fallback text and image
-            if (userProfileButton != null) {
-                userProfileButton.setText("Error Loading");
-            }
-            setDefaultAvatar();
-        }
-        System.out.println("=== Organization Data Loading Complete ===");
-    }
-
-    /**
-     * Loads organization image and sets it as the avatar background
-     */
-    private void loadOrganizationImage(Organization organization) {
-        System.out.println("=== Loading Organization Image ===");
-        try {
-            if (userAvatar == null) {
-                System.err.println("ERROR: userAvatar is null - check FXML fx:id");
-                return;
-            }
-
-            if (organization.getImage() != null && organization.getImage().length > 0) {
-                System.out.println("Converting byte array to JavaFX Image...");
-
-                // Convert byte array to JavaFX Image
-                javafx.scene.image.Image orgImage = new javafx.scene.image.Image(
-                        new java.io.ByteArrayInputStream(organization.getImage())
-                );
-
-                // Check if image loaded successfully
-                if (orgImage.isError()) {
-                    System.err.println("Error loading image: " + orgImage.getException().getMessage());
-                    setDefaultAvatar();
-                    return;
-                }
-
-                System.out.println("Image loaded successfully. Width: " + orgImage.getWidth() + ", Height: " + orgImage.getHeight());
-
-                // Create ImagePattern to fill the circle
-                javafx.scene.paint.ImagePattern imagePattern = new javafx.scene.paint.ImagePattern(orgImage);
-                userAvatar.setFill(imagePattern);
-
-                System.out.println("Organization image applied to avatar successfully");
-            } else {
-                // No image available, use default
-                System.out.println("No organization image available, using default");
-                setDefaultAvatar();
-            }
-        } catch (Exception e) {
-            System.err.println("Error loading organization image: " + e.getMessage());
-            e.printStackTrace();
-            setDefaultAvatar();
-        }
-        System.out.println("=== Organization Image Loading Complete ===");
-    }
-
-    /**
-     * Sets a default avatar (color or pattern) when no organization image is available
-     */
-    private void setDefaultAvatar() {
-        System.out.println("Setting default avatar...");
-        if (userAvatar != null) {
-            // Use a solid color
-            userAvatar.setFill(javafx.scene.paint.Color.web("#0099cc")); // Blue color
-            System.out.println("Default blue avatar set");
-
-            // Alternative: Use initials or gradient
-            // You could also create a text-based avatar with organization initials here
-        } else {
-            System.err.println("Cannot set default avatar - userAvatar is null");
-        }
-    }
-
-    /**
-     * Public method to refresh organization name and image (useful after updating organization)
-     */
-    public void refreshOrganizationData() {
-        System.out.println("Refreshing organization data...");
         loadOrganizationName();
+        updateLanguageButtons();
+        updateAllTexts(); // Add this to translate on startup
     }
 
-    /**
-     * Navigates to a new view by loading it into the content area
-     * while keeping the sidebar and top navigation intact.
-     *
-     * @param fxmlPath The path to the FXML file to load
-     */
+    @FXML
+    private void switchToEnglish() {
+        languageManager.setLanguage("en");
+        updateLanguageButtons();
+        updateAllTexts();
+        System.out.println("Switched to English");
+    }
+
+    @FXML
+    private void switchToCroatian() {
+        languageManager.setLanguage("hr");
+        updateLanguageButtons();
+        updateAllTexts();
+        System.out.println("Prebačeno na hrvatski");
+    }
+
+    private void updateLanguageButtons() {
+        if (englishButton == null || croatianButton == null) {
+            System.err.println("Language buttons are null - check FXML fx:id");
+            return;
+        }
+
+        englishButton.getStyleClass().removeAll("language-active");
+        croatianButton.getStyleClass().removeAll("language-active");
+
+        if (languageManager.isEnglish()) {
+            englishButton.getStyleClass().add("language-active");
+        } else {
+            croatianButton.getStyleClass().add("language-active");
+        }
+    }
+
+    private void updateAllTexts() {
+        updateNavigationTexts();
+        updateCurrentViewTexts();
+    }
+
+    private void updateNavigationTexts() {
+        try {
+            // Update main navigation sections
+            if (crmPane != null) crmPane.setText(languageManager.getText("nav.crm"));
+            if (marketingPane != null) marketingPane.setText(languageManager.getText("nav.marketing"));
+            if (commercePane != null) commercePane.setText(languageManager.getText("nav.commerce"));
+            if (designManagerPane != null) designManagerPane.setText(languageManager.getText("nav.design.manager"));
+            if (reportingPane != null) reportingPane.setText(languageManager.getText("nav.reporting"));
+            if (dataManagementPane != null) dataManagementPane.setText(languageManager.getText("nav.data.management"));
+            if (libraryPane != null) libraryPane.setText(languageManager.getText("nav.library"));
+
+            // Update menu items
+            if (profileMenuItem != null) profileMenuItem.setText(languageManager.getText("menu.profile"));
+            if (settingsMenuItem != null) settingsMenuItem.setText(languageManager.getText("menu.settings"));
+
+            // Update language label
+            if (languageLabel != null) languageLabel.setText(languageManager.getText("language.selector"));
+
+            // Update CRM section buttons
+            if (contactsButton != null) contactsButton.setText(languageManager.getText("crm.contacts"));
+            if (listsButton != null) listsButton.setText(languageManager.getText("crm.lists"));
+            if (workshopsButton != null) workshopsButton.setText(languageManager.getText("crm.workshops"));
+            if (teachersButton != null) teachersButton.setText(languageManager.getText("crm.teachers"));
+
+            // Update Marketing section buttons
+            if (createEmailButton != null) createEmailButton.setText(languageManager.getText("marketing.create.campaign"));
+            if (emailStatsButton != null) emailStatsButton.setText(languageManager.getText("marketing.statistics"));
+
+            // Update Commerce section buttons
+            if (barcodeButton != null) barcodeButton.setText(languageManager.getText("commerce.barcode"));
+            if (paymentSlipsButton != null) paymentSlipsButton.setText(languageManager.getText("commerce.payment.slips"));
+            if (paymentHistoryButton != null) paymentHistoryButton.setText(languageManager.getText("commerce.payment.history"));
+            if (bulkGenerationButton != null) bulkGenerationButton.setText(languageManager.getText("commerce.bulk.generation"));
+
+            // Update Design Manager section buttons
+            if (paymentTemplateButton != null) paymentTemplateButton.setText(languageManager.getText("design.payment.template"));
+            if (newsletterTemplateButton != null) newsletterTemplateButton.setText(languageManager.getText("design.newsletter.template"));
+            if (paymentAttachmentButton != null) paymentAttachmentButton.setText(languageManager.getText("design.payment.attachment"));
+
+            // Update Reporting section buttons
+            if (overviewButton != null) overviewButton.setText(languageManager.getText("reporting.overview"));
+            if (underagedStatsButton != null) underagedStatsButton.setText(languageManager.getText("reporting.underaged.stats"));
+            if (contactStatsButton != null) contactStatsButton.setText(languageManager.getText("reporting.contact.stats"));
+            if (workshopStatsButton != null) workshopStatsButton.setText(languageManager.getText("reporting.workshop.stats"));
+
+            // Update Data Management section buttons
+            if (propertiesButton != null) propertiesButton.setText(languageManager.getText("data.properties"));
+            if (importsButton != null) importsButton.setText(languageManager.getText("data.imports"));
+            if (exportButton != null) exportButton.setText(languageManager.getText("data.export"));
+
+            // Update Library section buttons
+            if (documentsButton != null) documentsButton.setText(languageManager.getText("library.documents"));
+            if (tasksButton != null) tasksButton.setText(languageManager.getText("library.tasks"));
+            if (resourcesButton != null) resourcesButton.setText(languageManager.getText("library.resources"));
+
+            String currentLang = languageManager.isEnglish() ? "English" : "Croatian";
+            System.out.println("Navigation texts updated for language: " + currentLang);
+        } catch (Exception e) {
+            System.err.println("Error updating navigation texts: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void updateCurrentViewTexts() {
+        System.out.println("Current view texts update requested");
+    }
+
     public void navigateTo(String fxmlPath) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
             Node view = loader.load();
 
-            // Clear current content and add the new view
             contentArea.getChildren().clear();
             contentArea.getChildren().add(view);
 
         } catch (IOException e) {
             e.printStackTrace();
-            // Handle the error appropriately in your application
         }
     }
 
-    // Handler methods for sidebar buttons
+    @FXML private void handleContactsAction() { navigateTo("/views/crm/contacts-view.fxml"); }
+    @FXML private void handleOrganizationAction() { navigateTo("/views/general/organization-view.fxml"); }
+    @FXML private void handleListsAction() { navigateTo("/views/crm/lists-view.fxml"); }
+    @FXML private void handleWorkshopsAction() { navigateTo("/views/crm/workshops-view.fxml"); }
+    @FXML private void handleEmailAction() { navigateTo("/views/marketing/email-builder.fxml"); }
+    @FXML private void handleBarcodeAppAction() { navigateTo("/views/commerce/barcode-generator-view.fxml"); }
+    @FXML private void handlePaymentSlipsAction() { navigateTo("/views/commerce/payment-slips-view.fxml"); }
+    @FXML private void handlePaymentHistoryAction() { navigateTo("/views/commerce/payment-history-view.fxml"); }
+    @FXML private void handleTeachersAction() { navigateTo("/views/crm/teacher-view.fxml"); }
+    @FXML private void handleEmailTemplateAction() { navigateTo("/views/marketing/email-builder.fxml"); }
+    @FXML private void handlePaymentTemplateAction() { navigateTo("/views/commerce/payment-template-view.fxml"); }
+    @FXML private void handleHelpTemplateAction() { navigateTo("/views/general/help-view.fxml"); }
+    @FXML private void handleBulkGenerationAction() { navigateTo("/views/commerce/bulk-generation.fxml"); }
+    @FXML private void handlePaymentAttachmentAction() { navigateTo("/views/commerce/payment-attachment-view.fxml"); }
+    @FXML private void handleSettingsAction() { navigateTo("/views/settings-view.fxml"); }
+    @FXML private void handleHomeReportingScreen() { navigateTo("/views/reporting/reporting-nav-dashboard-view.fxml"); }
 
-    @FXML
-    private void handleContactsAction() {
-        navigateTo("/views/crm/contacts-view.fxml");
+    // Keep all your existing organization methods exactly as they are
+    private void loadOrganizationName() {
+        try {
+            Optional<Organization> organization = organizationDAO.getFirst();
+            if (organization.isPresent()) {
+                Organization org = organization.get();
+                String orgName = org.getName();
+                System.out.println("Organization found: " + orgName);
+                if (userProfileButton != null) {
+                    userProfileButton.setText(orgName);
+                }
+                loadOrganizationImage(org);
+            } else {
+                if (userProfileButton != null) {
+                    userProfileButton.setText("No Organization");
+                }
+                setDefaultAvatar();
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading organization data: " + e.getMessage());
+            if (userProfileButton != null) {
+                userProfileButton.setText("Error Loading");
+            }
+            setDefaultAvatar();
+        }
     }
 
-    @FXML
-    private void handleOrganizationAction() {
-        navigateTo("/views/general/organization-view.fxml");
+    private void loadOrganizationImage(Organization organization) {
+        if (userAvatar == null) return;
+
+        if (organization.getImage() != null && organization.getImage().length > 0) {
+            try {
+                javafx.scene.image.Image orgImage = new javafx.scene.image.Image(
+                        new java.io.ByteArrayInputStream(organization.getImage())
+                );
+                if (!orgImage.isError()) {
+                    javafx.scene.paint.ImagePattern imagePattern = new javafx.scene.paint.ImagePattern(orgImage);
+                    userAvatar.setFill(imagePattern);
+                } else {
+                    setDefaultAvatar();
+                }
+            } catch (Exception e) {
+                setDefaultAvatar();
+            }
+        } else {
+            setDefaultAvatar();
+        }
     }
 
-    @FXML
-    private void handleListsAction() {
-        navigateTo("/views/crm/lists-view.fxml");
+    private void setDefaultAvatar() {
+        if (userAvatar != null) {
+            userAvatar.setFill(javafx.scene.paint.Color.web("#0099cc"));
+        }
     }
 
-    @FXML
-    private void handleWorkshopsAction() {
-        navigateTo("/views/crm/workshops-view.fxml");
+    public void refreshOrganizationData() {
+        loadOrganizationName();
     }
-
-    @FXML
-    private void handleEmailAction() {
-        navigateTo("/views/marketing/email-view.fxml");
-    }
-
-    @FXML
-    private void handleEmailStatisticsAction() {
-        navigateTo("/views/marketing/email-statistics-view.fxml");
-    }
-
-    @FXML
-    private void handleBarcodeAppAction() {
-        navigateTo("/views/commerce/barcode-generator-view.fxml");
-    }
-
-    @FXML
-    private void handlePaymentSlipsAction() {
-        navigateTo("/views/commerce/payment-slips-view.fxml");
-    }
-
-    @FXML
-    private void handlePaymentHistoryAction() {
-        navigateTo("/views/commerce/payment-history-view.fxml");
-    }
-
-    @FXML
-    private void handleContactStatisticsAction() {
-        navigateTo("/views/reporting/contact-statistics-view.fxml");
-    }
-
-    @FXML
-    private void handleWorkshopsStatisticsAction() {
-        navigateTo("/views/reporting/workshop-statistics-view.fxml");
-    }
-
-    @FXML
-    private void handleEStatisticsAction() {
-        navigateTo("/views/reporting/email-statistics-view.fxml");
-    }
-
-    @FXML
-    private void handleTeachersAction() {
-        navigateTo("/views/crm/teacher-view.fxml");
-    }
-
-
-    @FXML
-    private void handleEmailTemplateAction() {
-        navigateTo("/views/marketing/email-builder.fxml");
-    }
-    @FXML
-    private void handlePaymentTemplateAction() {
-        navigateTo("/views/commerce/payment-template-view.fxml");
-    }
-
-    @FXML
-    private void handleHelpTemplateAction() {
-        navigateTo("/views/general/help-view.fxml");
-    }
-
-    @FXML
-    private void handleBulkGenerationAction() {
-        navigateTo("/views/commerce/bulk-generation.fxml");
-    }
-
-
-    @FXML
-    private void handlePaymentAttachmentAction(){navigateTo("/views/commerce/payment-attachment-view.fxml");}
-    @FXML
-    private void handleSettingsAction() {
-        navigateTo("/views/settings-view.fxml");
-    }
-
-    @FXML
-    private void handleHomeReportingScreen() {
-        navigateTo("/views/reporting/reporting-nav-dashboard-view.fxml");
-    }
-
-    @FXML
-    private void handleContactsReportAction() {
-        navigateTo("/views/reporting/contacts-report.fxml");
-    }
-
-    @FXML
-    private void handleUnderagedReportAction() {
-        navigateTo("/views/underaged-report.fxml");
-    }
-
-    @FXML
-    private void handleWorkshopsReportAction() {
-        navigateTo("/views/workshops-report.fxml");
-    }
-
-    @FXML
-    private void handleTeachersReportAction() {
-        navigateTo("/views/teachers-report.fxml");
-    }
-
-    @FXML
-    private void handleListsReportAction() {
-        navigateTo("/views/ListsReport.fxml");
-    }
-
-    @FXML
-    private void handleCardHover(MouseEvent event) {
-        VBox card = (VBox) event.getSource();
-        card.setEffect(new Glow(0.6));
-        card.setScaleX(1.05);
-        card.setScaleY(1.05);
-    }
-
-    @FXML
-    private void handleCardExit(MouseEvent event) {
-        VBox card = (VBox) event.getSource();
-        card.setEffect(new Glow(0.2));
-        card.setScaleX(1.0);
-        card.setScaleY(1.0);
-    }
-
 }

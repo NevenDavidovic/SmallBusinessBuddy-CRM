@@ -11,7 +11,7 @@
             <children>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <Label text="Workshops" textFill="#0099cc">
+                        <Label fx:id="workshopsPageTitle" textFill="#0099cc">
                             <font>
                                 <Font name="System Bold" size="24.0" />
                             </font>
@@ -23,13 +23,13 @@
                         </Label>
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS" spacing="5.0">
                             <children>
-                                <Button fx:id="deleteSelectedButton" text="Delete Selected"
+                                <Button fx:id="deleteSelectedButton"
                                         style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-radius: 4;">
                                     <HBox.margin>
                                         <Insets right="5.0" />
                                     </HBox.margin>
                                 </Button>
-                                <Button fx:id="createWorkshopButton" text="Create Workshop"
+                                <Button fx:id="createWorkshopButton"
                                         style="-fx-background-color: #ff7a59; -fx-text-fill: white; -fx-border-radius: 4;" />
                             </children>
                         </HBox>
@@ -37,18 +37,18 @@
                 </HBox>
                 <HBox spacing="5.0">
                     <children>
-                        <Button fx:id="allWorkshopsButton" text="All workshops" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="activeWorkshopsButton" text="Active" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="upcomingWorkshopsButton" text="Upcoming" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="pastWorkshopsButton" text="Past" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="allWorkshopsButton" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="activeWorkshopsButton" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="upcomingWorkshopsButton" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="pastWorkshopsButton" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                     </children>
                 </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search workshop name or teacher..." style="-fx-border-color: #dfe3eb;" />
+                        <TextField fx:id="searchField" prefWidth="250.0" style="-fx-border-color: #dfe3eb;" />
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
-                                <Button fx:id="refreshButton" text="Refresh" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                <Button fx:id="refreshButton" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                             </children>
                         </HBox>
                     </children>
@@ -63,18 +63,18 @@
         <ScrollPane fitToHeight="true" fitToWidth="true">
             <TableView fx:id="workshopsTable" prefHeight="400.0">
                 <columns>
-                    <TableColumn fx:id="selectColumn" prefWidth="40.0" text="" />
-                    <TableColumn fx:id="editColumn" prefWidth="60.0" text="EDIT" />
-                    <TableColumn fx:id="nameColumn" text="WORKSHOP NAME" prefWidth="180.0" />
-                    <TableColumn fx:id="fromDateColumn" text="FROM DATE" prefWidth="100.0" />
-                    <TableColumn fx:id="toDateColumn" text="TO DATE" prefWidth="100.0" />
-                    <TableColumn fx:id="durationColumn" text="DURATION" prefWidth="80.0" />
-                    <TableColumn fx:id="statusColumn" text="STATUS" prefWidth="100.0" />
-                    <TableColumn fx:id="teacherColumn" text="TEACHER" prefWidth="120.0" />
-                    <TableColumn fx:id="participantCountColumn" text="PARTICIPANTS" prefWidth="100.0" />
-                    <TableColumn fx:id="manageParticipantsColumn" text="PARTICIPANTS" prefWidth="80.0" />
-                    <TableColumn fx:id="manageTeacherColumn" text="TEACHER" prefWidth="70.0" />
-                    <TableColumn fx:id="createdAtColumn" text="CREATED" prefWidth="140.0" />
+                    <TableColumn fx:id="selectColumn" prefWidth="40.0" />
+                    <TableColumn fx:id="editColumn" prefWidth="60.0" />
+                    <TableColumn fx:id="nameColumn" prefWidth="180.0" />
+                    <TableColumn fx:id="fromDateColumn" prefWidth="100.0" />
+                    <TableColumn fx:id="toDateColumn" prefWidth="100.0" />
+                    <TableColumn fx:id="durationColumn" prefWidth="80.0" />
+                    <TableColumn fx:id="statusColumn" prefWidth="100.0" />
+                    <TableColumn fx:id="teacherColumn" prefWidth="120.0" />
+                    <TableColumn fx:id="participantCountColumn" prefWidth="100.0" />
+                    <TableColumn fx:id="manageParticipantsColumn" prefWidth="80.0" />
+                    <TableColumn fx:id="manageTeacherColumn" prefWidth="70.0" />
+                    <TableColumn fx:id="createdAtColumn" prefWidth="140.0" />
                 </columns>
             </TableView>
         </ScrollPane>

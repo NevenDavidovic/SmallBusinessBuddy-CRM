@@ -4,7 +4,6 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.web.WebView;
@@ -14,7 +13,6 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Clipboard;
 
 import smallbusinessbuddycrm.model.NewsletterTemplate;
-import smallbusinessbuddycrm.services.*;
 import smallbusinessbuddycrm.services.newsletter.NewsletterComponentBuilder;
 import smallbusinessbuddycrm.services.newsletter.NewsletterHtmlGenerator;
 import smallbusinessbuddycrm.services.newsletter.NewsletterService;
@@ -31,7 +29,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 import java.util.Optional;
 
-public class NewsletterBuilderController implements Initializable {
+public class NewsletterBuilderController {
 
     // FXML Fields
     @FXML private Button newNewsletterButton;
@@ -82,7 +80,7 @@ public class NewsletterBuilderController implements Initializable {
     private boolean isEditing = false;
     private StringBuilder newsletterHTML;
 
-    @Override
+
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("NewsletterBuilderController.initialize() called");
 
@@ -657,23 +655,50 @@ public class NewsletterBuilderController implements Initializable {
     }
 
     private void sendNewsletter() {
+        // Generate the latest preview to ensure we have current content
         generatePreview();
 
-        Alert info = new Alert(Alert.AlertType.INFORMATION);
-        info.setTitle("Send Newsletter");
-        info.setHeaderText("Email Integration");
-        info.setContentText("Email sending functionality would be integrated here.\n\n" +
-                "The newsletter HTML has been copied to your clipboard.\n" +
-                "You can paste it into your email marketing platform.");
-
-        if (newsletterHTML != null) {
-            ClipboardContent clipboardContent = new ClipboardContent();
-            clipboardContent.putString(newsletterHTML.toString());
-            Clipboard.getSystemClipboard().setContent(clipboardContent);
+        // Validate that we have content to send
+        if (newsletterHTML == null || newsletterHTML.toString().trim().isEmpty()) {
+            showError("No newsletter content available. Please create and preview the newsletter first.");
+            return;
         }
 
-        info.showAndWait();
-        updateStatusLabel("Newsletter copied to clipboard for sending");
+        // Validate required fields
+        String title = subjectField.getText().trim();
+        if (title.isEmpty()) {
+            showError("Please enter a subject line for the newsletter.");
+            subjectField.requestFocus();
+            return;
+        }
+
+        String company = companyNameField.getText().trim();
+        if (company.isEmpty()) {
+            showError("Please enter a company name.");
+            companyNameField.requestFocus();
+            return;
+        }
+
+        try {
+            // Create and show the newsletter send dialog
+            Stage currentStage = (Stage) sendButton.getScene().getWindow();
+            NewsletterSendDialog sendDialog = new NewsletterSendDialog(
+                    currentStage,
+                    title,
+                    newsletterHTML.toString(),
+                    company
+            );
+
+            sendDialog.showAndWait();
+
+            // Update status after dialog closes
+            updateStatusLabel("Newsletter send dialog closed");
+
+        } catch (Exception e) {
+            System.err.println("Error showing newsletter send dialog: " + e.getMessage());
+            e.printStackTrace();
+            showError("Failed to open send dialog: " + e.getMessage());
+        }
     }
 
     // UI Helper Methods

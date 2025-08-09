@@ -64,7 +64,13 @@
     -fx-background-color: transparent;
     -fx-text-fill: -sbb-text-color;
     -fx-padding: 0 0 10 0;
+
 }
+
+.sidebar-sub-item-box{
+    -fx-max-height: 250px;
+}
+
 
 .sidebar-accordion > .title {
     -fx-background-color: transparent;
@@ -93,6 +99,7 @@
     -fx-text-fill: -sbb-text-color;
     -fx-alignment: CENTER_LEFT;
     -fx-padding: 5px 0 5px 20px;
+
 }
 
 .sidebar-sub-item:hover {
@@ -208,4 +215,76 @@
     -fx-text-fill: black;
     -fx-text-base-color: black;
     -fx-text-inner-color: black;
+}
+
+/* Language Chooser Styles - Dark Theme Compatible */
+.language-chooser {
+    -fx-padding: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 4, 0, 0, 1);
+}
+
+.language-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255, 255, 255, 0.8);
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-padding: 8px 14px;
+    -fx-border-radius: 6px;
+    -fx-cursor: hand;
+    -fx-min-width: 35px;
+    -fx-transition: all 0.2s ease;
+}
+
+.language-button:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-text-fill: rgba(255, 255, 255, 0.95);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.language-button.language-active {
+    -fx-background-color: #00bcd4;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(gaussian, rgba(0, 188, 212, 0.4), 6, 0, 0, 1);
+}
+
+.language-button.language-active:hover {
+    -fx-background-color: #00acc1;
+    -fx-effect: dropshadow(gaussian, rgba(0, 188, 212, 0.6), 8, 0, 0, 2);
+}
+
+/* Alternative: Modern rounded pill style */
+.language-chooser-pill {
+
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-background-radius: 20px;
+    -fx-border-color: rgba(255, 255, 255, 0.12);
+    -fx-border-width: 1px;
+    -fx-border-radius: 20px;
+    -fx-padding: 2px;
+}
+
+.language-button-pill {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255, 255, 255, 0.75);
+    -fx-font-size: 10px;
+    -fx-font-weight: 600;
+    -fx-padding: 6px 12px;
+    -fx-border-radius: 18px;
+    -fx-cursor: hand;
+    -fx-min-width: 32px;
+}
+
+.language-button-pill:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-text-fill: rgba(255, 255, 255, 0.9);
+}
+
+.language-button-pill.language-active {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #2c3e50;
+}
+
+.language-button-pill.language-active:hover {
+    -fx-background-color: #f8f9fa;
 }

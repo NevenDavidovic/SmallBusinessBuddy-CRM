@@ -8,7 +8,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
 import smallbusinessbuddycrm.database.ContactDAO;
 import smallbusinessbuddycrm.database.UnderagedDAO;
 import smallbusinessbuddycrm.model.Contact;

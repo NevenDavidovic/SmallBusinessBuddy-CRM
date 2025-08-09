@@ -20,6 +20,7 @@ import smallbusinessbuddycrm.database.ListsDAO;
 import smallbusinessbuddycrm.database.ContactDAO;
 import smallbusinessbuddycrm.model.Contact;
 import smallbusinessbuddycrm.model.List;
+import smallbusinessbuddycrm.utilities.LanguageManager;
 
 import java.net.URL;
 import java.util.ArrayList;
@@ -54,6 +55,9 @@ public class ListsController implements Initializable {
             listsDAO = new ListsDAO();
             contactDAO = new ContactDAO();
             listsData = FXCollections.observableArrayList();
+
+            updateTexts();
+            LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
 
             setupTable();
             setupEventHandlers();
@@ -91,6 +95,32 @@ public class ListsController implements Initializable {
 
         System.out.println("Table setup completed");
     }
+
+    private void updateTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Update main labels and buttons
+        if (listsTitle != null) listsTitle.setText(languageManager.getText("lists.page.title"));
+        if (createListButton != null) createListButton.setText(languageManager.getText("lists.create.new"));
+        if (refreshButton != null) refreshButton.setText(languageManager.getText("lists.refresh"));
+        if (searchField != null) searchField.setPromptText(languageManager.getText("lists.search.placeholder"));
+
+        // Update table columns
+        if (nameColumn != null) nameColumn.setText(languageManager.getText("lists.column.name"));
+        if (listSizeColumn != null) listSizeColumn.setText(languageManager.getText("lists.column.contacts"));
+        if (typeColumn != null) typeColumn.setText(languageManager.getText("lists.column.type"));
+        if (creatorColumn != null) creatorColumn.setText(languageManager.getText("lists.column.creator"));
+        if (lastUpdatedColumn != null) lastUpdatedColumn.setText(languageManager.getText("lists.column.last.updated"));
+        if (actionsColumn != null) actionsColumn.setText(languageManager.getText("lists.column.actions"));
+
+        // Update table placeholder
+        if (listsTable != null) {
+            listsTable.setPlaceholder(new Label(languageManager.getText("lists.no.lists.found")));
+        }
+
+        System.out.println("Lists view texts updated");
+    }
+
 
     private void setupEventHandlers() {
         if (createListButton != null) {
@@ -146,10 +176,12 @@ public class ListsController implements Initializable {
                 }
             }
 
-            // Update count label
+            // Update count label with translation
             if (listsCount != null) {
-                listsCount.setText(lists.size() + " Lists");
-                System.out.println("Updated count label to: " + lists.size() + " Lists");
+                LanguageManager languageManager = LanguageManager.getInstance();
+                String countText = languageManager.getText("lists.count").replace("{0}", String.valueOf(lists.size()));
+                listsCount.setText(countText);
+                System.out.println("Updated count label to: " + countText);
             } else {
                 System.err.println("⚠️ listsCount label is null!");
             }
@@ -171,6 +203,12 @@ public class ListsController implements Initializable {
             e.printStackTrace();
             showErrorAlert("Error loading lists: " + e.getMessage());
         }
+    }
+
+    // Add this method to refresh translations when language changes
+    public void refreshLanguage() {
+        updateTexts();
+        loadLists(); // Reload to update count text
     }
 
     private void searchLists(String searchTerm) {

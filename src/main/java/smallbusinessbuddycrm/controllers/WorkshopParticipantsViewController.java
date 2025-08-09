@@ -7,20 +7,18 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import smallbusinessbuddycrm.database.*;
 import smallbusinessbuddycrm.model.*;
 import smallbusinessbuddycrm.model.WorkshopParticipant.ParticipantType;
 import smallbusinessbuddycrm.model.WorkshopParticipant.PaymentStatus;
 import smallbusinessbuddycrm.database.TeacherDAO;
 import smallbusinessbuddycrm.model.Teacher;
+import smallbusinessbuddycrm.utilities.LanguageManager;
 
 import java.net.URL;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class WorkshopParticipantsViewController implements Initializable {
@@ -40,6 +38,16 @@ public class WorkshopParticipantsViewController implements Initializable {
     @FXML private TableColumn<Map<String, Object>, String> enrollmentDateColumn;
     @FXML private TableColumn<Map<String, Object>, Void> actionsColumn;
     @FXML private Label teacherLabel; // Read-only teacher display
+    @FXML private Label workshopParticipantsPageTitle;
+    @FXML private Tab currentParticipantsTab;
+    @FXML private Tab addParticipantsTab;
+    @FXML private Label addAdultParticipantsLabel;
+    @FXML private Label addChildParticipantsLabel;
+    @FXML private Label paymentStatusLabel;
+    @FXML private Label notesLabel;
+    @FXML private Label paymentStatusLabel2;
+    @FXML private Label notesLabel2;
+    @FXML private Label quickActionsLabel;
 
     // Add Adults Tab
     @FXML private TableView<Contact> availableAdultsTable;
@@ -119,10 +127,10 @@ public class WorkshopParticipantsViewController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        System.out.println("WorkshopParticipantsViewController.initialize() called");
+        updateTexts();
+        LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
 
-        // Initialize database first
-        DatabaseConnection.initializeDatabase();
+
 
         setupTables();
         setupSearchAndFilters();
@@ -130,17 +138,284 @@ public class WorkshopParticipantsViewController implements Initializable {
         setupComboBoxes();
         loadAvailableParticipants();
 
-        System.out.println("WorkshopParticipantsViewController initialized successfully");
+
     }
+
+    private void updateTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Page title and main labels
+        if (workshopParticipantsPageTitle != null) {
+            workshopParticipantsPageTitle.setText(languageManager.getText("workshop.participants.page.title"));
+        }
+
+        // Buttons
+        if (exportParticipantsButton != null) {
+            exportParticipantsButton.setText(languageManager.getText("workshop.participants.export"));
+        }
+        if (refreshButton != null) {
+            refreshButton.setText(languageManager.getText("workshop.participants.refresh"));
+        }
+        if (removeSelectedButton != null) {
+            removeSelectedButton.setText(languageManager.getText("workshop.participants.remove.selected"));
+        }
+
+        // Tabs
+        if (currentParticipantsTab != null) {
+            currentParticipantsTab.setText(languageManager.getText("workshop.participants.current.tab"));
+        }
+        if (addParticipantsTab != null) {
+            addParticipantsTab.setText(languageManager.getText("workshop.participants.add.tab"));
+        }
+
+        // Search fields
+        if (searchParticipantsField != null) {
+            searchParticipantsField.setPromptText(languageManager.getText("workshop.participants.search.placeholder"));
+        }
+        if (searchAdultsField != null) {
+            searchAdultsField.setPromptText(languageManager.getText("workshop.participants.search.adults.placeholder"));
+        }
+        if (searchChildrenField != null) {
+            searchChildrenField.setPromptText(languageManager.getText("workshop.participants.search.children.placeholder"));
+        }
+        if (adultsNotesField != null) {
+            adultsNotesField.setPromptText(languageManager.getText("workshop.participants.notes.placeholder"));
+        }
+        if (childrenNotesField != null) {
+            childrenNotesField.setPromptText(languageManager.getText("workshop.participants.notes.placeholder"));
+        }
+
+        // Table columns - Current Participants
+        if (participantNameColumn != null) {
+            participantNameColumn.setText(languageManager.getText("workshop.participants.column.name"));
+        }
+        if (participantTypeColumn != null) {
+            participantTypeColumn.setText(languageManager.getText("workshop.participants.column.type"));
+        }
+        if (participantAgeColumn != null) {
+            participantAgeColumn.setText(languageManager.getText("workshop.participants.column.age"));
+        }
+        if (participantEmailColumn != null) {
+            participantEmailColumn.setText(languageManager.getText("workshop.participants.column.email"));
+        }
+        if (participantPhoneColumn != null) {
+            participantPhoneColumn.setText(languageManager.getText("workshop.participants.column.phone"));
+        }
+        if (parentInfoColumn != null) {
+            parentInfoColumn.setText(languageManager.getText("workshop.participants.column.parent"));
+        }
+        if (paymentStatusColumn != null) {
+            paymentStatusColumn.setText(languageManager.getText("workshop.participants.column.payment"));
+        }
+        if (notesColumn != null) {
+            notesColumn.setText(languageManager.getText("workshop.participants.column.notes"));
+        }
+        if (enrollmentDateColumn != null) {
+            enrollmentDateColumn.setText(languageManager.getText("workshop.participants.column.enrolled"));
+        }
+        if (actionsColumn != null) {
+            actionsColumn.setText(languageManager.getText("workshop.participants.column.actions"));
+        }
+
+        // Table columns - Adults
+        if (adultNameColumn != null) {
+            adultNameColumn.setText(languageManager.getText("workshop.participants.adults.column.name"));
+        }
+        if (adultEmailColumn != null) {
+            adultEmailColumn.setText(languageManager.getText("workshop.participants.adults.column.email"));
+        }
+        if (adultPhoneColumn != null) {
+            adultPhoneColumn.setText(languageManager.getText("workshop.participants.adults.column.phone"));
+        }
+        if (adultMemberStatusColumn != null) {
+            adultMemberStatusColumn.setText(languageManager.getText("workshop.participants.adults.column.member"));
+        }
+        if (adultAgeColumn != null) {
+            adultAgeColumn.setText(languageManager.getText("workshop.participants.adults.column.age"));
+        }
+
+        // Table columns - Children
+        if (childNameColumn != null) {
+            childNameColumn.setText(languageManager.getText("workshop.participants.children.column.name"));
+        }
+        if (childAgeColumn != null) {
+            childAgeColumn.setText(languageManager.getText("workshop.participants.children.column.age"));
+        }
+        if (childGenderColumn != null) {
+            childGenderColumn.setText(languageManager.getText("workshop.participants.children.column.gender"));
+        }
+        if (childMemberStatusColumn != null) {
+            childMemberStatusColumn.setText(languageManager.getText("workshop.participants.children.column.member"));
+        }
+        if (parentNameColumn != null) {
+            parentNameColumn.setText(languageManager.getText("workshop.participants.children.column.parent.name"));
+        }
+        if (parentEmailColumn != null) {
+            parentEmailColumn.setText(languageManager.getText("workshop.participants.children.column.parent.email"));
+        }
+        if (parentPhoneColumn != null) {
+            parentPhoneColumn.setText(languageManager.getText("workshop.participants.children.column.parent.phone"));
+        }
+
+        // Section labels
+        if (addAdultParticipantsLabel != null) {
+            addAdultParticipantsLabel.setText(languageManager.getText("workshop.participants.add.adults"));
+        }
+        if (addChildParticipantsLabel != null) {
+            addChildParticipantsLabel.setText(languageManager.getText("workshop.participants.add.children"));
+        }
+        if (quickActionsLabel != null) {
+            quickActionsLabel.setText(languageManager.getText("workshop.participants.quick.actions"));
+        }
+
+        // Form labels
+        if (paymentStatusLabel != null) {
+            paymentStatusLabel.setText(languageManager.getText("workshop.participants.payment.status"));
+        }
+        if (notesLabel != null) {
+            notesLabel.setText(languageManager.getText("workshop.participants.notes"));
+        }
+        if (paymentStatusLabel2 != null) {
+            paymentStatusLabel2.setText(languageManager.getText("workshop.participants.payment.status"));
+        }
+        if (notesLabel2 != null) {
+            notesLabel2.setText(languageManager.getText("workshop.participants.notes"));
+        }
+
+        // Checkboxes
+        if (membersOnlyAdultsFilter != null) {
+            membersOnlyAdultsFilter.setText(languageManager.getText("workshop.participants.members.only"));
+        }
+        if (membersOnlyChildrenFilter != null) {
+            membersOnlyChildrenFilter.setText(languageManager.getText("workshop.participants.members.only"));
+        }
+
+        // Action buttons
+        if (selectAllAdultsButton != null) {
+            selectAllAdultsButton.setText(languageManager.getText("workshop.participants.select.all"));
+        }
+        if (clearAdultsSelectionButton != null) {
+            clearAdultsSelectionButton.setText(languageManager.getText("workshop.participants.clear.selection"));
+        }
+        if (selectAllChildrenButton != null) {
+            selectAllChildrenButton.setText(languageManager.getText("workshop.participants.select.all"));
+        }
+        if (clearChildrenSelectionButton != null) {
+            clearChildrenSelectionButton.setText(languageManager.getText("workshop.participants.clear.selection"));
+        }
+        if (addSelectedAdultsButton != null) {
+            addSelectedAdultsButton.setText(languageManager.getText("workshop.participants.add.selected.adults"));
+        }
+        if (addSelectedChildrenButton != null) {
+            addSelectedChildrenButton.setText(languageManager.getText("workshop.participants.add.selected.children"));
+        }
+
+        // Update ComboBox prompt texts
+        updateComboBoxPromptTexts();
+
+        // Update table placeholder if exists
+        if (participantsTable != null) {
+            participantsTable.setPlaceholder(new Label(languageManager.getText("workshop.participants.no.participants")));
+        }
+
+        // Update statistics labels if needed (these are dynamic, but we can update the base text)
+        updateStatistics(); // This will refresh the statistics with new language
+
+        System.out.println("Workshop participants view texts updated");
+    }
+
+    private void updateComboBoxPromptTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Update filter combo boxes
+        if (participantTypeFilter != null) {
+            String currentValue = participantTypeFilter.getValue();
+            participantTypeFilter.setItems(FXCollections.observableArrayList(
+                    languageManager.getText("workshop.participants.type.filter.all"),
+                    languageManager.getText("workshop.participants.type.filter.adults"),
+                    languageManager.getText("workshop.participants.type.filter.children")
+            ));
+            // Try to maintain selection, default to first item
+            if (currentValue != null) {
+                // Map old values to new values
+                switch (currentValue) {
+                    case "All Types":
+                        participantTypeFilter.setValue(languageManager.getText("workshop.participants.type.filter.all"));
+                        break;
+                    case "Adults":
+                        participantTypeFilter.setValue(languageManager.getText("workshop.participants.type.filter.adults"));
+                        break;
+                    case "Children":
+                        participantTypeFilter.setValue(languageManager.getText("workshop.participants.type.filter.children"));
+                        break;
+                    default:
+                        participantTypeFilter.setValue(languageManager.getText("workshop.participants.type.filter.all"));
+                }
+            } else {
+                participantTypeFilter.setValue(languageManager.getText("workshop.participants.type.filter.all"));
+            }
+        }
+
+        if (paymentStatusFilter != null) {
+            String currentValue = paymentStatusFilter.getValue();
+            paymentStatusFilter.setItems(FXCollections.observableArrayList(
+                    languageManager.getText("workshop.participants.payment.filter.all"),
+                    "PENDING", "PAID", "REFUNDED", "CANCELLED"
+            ));
+            if (currentValue != null && !currentValue.equals("All Payments")) {
+                paymentStatusFilter.setValue(currentValue);
+            } else {
+                paymentStatusFilter.setValue(languageManager.getText("workshop.participants.payment.filter.all"));
+            }
+        }
+
+        if (ageRangeFilter != null) {
+            String currentValue = ageRangeFilter.getValue();
+            ageRangeFilter.setItems(FXCollections.observableArrayList(
+                    languageManager.getText("workshop.participants.age.filter.all"),
+                    languageManager.getText("workshop.participants.age.filter.under6"),
+                    languageManager.getText("workshop.participants.age.filter.6to12"),
+                    languageManager.getText("workshop.participants.age.filter.13to17"),
+                    languageManager.getText("workshop.participants.age.filter.18plus")
+            ));
+            // Map old values to new values
+            if (currentValue != null) {
+                switch (currentValue) {
+                    case "All Ages":
+                        ageRangeFilter.setValue(languageManager.getText("workshop.participants.age.filter.all"));
+                        break;
+                    case "Under 6":
+                        ageRangeFilter.setValue(languageManager.getText("workshop.participants.age.filter.under6"));
+                        break;
+                    case "6-12":
+                        ageRangeFilter.setValue(languageManager.getText("workshop.participants.age.filter.6to12"));
+                        break;
+                    case "13-17":
+                        ageRangeFilter.setValue(languageManager.getText("workshop.participants.age.filter.13to17"));
+                        break;
+                    case "18+":
+                        ageRangeFilter.setValue(languageManager.getText("workshop.participants.age.filter.18plus"));
+                        break;
+                    default:
+                        ageRangeFilter.setValue(languageManager.getText("workshop.participants.age.filter.all"));
+                }
+            } else {
+                ageRangeFilter.setValue(languageManager.getText("workshop.participants.age.filter.all"));
+            }
+        }
+    }
+
 
     public void setWorkshop(Workshop workshop) {
         this.currentWorkshop = workshop;
         if (workshop != null) {
+            // Keep this in English/original format since it shows actual workshop data
             workshopNameLabel.setText("Workshop: " + workshop.getName() + " (" + workshop.getFormattedFromDate() + " - " + workshop.getFormattedToDate() + ")");
             loadWorkshopParticipants();
             updateStatistics();
         } else {
-            workshopNameLabel.setText("No workshop selected");
+            LanguageManager languageManager = LanguageManager.getInstance();
+            workshopNameLabel.setText(languageManager.getText("workshop.participants.no.workshop.selected"));
             participantsList.clear();
             clearStatistics();
         }
@@ -292,8 +567,12 @@ public class WorkshopParticipantsViewController implements Initializable {
                 new SimpleStringProperty(cellData.getValue().getFullName()));
         adultEmailColumn.setCellValueFactory(new PropertyValueFactory<>("email"));
         adultPhoneColumn.setCellValueFactory(new PropertyValueFactory<>("phoneNum"));
-        adultMemberStatusColumn.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().isMember() ? "Member" : "Non-member"));
+        adultMemberStatusColumn.setCellValueFactory(cellData -> {
+            LanguageManager languageManager = LanguageManager.getInstance();
+            return new SimpleStringProperty(cellData.getValue().isMember() ?
+                    languageManager.getText("workshop.participants.member") :
+                    languageManager.getText("workshop.participants.non.member"));
+        });
         adultAgeColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(String.valueOf(cellData.getValue().getAge())));
 
@@ -331,8 +610,12 @@ public class WorkshopParticipantsViewController implements Initializable {
                 new SimpleStringProperty(cellData.getValue().getFullName()));
         childAgeColumn.setCellValueFactory(new PropertyValueFactory<>("age"));
         childGenderColumn.setCellValueFactory(new PropertyValueFactory<>("gender"));
-        childMemberStatusColumn.setCellValueFactory(cellData ->
-                new SimpleStringProperty(cellData.getValue().isMember() ? "Member" : "Non-member"));
+        childMemberStatusColumn.setCellValueFactory(cellData -> {
+            LanguageManager languageManager = LanguageManager.getInstance();
+            return new SimpleStringProperty(cellData.getValue().isMember() ?
+                    languageManager.getText("workshop.participants.member") :
+                    languageManager.getText("workshop.participants.non.member"));
+        });
 
         // Parent info columns - cache contacts for performance
         java.util.List<Contact> contacts = contactDAO.getAllContacts();
@@ -391,16 +674,30 @@ public class WorkshopParticipantsViewController implements Initializable {
         childrenPaymentStatusCombo.setValue(PaymentStatus.PENDING);
 
         // Filter combos
-        participantTypeFilter.setItems(FXCollections.observableArrayList("All Types", "Adults", "Children"));
-        participantTypeFilter.setValue("All Types");
+        participantTypeFilter.setItems(FXCollections.observableArrayList(
+                LanguageManager.getInstance().getText("workshop.participants.type.filter.all"),
+                LanguageManager.getInstance().getText("workshop.participants.type.filter.adults"),
+                LanguageManager.getInstance().getText("workshop.participants.type.filter.children")
+        ));
+        participantTypeFilter.setValue(LanguageManager.getInstance().getText("workshop.participants.type.filter.all"));
         participantTypeFilter.valueProperty().addListener((obs, old, newValue) -> updateParticipantsFilter());
 
-        paymentStatusFilter.setItems(FXCollections.observableArrayList("All Payments", "PENDING", "PAID", "REFUNDED", "CANCELLED"));
-        paymentStatusFilter.setValue("All Payments");
+        paymentStatusFilter.setItems(FXCollections.observableArrayList(
+                LanguageManager.getInstance().getText("workshop.participants.payment.filter.all"),
+                "PENDING", "PAID", "REFUNDED", "CANCELLED"
+        ));
+        paymentStatusFilter.setValue(LanguageManager.getInstance().getText("workshop.participants.payment.filter.all"));
         paymentStatusFilter.valueProperty().addListener((obs, old, newValue) -> updateParticipantsFilter());
 
-        ageRangeFilter.setItems(FXCollections.observableArrayList("All Ages", "Under 6", "6-12", "13-17", "18+"));
-        ageRangeFilter.setValue("All Ages");
+
+        ageRangeFilter.setItems(FXCollections.observableArrayList(
+                LanguageManager.getInstance().getText("workshop.participants.age.filter.all"),
+                LanguageManager.getInstance().getText("workshop.participants.age.filter.under6"),
+                LanguageManager.getInstance().getText("workshop.participants.age.filter.6to12"),
+                LanguageManager.getInstance().getText("workshop.participants.age.filter.13to17"),
+                LanguageManager.getInstance().getText("workshop.participants.age.filter.18plus")
+        ));
+        ageRangeFilter.setValue(LanguageManager.getInstance().getText("workshop.participants.age.filter.all"));
         ageRangeFilter.valueProperty().addListener((obs, old, newValue) -> updateChildrenFilter());
     }
 
@@ -469,21 +766,25 @@ public class WorkshopParticipantsViewController implements Initializable {
 
     private void updateTeacherDisplay() {
         try {
+            LanguageManager languageManager = LanguageManager.getInstance();
+
             if (currentWorkshop != null && currentWorkshop.hasTeacher()) {
                 Teacher teacher = teacherDAO.getTeacherById(currentWorkshop.getTeacherId());
                 if (teacher != null) {
-                    teacherLabel.setText("Teacher: " + teacher.getFirstName() + " " + teacher.getLastName());
+                    String teacherName = teacher.getFirstName() + " " + teacher.getLastName();
+                    teacherLabel.setText(languageManager.getText("workshop.participants.teacher").replace("{0}", teacherName));
                     teacherLabel.setStyle("-fx-text-fill: #28a745; -fx-font-size: 12px;"); // Green color
                 } else {
-                    teacherLabel.setText("Teacher: Unknown");
+                    teacherLabel.setText(languageManager.getText("workshop.participants.teacher.unknown"));
                     teacherLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 12px;"); // Red color
                 }
             } else {
-                teacherLabel.setText("Teacher: Not assigned");
+                teacherLabel.setText(languageManager.getText("workshop.participants.teacher.not.assigned"));
                 teacherLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 12px;"); // Red color
             }
         } catch (Exception e) {
-            teacherLabel.setText("Teacher: Error loading");
+            LanguageManager languageManager = LanguageManager.getInstance();
+            teacherLabel.setText(languageManager.getText("workshop.participants.teacher.error"));
             teacherLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 12px;");
             e.printStackTrace();
         }
@@ -496,13 +797,21 @@ public class WorkshopParticipantsViewController implements Initializable {
         }
 
         try {
+            LanguageManager languageManager = LanguageManager.getInstance();
             Map<String, Integer> stats = participantDAO.getWorkshopStatistics(currentWorkshop.getId());
 
-            totalParticipantsLabel.setText("Total: " + stats.getOrDefault("total_participants", 0));
-            adultsCountLabel.setText("Adults: " + stats.getOrDefault("adult_count", 0));
-            childrenCountLabel.setText("Children: " + stats.getOrDefault("child_count", 0));
-            paidCountLabel.setText("Paid: " + stats.getOrDefault("paid_count", 0));
-            pendingCountLabel.setText("Pending: " + stats.getOrDefault("pending_count", 0));
+            // Use MessageFormat for parameterized strings if you want, or simple concatenation
+            totalParticipantsLabel.setText(languageManager.getText("workshop.participants.total").replace("{0}",
+                    String.valueOf(stats.getOrDefault("total_participants", 0))));
+            adultsCountLabel.setText(languageManager.getText("workshop.participants.adults").replace("{0}",
+                    String.valueOf(stats.getOrDefault("adult_count", 0))));
+            childrenCountLabel.setText(languageManager.getText("workshop.participants.children").replace("{0}",
+                    String.valueOf(stats.getOrDefault("child_count", 0))));
+            paidCountLabel.setText(languageManager.getText("workshop.participants.paid").replace("{0}",
+                    String.valueOf(stats.getOrDefault("paid_count", 0))));
+            pendingCountLabel.setText(languageManager.getText("workshop.participants.pending").replace("{0}",
+                    String.valueOf(stats.getOrDefault("pending_count", 0))));
+
             updateTeacherDisplay();
 
         } catch (Exception e) {
@@ -513,12 +822,14 @@ public class WorkshopParticipantsViewController implements Initializable {
     }
 
     private void clearStatistics() {
-        totalParticipantsLabel.setText("Total: 0");
-        adultsCountLabel.setText("Adults: 0");
-        childrenCountLabel.setText("Children: 0");
-        paidCountLabel.setText("Paid: 0");
-        pendingCountLabel.setText("Pending: 0");
-        teacherLabel.setText("Teacher: Not assigned");
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        totalParticipantsLabel.setText(languageManager.getText("workshop.participants.total").replace("{0}", "0"));
+        adultsCountLabel.setText(languageManager.getText("workshop.participants.adults").replace("{0}", "0"));
+        childrenCountLabel.setText(languageManager.getText("workshop.participants.children").replace("{0}", "0"));
+        paidCountLabel.setText(languageManager.getText("workshop.participants.paid").replace("{0}", "0"));
+        pendingCountLabel.setText(languageManager.getText("workshop.participants.pending").replace("{0}", "0"));
+        teacherLabel.setText(languageManager.getText("workshop.participants.teacher.not.assigned"));
         teacherLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 12px;");
     }
 
@@ -528,18 +839,24 @@ public class WorkshopParticipantsViewController implements Initializable {
         String typeFilter = participantTypeFilter.getValue();
         String paymentFilter = paymentStatusFilter.getValue();
 
+        LanguageManager languageManager = LanguageManager.getInstance();
+
         filteredParticipantsList.setPredicate(participant -> {
             // Search filter
             boolean matchesSearch = searchText.isEmpty() ||
                     ((String) participant.get("participant_name")).toLowerCase().contains(searchText);
 
-            // Type filter
-            boolean matchesType = "All Types".equals(typeFilter) ||
-                    ("Adults".equals(typeFilter) && "ADULT".equals(participant.get("participant_type"))) ||
-                    ("Children".equals(typeFilter) && "CHILD".equals(participant.get("participant_type")));
+            // Type filter - check against translated values
+            boolean matchesType = typeFilter == null ||
+                    typeFilter.equals(languageManager.getText("workshop.participants.type.filter.all")) ||
+                    (typeFilter.equals(languageManager.getText("workshop.participants.type.filter.adults")) &&
+                            "ADULT".equals(participant.get("participant_type"))) ||
+                    (typeFilter.equals(languageManager.getText("workshop.participants.type.filter.children")) &&
+                            "CHILD".equals(participant.get("participant_type")));
 
-            // Payment filter
-            boolean matchesPayment = "All Payments".equals(paymentFilter) ||
+            // Payment filter - check against translated values
+            boolean matchesPayment = paymentFilter == null ||
+                    paymentFilter.equals(languageManager.getText("workshop.participants.payment.filter.all")) ||
                     paymentFilter.equals(participant.get("payment_status"));
 
             return matchesSearch && matchesType && matchesPayment;
@@ -566,15 +883,18 @@ public class WorkshopParticipantsViewController implements Initializable {
         String ageRange = ageRangeFilter.getValue();
         boolean membersOnly = membersOnlyChildrenFilter.isSelected();
 
+        LanguageManager languageManager = LanguageManager.getInstance();
+
         filteredChildrenList.setPredicate(child -> {
             boolean matchesSearch = searchText.isEmpty() ||
                     child.getFullName().toLowerCase().contains(searchText);
 
-            boolean matchesAge = "All Ages".equals(ageRange) ||
-                    ("Under 6".equals(ageRange) && child.getAge() < 6) ||
-                    ("6-12".equals(ageRange) && child.getAge() >= 6 && child.getAge() <= 12) ||
-                    ("13-17".equals(ageRange) && child.getAge() >= 13 && child.getAge() <= 17) ||
-                    ("18+".equals(ageRange) && child.getAge() >= 18);
+            boolean matchesAge = ageRange == null ||
+                    ageRange.equals(languageManager.getText("workshop.participants.age.filter.all")) ||
+                    (ageRange.equals(languageManager.getText("workshop.participants.age.filter.under6")) && child.getAge() < 6) ||
+                    (ageRange.equals(languageManager.getText("workshop.participants.age.filter.6to12")) && child.getAge() >= 6 && child.getAge() <= 12) ||
+                    (ageRange.equals(languageManager.getText("workshop.participants.age.filter.13to17")) && child.getAge() >= 13 && child.getAge() <= 17) ||
+                    (ageRange.equals(languageManager.getText("workshop.participants.age.filter.18plus")) && child.getAge() >= 18);
 
             boolean matchesMember = !membersOnly || child.isMember();
 

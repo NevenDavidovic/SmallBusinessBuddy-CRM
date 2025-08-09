@@ -331,4 +331,208 @@ public class GmailService {
             return content;
         }
     }
+
+    /**
+     * Builds HTML email message in RFC 2822 format
+     * @param to Recipient email
+     * @param subject Email subject
+     * @param htmlBody HTML content
+     * @return Formatted email message
+     */
+    private String buildHtmlEmailMessage(String to, String subject, String htmlBody) {
+        StringBuilder email = new StringBuilder();
+
+        // Email headers
+        email.append("To: ").append(to).append("\r\n");
+        email.append("Subject: ").append(subject).append("\r\n");
+        email.append("MIME-Version: 1.0\r\n");
+
+        // IMPORTANT: Set content type to HTML instead of plain text
+        email.append("Content-Type: text/html; charset=utf-8\r\n");
+        email.append("\r\n");
+
+        // HTML body content
+        email.append(htmlBody);
+
+        return email.toString();
+    }
+
+    /**
+     * Sends HTML newsletter with both HTML and plain text versions (better compatibility)
+     * @param accessToken OAuth access token
+     * @param to Recipient email address
+     * @param subject Email subject
+     * @param htmlBody HTML content for the newsletter
+     * @param plainTextBody Plain text version (optional, will be auto-generated if null)
+     * @return true if email was sent successfully
+     */
+    public boolean sendMultipartNewsletter(String accessToken, String to, String subject,
+                                           String htmlBody, String plainTextBody) {
+        try {
+            System.out.println("📧 Sending multipart newsletter to: " + to);
+
+            if (accessToken == null || accessToken.isEmpty()) {
+                System.err.println("❌ No access token");
+                return false;
+            }
+
+            // Auto-generate plain text version if not provided
+            if (plainTextBody == null || plainTextBody.trim().isEmpty()) {
+                plainTextBody = convertHtmlToPlainText(htmlBody);
+            }
+
+            String email = buildMultipartEmailMessage(to, subject, htmlBody, plainTextBody);
+            String encodedEmail = Base64.getUrlEncoder()
+                    .withoutPadding()
+                    .encodeToString(email.getBytes(StandardCharsets.UTF_8));
+
+            String jsonPayload = "{\"raw\":\"" + encodedEmail + "\"}";
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://gmail.googleapis.com/gmail/v1/users/me/messages/send"))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofSeconds(30))
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("📧 Gmail API status: " + response.statusCode());
+
+            if (response.statusCode() == 200) {
+                System.out.println("✅ Multipart newsletter sent successfully!");
+                return true;
+            } else {
+                System.err.println("❌ Gmail error: " + response.statusCode());
+                System.err.println("❌ Response: " + response.body());
+                return false;
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Multipart newsletter sending error: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Builds multipart email with both HTML and plain text versions
+     * @param to Recipient email
+     * @param subject Email subject
+     * @param htmlBody HTML content
+     * @param plainTextBody Plain text content
+     * @return Formatted multipart email message
+     */
+    private String buildMultipartEmailMessage(String to, String subject, String htmlBody, String plainTextBody) {
+        StringBuilder email = new StringBuilder();
+        String boundary = "newsletter_boundary_" + System.currentTimeMillis();
+
+        // Email headers
+        email.append("To: ").append(to).append("\r\n");
+        email.append("Subject: ").append(subject).append("\r\n");
+        email.append("MIME-Version: 1.0\r\n");
+        email.append("Content-Type: multipart/alternative; boundary=\"").append(boundary).append("\"\r\n");
+        email.append("\r\n");
+
+        // Plain text version
+        email.append("--").append(boundary).append("\r\n");
+        email.append("Content-Type: text/plain; charset=utf-8\r\n");
+        email.append("\r\n");
+        email.append(plainTextBody).append("\r\n");
+
+        // HTML version
+        email.append("--").append(boundary).append("\r\n");
+        email.append("Content-Type: text/html; charset=utf-8\r\n");
+        email.append("\r\n");
+        email.append(htmlBody).append("\r\n");
+
+        // End boundary
+        email.append("--").append(boundary).append("--\r\n");
+
+        return email.toString();
+    }
+
+    /**
+     * Convert HTML to plain text for email clients that don't support HTML
+     * @param htmlContent HTML content
+     * @return Plain text version
+     */
+    private String convertHtmlToPlainText(String htmlContent) {
+        if (htmlContent == null || htmlContent.trim().isEmpty()) {
+            return "";
+        }
+
+        // Simple HTML to text conversion
+        String plainText = htmlContent
+                // Replace common HTML tags with meaningful text
+                .replaceAll("(?i)<br\\s*/?\\s*>", "\n")
+                .replaceAll("(?i)<p\\s*[^>]*>", "\n")
+                .replaceAll("(?i)</p>", "\n")
+                .replaceAll("(?i)<h[1-6]\\s*[^>]*>", "\n** ")
+                .replaceAll("(?i)</h[1-6]>", " **\n")
+                .replaceAll("(?i)<li\\s*[^>]*>", "\n• ")
+                .replaceAll("(?i)</li>", "")
+                .replaceAll("(?i)<a\\s+[^>]*href=\"([^\"]*)\"[^>]*>([^<]*)</a>", "$2 ($1)")
+                // Remove all remaining HTML tags
+                .replaceAll("(?i)<[^>]*>", "")
+                // Clean up whitespace
+                .replaceAll("\\n\\s*\\n", "\n\n")
+                .replaceAll("^\\s+", "")
+                .trim();
+
+        return plainText;
+    }
+
+    /**
+     * Sends an HTML newsletter via Gmail API
+     * @param accessToken OAuth access token
+     * @param to Recipient email address
+     * @param subject Email subject
+     * @param htmlBody HTML content for the newsletter
+     * @return true if email was sent successfully
+     */
+    public boolean sendHtmlNewsletter(String accessToken, String to, String subject, String htmlBody) {
+        try {
+            System.out.println("📧 Sending HTML newsletter to: " + to);
+
+            if (accessToken == null || accessToken.isEmpty()) {
+                System.err.println("❌ No access token");
+                return false;
+            }
+
+            String email = buildHtmlEmailMessage(to, subject, htmlBody);
+            String encodedEmail = Base64.getUrlEncoder()
+                    .withoutPadding()
+                    .encodeToString(email.getBytes(StandardCharsets.UTF_8));
+
+            String jsonPayload = "{\"raw\":\"" + encodedEmail + "\"}";
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://gmail.googleapis.com/gmail/v1/users/me/messages/send"))
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Content-Type", "application/json")
+                    .timeout(Duration.ofSeconds(30))
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            System.out.println("📧 Gmail API status: " + response.statusCode());
+
+            if (response.statusCode() == 200) {
+                System.out.println("✅ HTML newsletter sent successfully!");
+                return true;
+            } else {
+                System.err.println("❌ Gmail error: " + response.statusCode());
+                System.err.println("❌ Response: " + response.body());
+                return false;
+            }
+
+        } catch (Exception e) {
+            System.err.println("❌ Newsletter sending error: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
 }

@@ -338,4 +338,38 @@ public class GoogleOAuthManager {
         System.out.println("Gmail Service Validation: " + (isConnected ? validateGmailAccess() : "N/A"));
         System.out.println("================================\n");
     }
+
+    /**
+     * Send HTML newsletter using the current OAuth session
+     */
+    public boolean sendHtmlNewsletter(String to, String subject, String htmlContent) {
+        if (!isGmailConnected()) {
+            System.err.println("❌ Cannot send newsletter: Gmail not connected");
+            return false;
+        }
+
+        try {
+            return gmailService.sendHtmlNewsletter(currentToken.getAccessToken(), to, subject, htmlContent);
+        } catch (Exception e) {
+            System.err.println("Error sending HTML newsletter: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send multipart newsletter (HTML + plain text) using the current OAuth session
+     */
+    public boolean sendMultipartNewsletter(String to, String subject, String htmlContent, String plainTextContent) {
+        if (!isGmailConnected()) {
+            System.err.println("❌ Cannot send newsletter: Gmail not connected");
+            return false;
+        }
+
+        try {
+            return gmailService.sendMultipartNewsletter(currentToken.getAccessToken(), to, subject, htmlContent, plainTextContent);
+        } catch (Exception e) {
+            System.err.println("Error sending multipart newsletter: " + e.getMessage());
+            return false;
+        }
+    }
 }

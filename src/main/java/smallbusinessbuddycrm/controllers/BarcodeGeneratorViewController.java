@@ -30,6 +30,7 @@ import com.itextpdf.html2pdf.HtmlConverter;
 // NEW: Payment Attachment imports
 import smallbusinessbuddycrm.database.PaymentAttachmentDAO;
 import smallbusinessbuddycrm.model.PaymentAttachment;
+import smallbusinessbuddycrm.utilities.LanguageManager;
 
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -85,6 +86,28 @@ public class BarcodeGeneratorViewController implements Initializable {
     @FXML private Button printSlipButton;
     @FXML private Button copyDataButton;
 
+    //Translation FXML Fields
+    @FXML private Label pageTitle;
+    @FXML private Label amountLabel;
+    @FXML private Label ibanLabel;
+    @FXML private Label referenceLabel;
+    @FXML private TitledPane additionalDetailsPane;
+    @FXML private Label payerLabel;
+    @FXML private Label recipientLabel;
+    @FXML private Label modelLabel;
+    @FXML private Label purposeLabel;
+    @FXML private Label descriptionLabel;
+    @FXML private Label paymentSlipTitle;
+    @FXML private Label statusLabel;
+    @FXML private Label placeholderMainText;
+    @FXML private Label placeholderSubText;
+    @FXML private Label tipsTitle;
+    @FXML private Label tipsText1;
+    @FXML private Label tipsText2;
+    @FXML private Label hub3InfoTitle;
+    @FXML private Label hub3InfoText1;
+    @FXML private Label hub3InfoText2;
+
     // Constants - Hidden from user but used internally
     private static final String FIXED_BANK_CODE = "HRVHUB30";
     private static final String FIXED_CURRENCY = "EUR";
@@ -105,16 +128,148 @@ public class BarcodeGeneratorViewController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("BarcodeGeneratorViewController.initialize() called");
 
-        // Initialize database access
-        initializeDatabase();
 
         // NEW: Initialize payment attachment templates
         initializePaymentAttachments();
 
         setupInitialValues();
         setupEventHandlers();
+        LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
+        updateTexts();
+    }
 
-        System.out.println("BarcodeGeneratorViewController initialized successfully");
+    private void updateTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Page title and main labels
+        if (pageTitle != null) {
+            pageTitle.setText(languageManager.getText("barcode.generator.page.title"));
+        }
+        if (amountLabel != null) {
+            amountLabel.setText(languageManager.getText("barcode.generator.amount.label"));
+        }
+        if (ibanLabel != null) {
+            ibanLabel.setText(languageManager.getText("barcode.generator.iban.label"));
+        }
+        if (referenceLabel != null) {
+            referenceLabel.setText(languageManager.getText("barcode.generator.reference.label"));
+        }
+
+        // Additional details section
+        if (additionalDetailsPane != null) {
+            additionalDetailsPane.setText(languageManager.getText("barcode.generator.additional.details"));
+        }
+        if (payerLabel != null) {
+            payerLabel.setText(languageManager.getText("barcode.generator.payer.label"));
+        }
+        if (recipientLabel != null) {
+            recipientLabel.setText(languageManager.getText("barcode.generator.recipient.label"));
+        }
+        if (modelLabel != null) {
+            modelLabel.setText(languageManager.getText("barcode.generator.model.label"));
+        }
+        if (purposeLabel != null) {
+            purposeLabel.setText(languageManager.getText("barcode.generator.purpose.label"));
+        }
+        if (descriptionLabel != null) {
+            descriptionLabel.setText(languageManager.getText("barcode.generator.description.label"));
+        }
+
+        // Buttons
+        if (generateButton != null) {
+            generateButton.setText(languageManager.getText("barcode.generator.generate"));
+        }
+        if (clearButton != null) {
+            clearButton.setText(languageManager.getText("barcode.generator.clear"));
+        }
+        if (loadTemplateButton != null) {
+            loadTemplateButton.setText(languageManager.getText("barcode.generator.load"));
+        }
+        if (saveTemplateButton != null) {
+            saveTemplateButton.setText(languageManager.getText("barcode.generator.save"));
+        }
+        if (saveSlipButton != null) {
+            saveSlipButton.setText(languageManager.getText("barcode.generator.save.barcode"));
+        }
+        if (savePaymentSlipButton != null) {
+            savePaymentSlipButton.setText(languageManager.getText("barcode.generator.save.slip"));
+        }
+        if (printSlipButton != null) {
+            printSlipButton.setText(languageManager.getText("barcode.generator.print"));
+        }
+        if (copyDataButton != null) {
+            copyDataButton.setText(languageManager.getText("barcode.generator.copy"));
+        }
+
+        // Form field placeholders
+        if (amountField != null) {
+            amountField.setPromptText(languageManager.getText("barcode.generator.amount.placeholder"));
+        }
+        if (ibanField != null) {
+            ibanField.setPromptText(languageManager.getText("barcode.generator.iban.placeholder"));
+        }
+        if (referenceField != null) {
+            referenceField.setPromptText(languageManager.getText("barcode.generator.reference.placeholder"));
+        }
+        if (payerNameField != null) {
+            payerNameField.setPromptText(languageManager.getText("barcode.generator.payer.name.placeholder"));
+        }
+        if (payerAddressField != null) {
+            payerAddressField.setPromptText(languageManager.getText("barcode.generator.payer.address.placeholder"));
+        }
+        if (payerCityField != null) {
+            payerCityField.setPromptText(languageManager.getText("barcode.generator.payer.city.placeholder"));
+        }
+        if (recipientNameField != null) {
+            recipientNameField.setPromptText(languageManager.getText("barcode.generator.recipient.name.placeholder"));
+        }
+        if (recipientAddressField != null) {
+            recipientAddressField.setPromptText(languageManager.getText("barcode.generator.recipient.address.placeholder"));
+        }
+        if (recipientCityField != null) {
+            recipientCityField.setPromptText(languageManager.getText("barcode.generator.recipient.city.placeholder"));
+        }
+        if (descriptionField != null) {
+            descriptionField.setPromptText(languageManager.getText("barcode.generator.description.placeholder"));
+        }
+
+        // Display section
+        if (paymentSlipTitle != null) {
+            paymentSlipTitle.setText(languageManager.getText("barcode.generator.payment.slip.title"));
+        }
+        if (statusLabel != null) {
+            statusLabel.setText(languageManager.getText("barcode.generator.status.ready"));
+        }
+        if (placeholderMainText != null) {
+            placeholderMainText.setText(languageManager.getText("barcode.generator.placeholder.main"));
+        }
+        if (placeholderSubText != null) {
+            placeholderSubText.setText(languageManager.getText("barcode.generator.placeholder.sub"));
+        }
+
+        // Tips section
+        if (tipsTitle != null) {
+            tipsTitle.setText(languageManager.getText("barcode.generator.tips.title"));
+        }
+        if (tipsText1 != null) {
+            tipsText1.setText(languageManager.getText("barcode.generator.tips.text1"));
+        }
+        if (tipsText2 != null) {
+            tipsText2.setText(languageManager.getText("barcode.generator.tips.text2"));
+        }
+
+        // HUB-3 info section
+        if (hub3InfoTitle != null) {
+            hub3InfoTitle.setText(languageManager.getText("barcode.generator.hub3.info.title"));
+        }
+        if (hub3InfoText1 != null) {
+            hub3InfoText1.setText(languageManager.getText("barcode.generator.hub3.info.text1"));
+        }
+        if (hub3InfoText2 != null) {
+            hub3InfoText2.setText(languageManager.getText("barcode.generator.hub3.info.text2"));
+        }
+
+        System.out.println("Barcode generator view texts updated");
     }
 
     private void initializeDatabase() {
@@ -378,33 +533,39 @@ public class BarcodeGeneratorViewController implements Initializable {
             // Show the generated barcode
             showGeneratedBarcode();
 
-            showSuccess("HUB-3 PDF417 Barcode generated successfully!");
+            LanguageManager languageManager = LanguageManager.getInstance();
+            showSuccess(languageManager.getText("barcode.generator.success.generated"));
 
         } catch (Exception e) {
             System.err.println("Error generating barcode: " + e.getMessage());
             e.printStackTrace();
-            showAlert("Generation Error", "Failed to generate barcode: " + e.getMessage(), Alert.AlertType.ERROR);
+            LanguageManager languageManager = LanguageManager.getInstance();
+            String errorTitle = languageManager.getText("barcode.generator.generation.error");
+            showAlert(errorTitle, "Failed to generate barcode: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
     private boolean validateFields() {
+        LanguageManager languageManager = LanguageManager.getInstance();
         StringBuilder errors = new StringBuilder();
 
         if (payerNameField.getText().trim().isEmpty()) {
-            errors.append("• Payer name is required\n");
+            errors.append(languageManager.getText("barcode.generator.error.payer.name")).append("\n");
         }
         if (recipientNameField.getText().trim().isEmpty()) {
-            errors.append("• Recipient name is required\n");
+            errors.append(languageManager.getText("barcode.generator.error.recipient.name")).append("\n");
         }
         if (amountField.getText().trim().isEmpty()) {
-            errors.append("• Amount is required\n");
+            errors.append(languageManager.getText("barcode.generator.error.amount")).append("\n");
         }
         if (ibanField.getText().trim().isEmpty()) {
-            errors.append("• IBAN is required\n");
+            errors.append(languageManager.getText("barcode.generator.error.iban")).append("\n");
         }
 
         if (errors.length() > 0) {
-            showAlert("Validation Error", "Please fix the following errors:\n\n" + errors.toString(), Alert.AlertType.WARNING);
+            String errorTitle = languageManager.getText("barcode.generator.validation.error");
+            String errorMessage = languageManager.getText("barcode.generator.error.fix.errors") + "\n\n" + errors.toString();
+            showAlert(errorTitle, errorMessage, Alert.AlertType.WARNING);
             return false;
         }
 
@@ -602,7 +763,9 @@ public class BarcodeGeneratorViewController implements Initializable {
             List<PaymentAttachment> templates = paymentAttachmentDAO.findAll();
 
             if (templates.isEmpty()) {
-                showAlert("No Templates", "No payment templates found. Please create at least one template first.", Alert.AlertType.WARNING);
+                LanguageManager languageManager = LanguageManager.getInstance();
+                String title = languageManager.getText("barcode.generator.no.templates");
+                showAlert(title, "No payment templates found. Please create at least one template first.", Alert.AlertType.WARNING);
                 return null;
             }
 
@@ -622,7 +785,9 @@ public class BarcodeGeneratorViewController implements Initializable {
             }
         } catch (Exception e) {
             System.err.println("Error loading templates: " + e.getMessage());
-            showAlert("Template Error", "Failed to load templates: " + e.getMessage(), Alert.AlertType.ERROR);
+            LanguageManager languageManager = LanguageManager.getInstance();
+            String errorTitle = languageManager.getText("barcode.generator.template.error");
+            showAlert(errorTitle, "Failed to load templates: " + e.getMessage(), Alert.AlertType.ERROR);
         }
 
         return null; // User cancelled or error occurred
@@ -1251,13 +1416,16 @@ public class BarcodeGeneratorViewController implements Initializable {
                     purposeCodeField.setText(props.getProperty("purposeCode", ""));
                     descriptionField.setText(props.getProperty("description", ""));
 
-                    showSuccess("Template loaded successfully!");
+                    LanguageManager languageManager = LanguageManager.getInstance();
+                    showSuccess(languageManager.getText("barcode.generator.success.template.loaded"));
                 }
             }
         } catch (Exception e) {
             System.err.println("Error loading template: " + e.getMessage());
             e.printStackTrace();
-            showAlert("Load Error", "Failed to load template: " + e.getMessage(), Alert.AlertType.ERROR);
+            LanguageManager languageManager = LanguageManager.getInstance();
+            String errorTitle = languageManager.getText("barcode.generator.load.error");
+            showAlert(errorTitle, "Failed to load template: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -1295,13 +1463,16 @@ public class BarcodeGeneratorViewController implements Initializable {
 
                 try (FileOutputStream fos = new FileOutputStream(file)) {
                     props.store(fos, "HUB-3 Payment Template (EUR) - " + LocalDateTime.now());
-                    showSuccess("Template saved successfully!");
+                    LanguageManager languageManager = LanguageManager.getInstance();
+                    showSuccess(languageManager.getText("barcode.generator.success.template.saved"));
                 }
             }
         } catch (Exception e) {
             System.err.println("Error saving template: " + e.getMessage());
             e.printStackTrace();
-            showAlert("Save Error", "Failed to save template: " + e.getMessage(), Alert.AlertType.ERROR);
+            LanguageManager languageManager = LanguageManager.getInstance();
+            String errorTitle = languageManager.getText("barcode.generator.save.error");
+            showAlert(errorTitle, "Failed to save template: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -1338,7 +1509,10 @@ public class BarcodeGeneratorViewController implements Initializable {
 
     private void handleSaveBarcode() {
         if (currentBarcodeImage == null) {
-            showAlert("No Barcode", "Please generate a barcode first.", Alert.AlertType.WARNING);
+            LanguageManager languageManager = LanguageManager.getInstance();
+            String title = languageManager.getText("barcode.generator.no.barcode");
+            String message = languageManager.getText("barcode.generator.generate.first");
+            showAlert(title, message, Alert.AlertType.WARNING);
             return;
         }
 
@@ -1358,12 +1532,15 @@ public class BarcodeGeneratorViewController implements Initializable {
             if (file != null) {
                 String format = file.getName().toLowerCase().endsWith(".jpg") ? "jpg" : "png";
                 javax.imageio.ImageIO.write(currentBarcodeImage, format, file);
-                showSuccess("PDF417 barcode saved successfully!");
+                LanguageManager languageManager = LanguageManager.getInstance();
+                showSuccess(languageManager.getText("barcode.generator.success.barcode.saved"));
             }
         } catch (Exception e) {
             System.err.println("Error saving barcode: " + e.getMessage());
             e.printStackTrace();
-            showAlert("Save Error", "Failed to save barcode: " + e.getMessage(), Alert.AlertType.ERROR);
+            LanguageManager languageManager = LanguageManager.getInstance();
+            String errorTitle = languageManager.getText("barcode.generator.save.error");
+            showAlert(errorTitle, "Failed to save barcode: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
@@ -1382,9 +1559,13 @@ public class BarcodeGeneratorViewController implements Initializable {
             content.putString(currentPaymentData);
             javafx.scene.input.Clipboard.getSystemClipboard().setContent(content);
 
-            showSuccess("Payment data copied to clipboard!");
+            LanguageManager languageManager = LanguageManager.getInstance();
+            showSuccess(languageManager.getText("barcode.generator.success.data.copied"));
         } else {
-            showAlert("No Data", "Please generate a barcode first.", Alert.AlertType.WARNING);
+            LanguageManager languageManager = LanguageManager.getInstance();
+            String title = languageManager.getText("barcode.generator.no.data");
+            String message = languageManager.getText("barcode.generator.generate.first");
+            showAlert(title, message, Alert.AlertType.WARNING);
         }
     }
 
@@ -1418,15 +1599,20 @@ public class BarcodeGeneratorViewController implements Initializable {
                 if (orgOptional.isPresent()) {
                     currentOrganization = orgOptional.get();
                     loadOrganizationData();
-                    showSuccess("Organization data refreshed from database!");
+                    LanguageManager languageManager = LanguageManager.getInstance();
+                    showSuccess(languageManager.getText("barcode.generator.success.org.refreshed"));
                 } else {
-                    showAlert("No Organization", "No organization found in database.", Alert.AlertType.WARNING);
+                    LanguageManager languageManager = LanguageManager.getInstance();
+                    String title = languageManager.getText("barcode.generator.no.organization");
+                    showAlert(title, "No organization found in database.", Alert.AlertType.WARNING);
                 }
             }
         } catch (Exception e) {
             System.err.println("Error refreshing organization data: " + e.getMessage());
             e.printStackTrace();
-            showAlert("Database Error", "Failed to refresh organization data: " + e.getMessage(), Alert.AlertType.ERROR);
+            LanguageManager languageManager = LanguageManager.getInstance();
+            String errorTitle = languageManager.getText("barcode.generator.database.error");
+            showAlert(errorTitle, "Failed to refresh organization data: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 

@@ -23,6 +23,7 @@ module smallbusinessbuddycrm {
     requires java.net.http;
     requires jdk.httpserver;
     requires java.dotenv;
+    requires java.prefs;
 
     opens smallbusinessbuddycrm to javafx.fxml;
     exports smallbusinessbuddycrm;

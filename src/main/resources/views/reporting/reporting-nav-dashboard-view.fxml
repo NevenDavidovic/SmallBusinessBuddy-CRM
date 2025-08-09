@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
@@ -9,12 +7,10 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.layout.Priority?>
 <?import javafx.scene.text.Font?>
-<?import javafx.scene.effect.Glow?>
 <?import javafx.scene.effect.DropShadow?>
 
-<VBox fx:id="mainPane" spacing="0" style="-fx-background-color: #2c3e50;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.MainController">
+<VBox fx:id="mainPane" spacing="0" style="-fx-background-color: #2c3e50;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.ReportingDashboardController">
 
     <!-- Scrollable Content -->
     <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
@@ -30,7 +26,7 @@
                     </ImageView>
 
                     <VBox alignment="CENTER" spacing="5">
-                        <Label text="Analytics Dashboard" style="-fx-text-fill: white; -fx-font-size: 32px; -fx-font-weight: bold;">
+                        <Label text="Analytics Overview" style="-fx-text-fill: white; -fx-font-size: 32px; -fx-font-weight: bold;">
                             <font>
                                 <Font name="System Bold" size="32.0"/>
                             </font>
@@ -279,20 +275,7 @@
                                     </font>
                                 </Label>
                             </HBox>
-                            <HBox alignment="CENTER_LEFT" spacing="10">
-                                <VBox alignment="CENTER" style="-fx-background-color: #f39c12; -fx-background-radius: 8; -fx-padding: 8 12;">
-                                    <Label fx:id="activeTeachers" text="0" style="-fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold;">
-                                        <font>
-                                            <Font name="System Bold" size="16.0"/>
-                                        </font>
-                                    </Label>
-                                </VBox>
-                                <Label text="Active Educators" style="-fx-text-fill: #ecf0f1; -fx-font-size: 12px;">
-                                    <font>
-                                        <Font size="12.0"/>
-                                    </font>
-                                </Label>
-                            </HBox>
+
                         </VBox>
 
                         <Button fx:id="teachersReportButton" text="View Analytics" style="-fx-background-color: #d35400; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 15; -fx-font-size: 14px; -fx-font-weight: bold;" onAction="#handleTeachersReportAction">
@@ -379,12 +362,12 @@
                                 </ImageView>
                             </VBox>
                             <VBox spacing="3">
-                                <Label text="PERFORMANCE" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
+                                <Label text="SUPPORT" style="-fx-text-fill: white; -fx-font-size: 12px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="12.0"/>
                                     </font>
                                 </Label>
-                                <Label text="System Health" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
+                                <Label text="Help Center" style="-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;">
                                     <font>
                                         <Font name="System Bold" size="18.0"/>
                                     </font>
@@ -395,19 +378,19 @@
                         <VBox spacing="12">
                             <HBox alignment="CENTER_LEFT" spacing="15">
                                 <VBox alignment="CENTER" style="-fx-background-color: #27ae60; -fx-background-radius: 25; -fx-padding: 8;">
-                                    <Label text="98%" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
+                                    <Label text="✅" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
                                         <font>
                                             <Font name="System Bold" size="14.0"/>
                                         </font>
                                     </Label>
                                 </VBox>
                                 <VBox>
-                                    <Label text="System Uptime" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
+                                    <Label text="Reports manual" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
                                         <font>
                                             <Font name="System Bold" size="14.0"/>
                                         </font>
                                     </Label>
-                                    <Label text="Excellent Performance" style="-fx-text-fill: #ecf0f1; -fx-font-size: 11px;">
+                                    <Label text="How to use reports" style="-fx-text-fill: #ecf0f1; -fx-font-size: 11px;">
                                         <font>
                                             <Font size="11.0"/>
                                         </font>
@@ -417,19 +400,19 @@
 
                             <HBox alignment="CENTER_LEFT" spacing="15">
                                 <VBox alignment="CENTER" style="-fx-background-color: #3498db; -fx-background-radius: 25; -fx-padding: 8;">
-                                    <Label text="2.3s" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
+                                    <Label text="✅" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
                                         <font>
                                             <Font name="System Bold" size="14.0"/>
                                         </font>
                                     </Label>
                                 </VBox>
                                 <VBox>
-                                    <Label text="Avg Response Time" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
+                                    <Label text="Useful information" style="-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;">
                                         <font>
                                             <Font name="System Bold" size="14.0"/>
                                         </font>
                                     </Label>
-                                    <Label text="Lightning Fast" style="-fx-text-fill: #ecf0f1; -fx-font-size: 11px;">
+                                    <Label text="Contacts, workshops etc..." style="-fx-text-fill: #ecf0f1; -fx-font-size: 11px;">
                                         <font>
                                             <Font size="11.0"/>
                                         </font>
@@ -439,7 +422,7 @@
                         </VBox>
 
                         <HBox spacing="10" alignment="CENTER">
-                            <Button text="System Logs" style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px;">
+                            <Button text="View Help" style="-fx-background-color: #e67e22; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 12; -fx-font-size: 12px;" >
                                 <font>
                                     <Font size="12.0"/>
                                 </font>

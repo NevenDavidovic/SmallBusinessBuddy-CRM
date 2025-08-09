@@ -11,6 +11,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <junit.version>5.10.2</junit.version>
         <javafx.version>17.0.6</javafx.version>
         <itext.version>7.2.5</itext.version>
@@ -54,7 +56,6 @@
             <artifactId>java-dotenv</artifactId>
             <version>5.2.2</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -192,8 +193,6 @@
             </exclusions>
         </dependency>
 
-
-
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -219,26 +218,55 @@
                 <configuration>
                     <source>24</source>
                     <target>24</target>
+                    <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
+                <configuration>
+                    <mainClass>com.example.smallbusinessbuddycrm/smallbusinessbuddycrm.MainApplication</mainClass>
+                    <launcher>app</launcher>
+                    <jlinkZipName>app</jlinkZipName>
+                    <jlinkImageName>app</jlinkImageName>
+                    <noManPages>true</noManPages>
+                    <stripDebug>true</stripDebug>
+                    <noHeaderFiles>true</noHeaderFiles>
+                    <!-- Add UTF-8 JVM arguments -->
+                    <commandlineArgs>-Dfile.encoding=UTF-8</commandlineArgs>
+                    <options>
+                        <option>-Dfile.encoding=UTF-8</option>
+                        <option>-Dsun.jnu.encoding=UTF-8</option>
+                    </options>
+                </configuration>
                 <executions>
                     <execution>
-                        <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>
-                                com.example.smallbusinessbuddycrm/smallbusinessbuddycrm.MainApplication
-                            </mainClass>
+                            <mainClass>com.example.smallbusinessbuddycrm/smallbusinessbuddycrm.MainApplication</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>
                             <noManPages>true</noManPages>
                             <stripDebug>true</stripDebug>
                             <noHeaderFiles>true</noHeaderFiles>
+                            <!-- UTF-8 JVM arguments for execution -->
+                            <commandlineArgs>-Dfile.encoding=UTF-8</commandlineArgs>
+                            <options>
+                                <option>-Dfile.encoding=UTF-8</option>
+                                <option>-Dsun.jnu.encoding=UTF-8</option>
+                            </options>
                         </configuration>
                     </execution>
                 </executions>

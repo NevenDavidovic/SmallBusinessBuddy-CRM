@@ -7,10 +7,8 @@ import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
-import smallbusinessbuddycrm.database.DatabaseConnection;
 import smallbusinessbuddycrm.database.TeacherDAO;
 import smallbusinessbuddycrm.database.WorkshopDAO;
 import smallbusinessbuddycrm.database.WorkshopParticipantDAO;
@@ -18,8 +16,6 @@ import smallbusinessbuddycrm.model.Teacher;
 import smallbusinessbuddycrm.model.Workshop;
 
 import java.net.URL;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,7 +25,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
-import javafx.stage.Stage;
+import smallbusinessbuddycrm.utilities.LanguageManager;
 
 public class WorkshopsViewController implements Initializable {
 
@@ -57,6 +53,7 @@ public class WorkshopsViewController implements Initializable {
     @FXML private Button refreshButton;
     @FXML private TextField searchField;
     @FXML private Label recordCountLabel;
+    @FXML private Label workshopsPageTitle;
 
     // Data lists
     private ObservableList<Workshop> allWorkshopsList = FXCollections.observableArrayList();
@@ -72,19 +69,106 @@ public class WorkshopsViewController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        System.out.println("WorkshopsViewController.initialize() called");
 
-        // Initialize database first
-        DatabaseConnection.initializeDatabase();
-
-        loadTeacherCache(); // NEW: Load teacher names for display
+        loadTeacherCache();
         setupTable();
         setupSearchAndFilters();
         loadWorkshops();
         setupEventHandlers();
+        LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
+        updateTexts();
 
-        System.out.println("WorkshopsViewController initialized successfully");
     }
+
+    private void updateTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Page title
+        if (workshopsPageTitle != null) {
+            workshopsPageTitle.setText(languageManager.getText("workshops.page.title"));
+        }
+
+        // Buttons
+        if (deleteSelectedButton != null) {
+            deleteSelectedButton.setText(languageManager.getText("workshops.delete.selected"));
+        }
+        if (createWorkshopButton != null) {
+            createWorkshopButton.setText(languageManager.getText("workshops.create.workshop"));
+        }
+        if (refreshButton != null) {
+            refreshButton.setText(languageManager.getText("workshops.refresh"));
+        }
+
+        // Filter buttons
+        if (allWorkshopsButton != null) {
+            allWorkshopsButton.setText(languageManager.getText("workshops.all.workshops"));
+        }
+        if (activeWorkshopsButton != null) {
+            activeWorkshopsButton.setText(languageManager.getText("workshops.active"));
+        }
+        if (upcomingWorkshopsButton != null) {
+            upcomingWorkshopsButton.setText(languageManager.getText("workshops.upcoming"));
+        }
+        if (pastWorkshopsButton != null) {
+            pastWorkshopsButton.setText(languageManager.getText("workshops.past"));
+        }
+
+        // Search field
+        if (searchField != null) {
+            searchField.setPromptText(languageManager.getText("workshops.search.placeholder"));
+        }
+
+        // Table columns
+        if (editColumn != null) {
+            editColumn.setText(languageManager.getText("workshops.column.edit"));
+        }
+        if (nameColumn != null) {
+            nameColumn.setText(languageManager.getText("workshops.column.name"));
+        }
+        if (fromDateColumn != null) {
+            fromDateColumn.setText(languageManager.getText("workshops.column.from.date"));
+        }
+        if (toDateColumn != null) {
+            toDateColumn.setText(languageManager.getText("workshops.column.to.date"));
+        }
+        if (durationColumn != null) {
+            durationColumn.setText(languageManager.getText("workshops.column.duration"));
+        }
+        if (statusColumn != null) {
+            statusColumn.setText(languageManager.getText("workshops.column.status"));
+        }
+        if (teacherColumn != null) {
+            teacherColumn.setText(languageManager.getText("workshops.column.teacher"));
+        }
+        if (participantCountColumn != null) {
+            participantCountColumn.setText(languageManager.getText("workshops.column.participant.count"));
+        }
+        if (manageParticipantsColumn != null) {
+            manageParticipantsColumn.setText(languageManager.getText("workshops.column.manage.participants"));
+        }
+        if (manageTeacherColumn != null) {
+            manageTeacherColumn.setText(languageManager.getText("workshops.column.manage.teacher"));
+        }
+        if (createdAtColumn != null) {
+            createdAtColumn.setText(languageManager.getText("workshops.column.created"));
+        }
+
+        // Update table placeholder if exists
+        if (workshopsTable != null) {
+            workshopsTable.setPlaceholder(new Label(languageManager.getText("workshops.no.workshops.found")));
+        }
+
+        // Refresh table to update cell values with new language
+        if (workshopsTable != null) {
+            workshopsTable.refresh();
+        }
+
+        // Update record count
+        updateRecordCount();
+
+        System.out.println("Workshops view texts updated");
+    }
+
 
     // NEW: Load teacher names into cache for quick lookup
     private void loadTeacherCache() {
@@ -130,7 +214,7 @@ public class WorkshopsViewController implements Initializable {
 
         // Set up edit button column
         editColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
-            private final Button editButton = new Button("Edit");
+            private final Button editButton = new Button();
 
             {
                 editButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 3; -fx-font-size: 10px;");
@@ -139,6 +223,9 @@ public class WorkshopsViewController implements Initializable {
                     Workshop workshop = getTableView().getItems().get(getIndex());
                     handleEditWorkshop(workshop);
                 });
+
+                // Set initial text
+                editButton.setText(LanguageManager.getInstance().getText("workshops.action.edit"));
             }
 
             @Override
@@ -147,14 +234,15 @@ public class WorkshopsViewController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
+                    // Update button text when table refreshes
+                    editButton.setText(LanguageManager.getInstance().getText("workshops.action.edit"));
                     setGraphic(editButton);
                 }
             }
         });
-
         // Set up manage participants column
         manageParticipantsColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
-            private final Button manageButton = new Button("Participants");
+            private final Button manageButton = new Button();
 
             {
                 manageButton.setStyle("-fx-background-color: #0099cc; -fx-text-fill: white; -fx-border-radius: 3; -fx-font-size: 10px;");
@@ -163,6 +251,9 @@ public class WorkshopsViewController implements Initializable {
                     Workshop workshop = getTableView().getItems().get(getIndex());
                     handleManageParticipants(workshop);
                 });
+
+                // Set initial text
+                manageButton.setText(LanguageManager.getInstance().getText("workshops.action.participants"));
             }
 
             @Override
@@ -171,14 +262,15 @@ public class WorkshopsViewController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
+                    // Update button text when table refreshes
+                    manageButton.setText(LanguageManager.getInstance().getText("workshops.action.participants"));
                     setGraphic(manageButton);
                 }
             }
         });
-
         // NEW: Set up manage teacher column
         manageTeacherColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
-            private final Button manageButton = new Button("Teacher");
+            private final Button manageButton = new Button();
 
             {
                 manageButton.setStyle("-fx-background-color: #6f42c1; -fx-text-fill: white; -fx-border-radius: 3; -fx-font-size: 10px;");
@@ -187,6 +279,9 @@ public class WorkshopsViewController implements Initializable {
                     Workshop workshop = getTableView().getItems().get(getIndex());
                     handleManageTeacher(workshop);
                 });
+
+                // Set initial text
+                manageButton.setText(LanguageManager.getInstance().getText("workshops.action.teacher"));
             }
 
             @Override
@@ -195,6 +290,8 @@ public class WorkshopsViewController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
+                    // Update button text when table refreshes
+                    manageButton.setText(LanguageManager.getInstance().getText("workshops.action.teacher"));
                     setGraphic(manageButton);
                 }
             }
@@ -216,26 +313,28 @@ public class WorkshopsViewController implements Initializable {
         durationColumn.setCellValueFactory(cellData -> {
             Workshop workshop = cellData.getValue();
             long days = workshop.getDurationInDays();
-            return new SimpleStringProperty(days > 0 ? days + " days" : "");
+            if (days > 0) {
+                LanguageManager languageManager = LanguageManager.getInstance();
+                String durationText = languageManager.getText("workshops.duration.days").replace("{0}", String.valueOf(days));
+                return new SimpleStringProperty(durationText);
+            } else {
+                return new SimpleStringProperty("");
+            }
         });
 
         statusColumn.setCellValueFactory(cellData -> {
             Workshop workshop = cellData.getValue();
+            LanguageManager languageManager = LanguageManager.getInstance();
             String status;
-            String style = "";
 
             if (workshop.isActive()) {
-                status = "ACTIVE";
-                style = "-fx-text-fill: #28a745; -fx-font-weight: bold;";
+                status = languageManager.getText("workshops.status.active");
             } else if (workshop.isUpcoming()) {
-                status = "UPCOMING";
-                style = "-fx-text-fill: #0099cc; -fx-font-weight: bold;";
+                status = languageManager.getText("workshops.status.upcoming");
             } else if (workshop.isPast()) {
-                status = "PAST";
-                style = "-fx-text-fill: #6c757d;";
+                status = languageManager.getText("workshops.status.past");
             } else {
-                status = "DRAFT";
-                style = "-fx-text-fill: #ffc107;";
+                status = languageManager.getText("workshops.status.draft");
             }
 
             return new SimpleStringProperty(status);
@@ -244,11 +343,14 @@ public class WorkshopsViewController implements Initializable {
         // NEW: Set up teacher column
         teacherColumn.setCellValueFactory(cellData -> {
             Workshop workshop = cellData.getValue();
+            LanguageManager languageManager = LanguageManager.getInstance();
+
             if (workshop.hasTeacher()) {
                 String teacherName = teacherNamesCache.get(workshop.getTeacherId());
-                return new SimpleStringProperty(teacherName != null ? teacherName : "Unknown Teacher");
+                return new SimpleStringProperty(teacherName != null ? teacherName :
+                        languageManager.getText("workshops.teacher.unknown"));
             } else {
-                return new SimpleStringProperty("No Teacher");
+                return new SimpleStringProperty(languageManager.getText("workshops.teacher.no.teacher"));
             }
         });
 
@@ -337,7 +439,23 @@ public class WorkshopsViewController implements Initializable {
 
     private void updateRecordCount() {
         int count = filteredWorkshopsList.size();
-        recordCountLabel.setText(count + " record" + (count != 1 ? "s" : ""));
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Handle plural form for Croatian
+        String recordText;
+        if (languageManager.isCroatian()) {
+            String pluralSuffix = (count == 1) ? "" : "a";
+            recordText = languageManager.getText("workshops.records")
+                    .replace("{0}", String.valueOf(count))
+                    .replace("{1}", pluralSuffix);
+        } else {
+            String pluralSuffix = (count == 1) ? "" : "s";
+            recordText = languageManager.getText("workshops.records")
+                    .replace("{0}", String.valueOf(count))
+                    .replace("{1}", pluralSuffix);
+        }
+
+        recordCountLabel.setText(recordText);
     }
 
     private void setupEventHandlers() {
