@@ -5,14 +5,10 @@ import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.stage.Stage;
 import smallbusinessbuddycrm.model.PaymentTemplate;
 import smallbusinessbuddycrm.database.PaymentTemplateDAO;
-import smallbusinessbuddycrm.database.DatabaseConnection;
-
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,8 +46,6 @@ public class PaymentTemplateViewController {
     public void initialize() {
         System.out.println("PaymentTemplateViewController.initialize() called");
 
-        // Initialize database first
-        DatabaseConnection.initializeDatabase();
 
         setupTable();
         setupSearchAndFilters();

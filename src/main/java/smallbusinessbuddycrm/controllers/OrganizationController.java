@@ -1,7 +1,6 @@
 package smallbusinessbuddycrm.controllers;
 
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -15,7 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-public class OrganizationController implements Initializable {
+public class OrganizationController {
 
     @FXML private Button editButton;
     @FXML private Button saveButton;
@@ -55,7 +54,6 @@ public class OrganizationController implements Initializable {
 
     private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
-    @Override
     public void initialize(URL location, ResourceBundle resources) {
         organizationDAO = new OrganizationDAO();
         setupImageView();

@@ -16,9 +16,9 @@ import javafx.stage.FileChooser;
 import smallbusinessbuddycrm.database.PaymentTemplateDAO;
 import smallbusinessbuddycrm.model.Contact;
 import smallbusinessbuddycrm.database.ContactDAO;
-import smallbusinessbuddycrm.database.DatabaseConnection;
 import javafx.stage.Stage;
 import smallbusinessbuddycrm.model.PaymentTemplate;
+import smallbusinessbuddycrm.utilities.LanguageManager;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -67,6 +67,7 @@ public class ContactViewController {
     @FXML private Label recordCountLabel;
     @FXML private Button importButton;
     @FXML private Button generateBarcodeButton;
+    @FXML private Label contactsPageTitle;
 
 
     @FXML
@@ -238,6 +239,47 @@ public class ContactViewController {
         return infoPane;
     }
 
+    private void updateTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Update labels and buttons
+        if (contactsPageTitle != null) contactsPageTitle.setText(languageManager.getText("contacts.page.title"));
+        if (deleteSelectedButton != null) deleteSelectedButton.setText(languageManager.getText("contacts.delete.selected"));
+        if (generateBarcodeButton != null) generateBarcodeButton.setText(languageManager.getText("contacts.generate.barcode"));
+        if (importButton != null) importButton.setText(languageManager.getText("contacts.import"));
+        if (createContactButton != null) createContactButton.setText(languageManager.getText("contacts.create.contact"));
+
+        if (allContactsButton != null) allContactsButton.setText(languageManager.getText("contacts.all.contacts"));
+        if (membersButton != null) membersButton.setText(languageManager.getText("contacts.members"));
+        if (nonMembersButton != null) nonMembersButton.setText(languageManager.getText("contacts.non.members"));
+        if (upcomingBirthdaysButton != null) upcomingBirthdaysButton.setText(languageManager.getText("contacts.upcoming.birthdays"));
+
+        if (searchField != null) searchField.setPromptText(languageManager.getText("contacts.search.placeholder"));
+        if (exportButton != null) exportButton.setText(languageManager.getText("contacts.export"));
+        if (editColumnsButton != null) editColumnsButton.setText(languageManager.getText("contacts.edit.columns"));
+
+        // Update table columns
+        if (editColumn != null) editColumn.setText(languageManager.getText("contacts.column.edit"));
+        if (barcodeColumn != null) barcodeColumn.setText(languageManager.getText("contacts.column.barcode"));
+        if (firstNameColumn != null) firstNameColumn.setText(languageManager.getText("contacts.column.first.name"));
+        if (lastNameColumn != null) lastNameColumn.setText(languageManager.getText("contacts.column.last.name"));
+        if (birthdayColumn != null) birthdayColumn.setText(languageManager.getText("contacts.column.birthday"));
+        if (ageColumn != null) ageColumn.setText(languageManager.getText("contacts.column.age"));
+        if (pinColumn != null) pinColumn.setText(languageManager.getText("contacts.column.pin"));
+        if (emailColumn != null) emailColumn.setText(languageManager.getText("contacts.column.email"));
+        if (phoneColumn != null) phoneColumn.setText(languageManager.getText("contacts.column.phone"));
+        if (streetNameColumn != null) streetNameColumn.setText(languageManager.getText("contacts.column.street.name"));
+        if (streetNumColumn != null) streetNumColumn.setText(languageManager.getText("contacts.column.street.number"));
+        if (postalCodeColumn != null) postalCodeColumn.setText(languageManager.getText("contacts.column.postal.code"));
+        if (cityColumn != null) cityColumn.setText(languageManager.getText("contacts.column.city"));
+        if (memberStatusColumn != null) memberStatusColumn.setText(languageManager.getText("contacts.column.member.status"));
+        if (memberSinceColumn != null) memberSinceColumn.setText(languageManager.getText("contacts.column.member.since"));
+        if (memberUntilColumn != null) memberUntilColumn.setText(languageManager.getText("contacts.column.member.until"));
+        if (createdAtColumn != null) createdAtColumn.setText(languageManager.getText("contacts.column.created"));
+        if (updatedAtColumn != null) updatedAtColumn.setText(languageManager.getText("contacts.column.updated"));
+
+        System.out.println("Contact view texts updated");
+    }
 
 
     private void handleImportContacts() {
@@ -292,10 +334,9 @@ public class ContactViewController {
 
     @FXML
     public void initialize() {
-        System.out.println("ContactViewController.initialize() called");
 
-        // Initialize database first
-        DatabaseConnection.initializeDatabase();
+        updateTexts();
+        LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
 
         initializeColumnMapping();
         setupTable();

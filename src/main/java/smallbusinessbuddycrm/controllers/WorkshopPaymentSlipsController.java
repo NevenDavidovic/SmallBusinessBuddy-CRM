@@ -8,7 +8,6 @@ import com.google.zxing.pdf417.PDF417Writer;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -39,8 +38,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import smallbusinessbuddycrm.utilities.LanguageManager;
 
-public class WorkshopPaymentSlipsController implements Initializable {
+public class WorkshopPaymentSlipsController {
 
     // FXML Components
     @FXML private ComboBox<Workshop> workshopComboBox;
@@ -75,6 +75,18 @@ public class WorkshopPaymentSlipsController implements Initializable {
     @FXML private ProgressBar progressBar;
     @FXML private Label progressDetailsLabel;
 
+    @FXML private Label pageTitle;
+    @FXML private Label pageSubtitle;
+    @FXML private Label workshopSelectionTitle;
+    @FXML private Label selectWorkshopLabel;
+    @FXML private Label paymentTemplateTitle;
+    @FXML private Label selectTemplateLabel;
+    @FXML private Label participantsTitle;
+    @FXML private Label filterByTypeLabel;
+    @FXML private Label paymentStatusLabel;
+    @FXML private Label noParticipantsMainText;
+    @FXML private Label noParticipantsSubText;
+
     // Data
     private WorkshopDAO workshopDAO;
     private WorkshopParticipantDAO participantDAO;
@@ -101,18 +113,192 @@ public class WorkshopPaymentSlipsController implements Initializable {
     private static final String FIXED_BANK_CODE = "HRVHUB30";
     private static final String FIXED_CURRENCY = "EUR";
 
-    @Override
     public void initialize(URL location, ResourceBundle resources) {
-        System.out.println("🎓 Initializing Workshop Payment Slips Controller");
+
 
         initializeDAOs();
         loadOrganizationData();
         setupComboBoxes();
         setupParticipantsList();
         loadInitialData();
-
-        System.out.println("✅ Workshop Payment Slips Controller initialized successfully");
+        LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
+        updateTexts();
+        
     }
+
+    private void updateTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Page title and subtitle
+        if (pageTitle != null) {
+            pageTitle.setText(languageManager.getText("workshop.payment.slips.page.title"));
+        }
+        if (pageSubtitle != null) {
+            pageSubtitle.setText(languageManager.getText("workshop.payment.slips.page.subtitle"));
+        }
+
+        // Section titles
+        if (workshopSelectionTitle != null) {
+            workshopSelectionTitle.setText(languageManager.getText("workshop.payment.slips.workshop.selection"));
+        }
+        if (paymentTemplateTitle != null) {
+            paymentTemplateTitle.setText(languageManager.getText("workshop.payment.slips.payment.template"));
+        }
+        if (participantsTitle != null) {
+            participantsTitle.setText(languageManager.getText("workshop.payment.slips.participants"));
+        }
+
+        // Labels
+        if (selectWorkshopLabel != null) {
+            selectWorkshopLabel.setText(languageManager.getText("workshop.payment.slips.select.workshop"));
+        }
+        if (selectTemplateLabel != null) {
+            selectTemplateLabel.setText(languageManager.getText("workshop.payment.slips.select.template"));
+        }
+        if (filterByTypeLabel != null) {
+            filterByTypeLabel.setText(languageManager.getText("workshop.payment.slips.filter.by.type"));
+        }
+        if (paymentStatusLabel != null) {
+            paymentStatusLabel.setText(languageManager.getText("workshop.payment.slips.payment.status"));
+        }
+
+        // Buttons
+        if (loadParticipantsButton != null) {
+            loadParticipantsButton.setText(languageManager.getText("workshop.payment.slips.load.participants"));
+        }
+        if (selectAllParticipantsCheckBox != null) {
+            selectAllParticipantsCheckBox.setText(languageManager.getText("workshop.payment.slips.select.all"));
+        }
+        if (previewSelectedButton != null) {
+            previewSelectedButton.setText(languageManager.getText("workshop.payment.slips.preview.selected"));
+        }
+        if (previewAllButton != null) {
+            previewAllButton.setText(languageManager.getText("workshop.payment.slips.preview.all"));
+        }
+        if (generateAllButton != null) {
+            generateAllButton.setText(languageManager.getText("workshop.payment.slips.generate.all"));
+        }
+        if (exportSelectedButton != null) {
+            exportSelectedButton.setText(languageManager.getText("workshop.payment.slips.export.selected"));
+        }
+
+        // ComboBox prompt texts
+        if (workshopComboBox != null) {
+            workshopComboBox.setPromptText(languageManager.getText("workshop.payment.slips.choose.workshop"));
+        }
+        if (paymentTemplateComboBox != null) {
+            paymentTemplateComboBox.setPromptText(languageManager.getText("workshop.payment.slips.choose.template"));
+        }
+
+        // No participants messages
+        if (noParticipantsMainText != null) {
+            noParticipantsMainText.setText(languageManager.getText("workshop.payment.slips.no.participants.main"));
+        }
+        if (noParticipantsSubText != null) {
+            noParticipantsSubText.setText(languageManager.getText("workshop.payment.slips.no.participants.sub"));
+        }
+
+        // Update ComboBox filter items
+        updateComboBoxFilterItems();
+
+        // Update progress and status texts
+        updateProgressTexts();
+
+        // Update selected count
+        updateSelectedCount();
+
+        // Refresh participant list to update status texts
+        if (participantsListView != null) {
+            participantsListView.refresh();
+        }
+
+        System.out.println("Workshop payment slips view texts updated");
+    }
+
+    private void updateComboBoxFilterItems() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Update participant type filter
+        if (participantTypeFilterComboBox != null) {
+            String currentValue = participantTypeFilterComboBox.getValue();
+            participantTypeFilterComboBox.setItems(FXCollections.observableArrayList(
+                    languageManager.getText("workshop.payment.slips.filter.all"),
+                    languageManager.getText("workshop.payment.slips.filter.adult"),
+                    languageManager.getText("workshop.payment.slips.filter.child")
+            ));
+
+            // Map old values to new values
+            if (currentValue != null) {
+                switch (currentValue) {
+                    case "ALL":
+                        participantTypeFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.all"));
+                        break;
+                    case "ADULT":
+                        participantTypeFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.adult"));
+                        break;
+                    case "CHILD":
+                        participantTypeFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.child"));
+                        break;
+                    default:
+                        participantTypeFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.all"));
+                }
+            } else {
+                participantTypeFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.all"));
+            }
+        }
+
+        // Update payment status filter
+        if (paymentStatusFilterComboBox != null) {
+            String currentValue = paymentStatusFilterComboBox.getValue();
+            paymentStatusFilterComboBox.setItems(FXCollections.observableArrayList(
+                    languageManager.getText("workshop.payment.slips.filter.all"),
+                    languageManager.getText("workshop.payment.slips.filter.pending"),
+                    languageManager.getText("workshop.payment.slips.filter.paid"),
+                    languageManager.getText("workshop.payment.slips.filter.refunded"),
+                    languageManager.getText("workshop.payment.slips.filter.cancelled")
+            ));
+
+            // Map old values to new values
+            if (currentValue != null) {
+                switch (currentValue) {
+                    case "ALL":
+                        paymentStatusFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.all"));
+                        break;
+                    case "PENDING":
+                        paymentStatusFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.pending"));
+                        break;
+                    case "PAID":
+                        paymentStatusFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.paid"));
+                        break;
+                    case "REFUNDED":
+                        paymentStatusFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.refunded"));
+                        break;
+                    case "CANCELLED":
+                        paymentStatusFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.cancelled"));
+                        break;
+                    default:
+                        paymentStatusFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.pending"));
+                }
+            } else {
+                paymentStatusFilterComboBox.setValue(languageManager.getText("workshop.payment.slips.filter.pending"));
+            }
+        }
+    }
+
+    private void updateProgressTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        if (progressLabel != null && progressLabel.getText().equals("Processing...")) {
+            progressLabel.setText(languageManager.getText("workshop.payment.slips.progress.processing"));
+        }
+        if (progressDetailsLabel != null && progressDetailsLabel.getText().equals("Initializing...")) {
+            progressDetailsLabel.setText(languageManager.getText("workshop.payment.slips.progress.initializing"));
+        }
+    }
+
+
+
+
 
     private void initializeDAOs() {
         workshopDAO = new WorkshopDAO();
@@ -262,22 +448,23 @@ public class WorkshopPaymentSlipsController implements Initializable {
     @FXML
     private void onLoadParticipants() {
         if (selectedWorkshop == null) {
-            showAlert(Alert.AlertType.WARNING, "No Workshop Selected", "Please select a workshop first.");
+            showAlert(Alert.AlertType.WARNING, "workshop.payment.slips.no.workshop.selected", "workshop.payment.slips.select.workshop.first");
             return;
         }
 
+        LanguageManager languageManager = LanguageManager.getInstance();
+
         loadParticipantsButton.setDisable(true);
         progressContainer.setVisible(true);
-        progressLabel.setText("Loading participants...");
+        progressLabel.setText(languageManager.getText("workshop.payment.slips.progress.loading"));
 
-        // Unbind progress bar before setting value manually
         progressBar.progressProperty().unbind();
-        progressBar.setProgress(-1); // Indeterminate
+        progressBar.setProgress(-1);
 
         Task<List<Map<String, Object>>> loadTask = new Task<List<Map<String, Object>>>() {
             @Override
             protected List<Map<String, Object>> call() throws Exception {
-                updateMessage("Fetching workshop participants...");
+                updateMessage(languageManager.getText("workshop.payment.slips.progress.loading"));
                 return participantDAO.getWorkshopParticipantsWithDetails(selectedWorkshop.getId());
             }
 
@@ -297,7 +484,14 @@ public class WorkshopPaymentSlipsController implements Initializable {
                 Throwable exception = getException();
                 System.err.println("❌ Failed to load participants: " + exception.getMessage());
                 exception.printStackTrace();
-                showAlert(Alert.AlertType.ERROR, "Loading Error", "Failed to load participants: " + exception.getMessage());
+
+                LanguageManager langMgr = LanguageManager.getInstance();
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Data Loading Error");
+                alert.setHeaderText(null);
+                alert.setContentText(langMgr.getText("workshop.payment.slips.error.loading.participants").replace("{0}", exception.getMessage()));
+                alert.initOwner(workshopComboBox.getScene().getWindow());
+                alert.showAndWait();
             }
         };
 
@@ -353,14 +547,26 @@ public class WorkshopPaymentSlipsController implements Initializable {
     }
 
     private void filterParticipants() {
+        LanguageManager languageManager = LanguageManager.getInstance();
         String typeFilter = participantTypeFilterComboBox.getValue();
         String statusFilter = paymentStatusFilterComboBox.getValue();
 
         filteredParticipants.clear();
 
         for (WorkshopParticipantItem item : allParticipants) {
-            boolean typeMatch = "ALL".equals(typeFilter) || typeFilter.equals(item.getParticipantType());
-            boolean statusMatch = "ALL".equals(statusFilter) || statusFilter.equals(item.getPaymentStatus());
+            // Type filter - check against translated values
+            boolean typeMatch = typeFilter == null ||
+                    typeFilter.equals(languageManager.getText("workshop.payment.slips.filter.all")) ||
+                    (typeFilter.equals(languageManager.getText("workshop.payment.slips.filter.adult")) && "ADULT".equals(item.getParticipantType())) ||
+                    (typeFilter.equals(languageManager.getText("workshop.payment.slips.filter.child")) && "CHILD".equals(item.getParticipantType()));
+
+            // Status filter - check against translated values
+            boolean statusMatch = statusFilter == null ||
+                    statusFilter.equals(languageManager.getText("workshop.payment.slips.filter.all")) ||
+                    (statusFilter.equals(languageManager.getText("workshop.payment.slips.filter.pending")) && "PENDING".equals(item.getPaymentStatus())) ||
+                    (statusFilter.equals(languageManager.getText("workshop.payment.slips.filter.paid")) && "PAID".equals(item.getPaymentStatus())) ||
+                    (statusFilter.equals(languageManager.getText("workshop.payment.slips.filter.refunded")) && "REFUNDED".equals(item.getPaymentStatus())) ||
+                    (statusFilter.equals(languageManager.getText("workshop.payment.slips.filter.cancelled")) && "CANCELLED".equals(item.getPaymentStatus()));
 
             if (typeMatch && statusMatch) {
                 filteredParticipants.add(item);
@@ -376,12 +582,12 @@ public class WorkshopPaymentSlipsController implements Initializable {
         List<WorkshopParticipantItem> selectedItems = getSelectedParticipants();
 
         if (selectedItems.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select at least one participant.");
+            showAlert(Alert.AlertType.WARNING, "workshop.payment.slips.no.selection", "workshop.payment.slips.select.participants");
             return;
         }
 
         if (selectedPaymentTemplate == null) {
-            showAlert(Alert.AlertType.WARNING, "No Template Selected", "Please select a payment template.");
+            showAlert(Alert.AlertType.WARNING, "workshop.payment.slips.no.template.selected", "workshop.payment.slips.select.template.first");
             return;
         }
 
@@ -391,16 +597,15 @@ public class WorkshopPaymentSlipsController implements Initializable {
     @FXML
     private void onPreviewAll() {
         if (selectedPaymentTemplate == null) {
-            showAlert(Alert.AlertType.WARNING, "No Template Selected", "Please select a payment template.");
+            showAlert(Alert.AlertType.WARNING, "workshop.payment.slips.no.template.selected", "workshop.payment.slips.select.template.first");
             return;
         }
 
         if (filteredParticipants.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Participants", "Please load participants first.");
+            showAlert(Alert.AlertType.WARNING, "workshop.payment.slips.no.participants", "workshop.payment.slips.load.participants.first");
             return;
         }
 
-        // Preview all filtered participants (not just selected ones)
         List<WorkshopParticipantItem> allFilteredParticipants = new ArrayList<>(filteredParticipants);
         generatePreviewsInSameWindow(allFilteredParticipants);
     }
@@ -410,12 +615,12 @@ public class WorkshopPaymentSlipsController implements Initializable {
         List<WorkshopParticipantItem> selectedItems = getSelectedParticipants();
 
         if (selectedItems.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select at least one participant.");
+            showAlert(Alert.AlertType.WARNING, "workshop.payment.slips.no.selection", "workshop.payment.slips.select.participants");
             return;
         }
 
         if (selectedPaymentTemplate == null) {
-            showAlert(Alert.AlertType.WARNING, "No Template Selected", "Please select a payment template.");
+            showAlert(Alert.AlertType.WARNING, "workshop.payment.slips.no.template.selected", "workshop.payment.slips.select.template.first");
             return;
         }
 
@@ -427,12 +632,12 @@ public class WorkshopPaymentSlipsController implements Initializable {
         List<WorkshopParticipantItem> selectedItems = getSelectedParticipants();
 
         if (selectedItems.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select at least one participant.");
+            showAlert(Alert.AlertType.WARNING, "workshop.payment.slips.no.selection", "workshop.payment.slips.select.participants");
             return;
         }
 
         if (selectedPaymentTemplate == null) {
-            showAlert(Alert.AlertType.WARNING, "No Template Selected", "Please select a payment template.");
+            showAlert(Alert.AlertType.WARNING, "workshop.payment.slips.no.template.selected", "workshop.payment.slips.select.template.first");
             return;
         }
 
@@ -445,14 +650,15 @@ public class WorkshopPaymentSlipsController implements Initializable {
             return;
         }
 
-        workshopNameLabel.setText("Workshop: " + selectedWorkshop.getName());
-        workshopDatesLabel.setText("Dates: " + selectedWorkshop.getDateRange());
+        LanguageManager languageManager = LanguageManager.getInstance();
 
-        // Load teacher information using the same pattern as MultipleGenerationBarcodeDialog
-        String teacherInfo = "Teacher: ";
+        workshopNameLabel.setText(languageManager.getText("workshop.payment.slips.workshop.prefix") + selectedWorkshop.getName());
+        workshopDatesLabel.setText(languageManager.getText("workshop.payment.slips.dates.prefix") + selectedWorkshop.getDateRange());
+
+        // Load teacher information
+        String teacherInfo = languageManager.getText("workshop.payment.slips.teacher.prefix");
         if (selectedWorkshop.getTeacherId() != null) {
             try {
-                // Use the existing DAO method pattern
                 List<Teacher> allTeachers = teacherDAO.getAllTeachers();
                 Teacher teacher = allTeachers.stream()
                         .filter(t -> t.getId() == selectedWorkshop.getTeacherId())
@@ -462,13 +668,13 @@ public class WorkshopPaymentSlipsController implements Initializable {
                 if (teacher != null) {
                     teacherInfo += teacher.getFirstName() + " " + teacher.getLastName();
                 } else {
-                    teacherInfo += "Unknown (ID: " + selectedWorkshop.getTeacherId() + ")";
+                    teacherInfo += languageManager.getText("workshop.payment.slips.teacher.unknown") + " (ID: " + selectedWorkshop.getTeacherId() + ")";
                 }
             } catch (Exception e) {
-                teacherInfo += "Error loading teacher";
+                teacherInfo += languageManager.getText("workshop.payment.slips.teacher.error");
             }
         } else {
-            teacherInfo += "Not assigned";
+            teacherInfo += languageManager.getText("workshop.payment.slips.teacher.not.assigned");
         }
         workshopTeacherLabel.setText(teacherInfo);
 
@@ -481,11 +687,13 @@ public class WorkshopPaymentSlipsController implements Initializable {
             return;
         }
 
-        templateNameLabel.setText("Template: " + selectedPaymentTemplate.getName());
-        templateAmountLabel.setText("Amount: " + selectedPaymentTemplate.getAmount() + " EUR");
-        templateModelLabel.setText("Payment Model: " +
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        templateNameLabel.setText(languageManager.getText("workshop.payment.slips.template.prefix") + selectedPaymentTemplate.getName());
+        templateAmountLabel.setText(languageManager.getText("workshop.payment.slips.amount.prefix") + selectedPaymentTemplate.getAmount() + " EUR");
+        templateModelLabel.setText(languageManager.getText("workshop.payment.slips.model.prefix") +
                 (selectedPaymentTemplate.getModelOfPayment() != null ? selectedPaymentTemplate.getModelOfPayment() : "N/A"));
-        templateDescriptionLabel.setText("Description: " +
+        templateDescriptionLabel.setText(languageManager.getText("workshop.payment.slips.description.prefix") +
                 (selectedPaymentTemplate.getDescription() != null && !selectedPaymentTemplate.getDescription().trim().isEmpty()
                         ? selectedPaymentTemplate.getDescription() : "N/A"));
 
@@ -493,12 +701,17 @@ public class WorkshopPaymentSlipsController implements Initializable {
     }
 
     private void updateParticipantCount() {
-        participantCountLabel.setText("Participants: " + allParticipants.size());
+        LanguageManager languageManager = LanguageManager.getInstance();
+        participantCountLabel.setText(languageManager.getText("workshop.payment.slips.participants.prefix") + allParticipants.size());
     }
 
     private void updateSelectedCount() {
         long selectedCount = filteredParticipants.stream().mapToLong(item -> item.isSelected() ? 1 : 0).sum();
-        selectedCountLabel.setText("Selected: " + selectedCount + " / " + filteredParticipants.size());
+        LanguageManager languageManager = LanguageManager.getInstance();
+        String countText = languageManager.getText("workshop.payment.slips.selected.count")
+                .replace("{0}", String.valueOf(selectedCount))
+                .replace("{1}", String.valueOf(filteredParticipants.size()));
+        selectedCountLabel.setText(countText);
     }
 
     private void clearParticipants() {
@@ -1174,11 +1387,12 @@ public class WorkshopPaymentSlipsController implements Initializable {
         }
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
+    private void showAlert(Alert.AlertType type, String titleKey, String messageKey) {
+        LanguageManager languageManager = LanguageManager.getInstance();
         Alert alert = new Alert(type);
-        alert.setTitle(title);
+        alert.setTitle(languageManager.getText(titleKey));
         alert.setHeaderText(null);
-        alert.setContentText(message);
+        alert.setContentText(languageManager.getText(messageKey));
         alert.initOwner(workshopComboBox.getScene().getWindow());
         alert.showAndWait();
     }
@@ -1233,18 +1447,21 @@ public class WorkshopPaymentSlipsController implements Initializable {
         }
 
         public String getDisplayInfo() {
+            LanguageManager languageManager = LanguageManager.getInstance();
             StringBuilder info = new StringBuilder();
             info.append(getParticipantName());
 
             if ("CHILD".equals(getParticipantType())) {
                 String parentName = (String) participantData.get("parent_name");
                 if (parentName != null && !parentName.trim().isEmpty()) {
-                    info.append(" (Parent: ").append(parentName).append(")");
+                    String parentText = languageManager.getText("workshop.payment.slips.participant.parent").replace("{0}", parentName);
+                    info.append(" (").append(parentText).append(")");
                 }
 
                 Object age = participantData.get("participant_age");
                 if (age != null) {
-                    info.append(" Age: ").append(age);
+                    String ageText = languageManager.getText("workshop.payment.slips.participant.age").replace("{0}", age.toString());
+                    info.append(" ").append(ageText);
                 }
             }
 
@@ -1262,13 +1479,14 @@ public class WorkshopPaymentSlipsController implements Initializable {
         }
 
         public String getStatusText() {
+            LanguageManager languageManager = LanguageManager.getInstance();
             String status = getPaymentStatus();
             return switch (status) {
-                case "PENDING" -> "⏳ Pending Payment";
-                case "PAID" -> "✅ Paid";
-                case "REFUNDED" -> "↩️ Refunded";
-                case "CANCELLED" -> "❌ Cancelled";
-                default -> "❓ " + status;
+                case "PENDING" -> languageManager.getText("workshop.payment.slips.status.pending");
+                case "PAID" -> languageManager.getText("workshop.payment.slips.status.paid");
+                case "REFUNDED" -> languageManager.getText("workshop.payment.slips.status.refunded");
+                case "CANCELLED" -> languageManager.getText("workshop.payment.slips.status.cancelled");
+                default -> languageManager.getText("workshop.payment.slips.status.unknown").replace("{0}", status);
             };
         }
 

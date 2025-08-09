@@ -28,7 +28,7 @@ public class CreateContactDialog {
     // Contact form fields
     private TextField firstNameField;
     private TextField lastNameField;
-    private DatePicker birthdayPicker; // Added birthday field
+    private DatePicker birthdayPicker;
     private TextField pinField; // Added PIN field
     private TextField emailField;
     private TextField phoneField;

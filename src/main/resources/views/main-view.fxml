@@ -2,22 +2,19 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 <?import javafx.scene.shape.*?>
 <?import javafx.geometry.*?>
-
-
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
+
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="smallbusinessbuddycrm.MainController"
-            prefHeight="700.0" prefWidth="1200.0" stylesheets="../styles/main-style.css">
+            prefHeight="700.0" prefWidth="1200.0" stylesheets="@../styles/main-style.css">
 
     <!-- Top Navigation Bar -->
     <top>
         <HBox styleClass="top-bar">
-
             <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
                 <!-- Small Business Buddy Logo at the top -->
                 <Button styleClass="logo-button">
@@ -34,7 +31,8 @@
                 <padding>
                     <Insets right="10.0"/>
                 </padding>
-                <!-- Table Icon -->
+
+                <!-- Support Icon -->
                 <Button styleClass="icon-button" onAction="#handleHelpTemplateAction">
                     <graphic>
                         <ImageView fitHeight="24.0" fitWidth="24.0">
@@ -42,6 +40,7 @@
                         </ImageView>
                     </graphic>
                 </Button>
+
                 <!-- Notification Bell -->
                 <Button styleClass="icon-button">
                     <graphic>
@@ -50,6 +49,7 @@
                         </ImageView>
                     </graphic>
                 </Button>
+
                 <!-- Settings Gear -->
                 <Button styleClass="icon-button" onAction="#handleSettingsAction">
                     <graphic>
@@ -58,14 +58,15 @@
                         </ImageView>
                     </graphic>
                 </Button>
+
                 <!-- User Profile with Organization Name -->
                 <MenuButton fx:id="userProfileButton" text="Loading..." styleClass="user-profile-button">
                     <graphic>
                         <Circle fx:id="userAvatar" radius="15" styleClass="user-avatar" />
                     </graphic>
                     <items>
-                        <MenuItem text="Profile" onAction="#handleOrganizationAction" />
-                        <MenuItem text="Settings"/>
+                        <MenuItem fx:id="profileMenuItem" onAction="#handleOrganizationAction" />
+                        <MenuItem fx:id="settingsMenuItem"/>
                     </items>
                 </MenuButton>
             </HBox>
@@ -80,106 +81,117 @@
             </padding>
 
             <!-- Main Navigation Items with Dropdowns -->
-            <Accordion>
+            <Accordion VBox.vgrow="ALWAYS">
                 <panes>
-                    <TitledPane text="CRM" styleClass="sidebar-accordion">
+                    <TitledPane fx:id="crmPane" styleClass="sidebar-accordion">
                         <graphic>
                             <ImageView fitHeight="24.0" fitWidth="24.0" preserveRatio="true">
                                 <Image url="@../images/icons/crm-icon.png" backgroundLoading="true"/>
                             </ImageView>
                         </graphic>
                         <VBox spacing="5">
-                            <Button text="Contacts" styleClass="sidebar-sub-item" onAction="#handleContactsAction"/>
-                            <Button text="Lists" styleClass="sidebar-sub-item" onAction="#handleListsAction"/>
-                            <Button text="Workshops" styleClass="sidebar-sub-item" onAction="#handleWorkshopsAction"/>
-                            <Button text="Teachers" styleClass="sidebar-sub-item" onAction="#handleTeachersAction"/>
-
+                            <Button fx:id="contactsButton" styleClass="sidebar-sub-item" onAction="#handleContactsAction"/>
+                            <Button fx:id="listsButton" styleClass="sidebar-sub-item" onAction="#handleListsAction"/>
+                            <Button fx:id="workshopsButton" styleClass="sidebar-sub-item" onAction="#handleWorkshopsAction"/>
+                            <Button fx:id="teachersButton" styleClass="sidebar-sub-item" onAction="#handleTeachersAction"/>
                         </VBox>
                     </TitledPane>
 
-                    <TitledPane text="Marketing" styleClass="sidebar-accordion">
+                    <TitledPane fx:id="marketingPane" styleClass="sidebar-accordion">
                         <graphic>
                             <ImageView fitHeight="24.0" fitWidth="24.0">
                                 <Image url="@../images/icons/marketing-icon.png"/>
                             </ImageView>
                         </graphic>
                         <VBox spacing="5">
-
-                            <Button text="Create Email&#10;Campaign " styleClass="sidebar-sub-item" onAction="#handleEmailAction"/>
-                            <Button text="Email Statistics" styleClass="sidebar-sub-item" onAction="#handleEmailStatisticsAction"/>
-
+                            <Button fx:id="createEmailButton" styleClass="sidebar-sub-item" onAction="#handleEmailAction"/>
                         </VBox>
                     </TitledPane>
 
-                    <TitledPane text="Commerce" styleClass="sidebar-accordion">
+                    <TitledPane fx:id="commercePane" styleClass="sidebar-accordion">
                         <graphic>
                             <ImageView fitHeight="24.0" fitWidth="24.0">
                                 <Image url="@../images/icons/commerce-icon.png"/>
                             </ImageView>
                         </graphic>
                         <VBox spacing="5">
-                            <Button text="Barcode&#10;generator app" styleClass="sidebar-sub-item" onAction="#handleBarcodeAppAction"/>
-                            <Button text="Send payment slips" styleClass="sidebar-sub-item" onAction="#handlePaymentSlipsAction"/>
-                            <Button text="Payment history" styleClass="sidebar-sub-item" onAction="#handlePaymentHistoryAction"/>
-                            <Button text="Bulk generation&#10;(Workshops/lists)" styleClass="sidebar-sub-item" onAction="#handleBulkGenerationAction"/>
+                            <Button fx:id="barcodeButton" styleClass="sidebar-sub-item" onAction="#handleBarcodeAppAction"/>
+                            <Button fx:id="paymentSlipsButton" styleClass="sidebar-sub-item" onAction="#handlePaymentSlipsAction"/>
+                            <Button fx:id="paymentHistoryButton" styleClass="sidebar-sub-item" onAction="#handlePaymentHistoryAction"/>
+                            <Button fx:id="bulkGenerationButton" styleClass="sidebar-sub-item" onAction="#handleBulkGenerationAction"/>
                         </VBox>
                     </TitledPane>
 
-                    <TitledPane text="Design Manager" styleClass="sidebar-accordion">
+                    <TitledPane fx:id="designManagerPane" styleClass="sidebar-accordion">
                         <graphic>
                             <ImageView fitHeight="24.0" fitWidth="24.0">
                                 <Image url="@../images/icons/automations-icon.png"/>
                             </ImageView>
                         </graphic>
                         <VBox spacing="5">
-                            <Button text="Payment&#10;template designer" styleClass="sidebar-sub-item" onAction="#handlePaymentTemplateAction"/>
-                            <Button text="Newsletter&#10;template designer" styleClass="sidebar-sub-item" onAction="#handleEmailTemplateAction"/>
-                            <Button text="Payment&#10;attachments designer" styleClass="sidebar-sub-item" onAction="#handlePaymentAttachmentAction"/>
+                            <Button fx:id="paymentTemplateButton" styleClass="sidebar-sub-item" onAction="#handlePaymentTemplateAction"/>
+                            <Button fx:id="newsletterTemplateButton" styleClass="sidebar-sub-item" onAction="#handleEmailTemplateAction"/>
+                            <Button fx:id="paymentAttachmentButton" styleClass="sidebar-sub-item" onAction="#handlePaymentAttachmentAction"/>
                         </VBox>
                     </TitledPane>
 
-                    <TitledPane text="Reporting" styleClass="sidebar-accordion">
+                    <TitledPane fx:id="reportingPane" styleClass="sidebar-accordion">
                         <graphic>
                             <ImageView fitHeight="24.0" fitWidth="24.0">
                                 <Image url="@../images/icons/reporting-icon.png"/>
                             </ImageView>
                         </graphic>
                         <VBox spacing="5">
-                            <Button text="See more..." styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
-
+                            <Button fx:id="overviewButton" styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
+                            <Button fx:id="underagedStatsButton" styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
+                            <Button fx:id="contactStatsButton" styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
+                            <Button fx:id="workshopStatsButton" styleClass="sidebar-sub-item" onAction="#handleHomeReportingScreen"/>
                         </VBox>
                     </TitledPane>
 
-                    <TitledPane text="Data Management" styleClass="sidebar-accordion">
+                    <TitledPane fx:id="dataManagementPane" styleClass="sidebar-accordion">
                         <graphic>
                             <ImageView fitHeight="24.0" fitWidth="24.0">
                                 <Image url="@../images/icons/data-managment-icon.png"/>
                             </ImageView>
                         </graphic>
                         <VBox spacing="5">
-                            <Button text="Properties" styleClass="sidebar-sub-item"/>
-                            <Button text="Imports" styleClass="sidebar-sub-item"/>
-                            <Button text="Export" styleClass="sidebar-sub-item"/>
+                            <Button fx:id="propertiesButton" styleClass="sidebar-sub-item"/>
+                            <Button fx:id="importsButton" styleClass="sidebar-sub-item"/>
+                            <Button fx:id="exportButton" styleClass="sidebar-sub-item"/>
                         </VBox>
                     </TitledPane>
 
-                    <TitledPane text="Library" styleClass="sidebar-accordion">
+                    <TitledPane fx:id="libraryPane" styleClass="sidebar-accordion">
                         <graphic>
                             <ImageView fitHeight="24.0" fitWidth="24.0">
                                 <Image url="@../images/icons/library-icon.png"/>
                             </ImageView>
                         </graphic>
                         <VBox spacing="5">
-                            <Button text="Documents" styleClass="sidebar-sub-item"/>
-                            <Button text="Tasks" styleClass="sidebar-sub-item"/>
-                            <Button text="Resources" styleClass="sidebar-sub-item"/>
+                            <Button fx:id="documentsButton" styleClass="sidebar-sub-item"/>
+                            <Button fx:id="tasksButton" styleClass="sidebar-sub-item"/>
+                            <Button fx:id="resourcesButton" styleClass="sidebar-sub-item"/>
                         </VBox>
                     </TitledPane>
                 </panes>
             </Accordion>
+
+            <!-- Language Chooser at the bottom -->
+            <VBox alignment="CENTER" spacing="8.0" styleClass="sidebar-bottom">
+                <padding>
+                    <Insets top="15.0"/>
+                </padding>
+
+                <HBox alignment="CENTER" spacing="3.0" styleClass="language-chooser">
+                    <Button fx:id="englishButton" text="EN" onAction="#switchToEnglish"
+                            styleClass="language-button"/>
+                    <Button fx:id="croatianButton" text="HR" onAction="#switchToCroatian"
+                            styleClass="language-button, language-active"/>
+                </HBox>
+            </VBox>
         </VBox>
     </left>
-
 
     <center>
         <StackPane fx:id="contentArea" styleClass="content-area"/>

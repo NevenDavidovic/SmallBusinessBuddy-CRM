@@ -11,37 +11,37 @@
             <children>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <Label text="Contacts" textFill="#0099cc">
+                        <Label fx:id="contactsPageTitle" textFill="#0099cc">
                             <font>
                                 <Font name="System Bold" size="24.0" />
                             </font>
                         </Label>
-                        <Label fx:id="recordCountLabel" text="0 records" textFill="#71757a">
+                        <Label fx:id="recordCountLabel" textFill="#71757a">
                             <font>
                                 <Font size="12.0" />
                             </font>
                         </Label>
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS" spacing="5.0">
                             <children>
-                                <Button fx:id="deleteSelectedButton" text="Delete Selected"
+                                <Button fx:id="deleteSelectedButton"
                                         style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-radius: 4;">
                                     <HBox.margin>
                                         <Insets right="5.0" />
                                     </HBox.margin>
                                 </Button>
-                                <Button fx:id="generateBarcodeButton" text="Generate Barcode"
+                                <Button fx:id="generateBarcodeButton"
                                         style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4;">
                                     <HBox.margin>
                                         <Insets right="5.0" />
                                     </HBox.margin>
                                 </Button>
-                                <Button fx:id="importButton" text="Import"
+                                <Button fx:id="importButton"
                                         style="-fx-background-color: white; -fx-border-color: #cccccc; -fx-border-radius: 4;">
                                     <HBox.margin>
                                         <Insets right="5.0" />
                                     </HBox.margin>
                                 </Button>
-                                <Button fx:id="createContactButton" text="Create contact"
+                                <Button fx:id="createContactButton"
                                         style="-fx-background-color: #ff7a59; -fx-text-fill: white; -fx-border-radius: 4;" />
                             </children>
                         </HBox>
@@ -49,19 +49,19 @@
                 </HBox>
                 <HBox spacing="5.0">
                     <children>
-                        <Button fx:id="allContactsButton" text="All contacts" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="membersButton" text="Members" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="nonMembersButton" text="Non-members" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="upcomingBirthdaysButton" text="Upcoming Birthdays" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="allContactsButton" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="membersButton" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="nonMembersButton" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="upcomingBirthdaysButton" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                     </children>
                 </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search name, phone, email..." style="-fx-border-color: #dfe3eb;" />
+                        <TextField fx:id="searchField" prefWidth="250.0" style="-fx-border-color: #dfe3eb;" />
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
-                                <Button fx:id="exportButton" text="Export" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                                <Button fx:id="editColumnsButton" text="Edit columns" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                <Button fx:id="exportButton" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                <Button fx:id="editColumnsButton" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                             </children>
                         </HBox>
                     </children>
@@ -76,25 +76,25 @@
         <ScrollPane fitToHeight="true" fitToWidth="true">
             <TableView fx:id="contactsTable" prefHeight="400.0">
                 <columns>
-                    <TableColumn fx:id="selectColumn" prefWidth="40.0" text="" />
-                    <TableColumn fx:id="editColumn" prefWidth="60.0" text="EDIT" />
-                    <TableColumn fx:id="barcodeColumn" prefWidth="60.0" text="BARCODE" />
-                    <TableColumn fx:id="firstNameColumn" text="FIRST NAME" prefWidth="120.0" />
-                    <TableColumn fx:id="lastNameColumn" text="LAST NAME" prefWidth="120.0" />
-                    <TableColumn fx:id="birthdayColumn" text="BIRTHDAY" prefWidth="100.0" />
-                    <TableColumn fx:id="ageColumn" text="AGE" prefWidth="60.0" />
-                    <TableColumn fx:id="pinColumn" text="PIN" prefWidth="80.0" />
-                    <TableColumn fx:id="emailColumn" text="EMAIL" prefWidth="200.0" />
-                    <TableColumn fx:id="phoneColumn" text="PHONE NUMBER" prefWidth="140.0" />
-                    <TableColumn fx:id="streetNameColumn" text="STREET NAME" prefWidth="140.0" />
-                    <TableColumn fx:id="streetNumColumn" text="STREET #" prefWidth="80.0" />
-                    <TableColumn fx:id="postalCodeColumn" text="POSTAL CODE" prefWidth="100.0" />
-                    <TableColumn fx:id="cityColumn" text="CITY" prefWidth="120.0" />
-                    <TableColumn fx:id="memberStatusColumn" text="MEMBER STATUS" prefWidth="120.0" />
-                    <TableColumn fx:id="memberSinceColumn" text="MEMBER SINCE" prefWidth="120.0" />
-                    <TableColumn fx:id="memberUntilColumn" text="MEMBER UNTIL" prefWidth="120.0" />
-                    <TableColumn fx:id="createdAtColumn" text="CREATED" prefWidth="140.0" />
-                    <TableColumn fx:id="updatedAtColumn" text="UPDATED" prefWidth="140.0" />
+                    <TableColumn fx:id="selectColumn" prefWidth="40.0" />
+                    <TableColumn fx:id="editColumn" prefWidth="60.0" />
+                    <TableColumn fx:id="barcodeColumn" prefWidth="60.0" />
+                    <TableColumn fx:id="firstNameColumn" prefWidth="120.0" />
+                    <TableColumn fx:id="lastNameColumn" prefWidth="120.0" />
+                    <TableColumn fx:id="birthdayColumn" prefWidth="100.0" />
+                    <TableColumn fx:id="ageColumn" prefWidth="60.0" />
+                    <TableColumn fx:id="pinColumn" prefWidth="80.0" />
+                    <TableColumn fx:id="emailColumn" prefWidth="200.0" />
+                    <TableColumn fx:id="phoneColumn" prefWidth="140.0" />
+                    <TableColumn fx:id="streetNameColumn" prefWidth="140.0" />
+                    <TableColumn fx:id="streetNumColumn" prefWidth="80.0" />
+                    <TableColumn fx:id="postalCodeColumn" prefWidth="100.0" />
+                    <TableColumn fx:id="cityColumn" prefWidth="120.0" />
+                    <TableColumn fx:id="memberStatusColumn" prefWidth="120.0" />
+                    <TableColumn fx:id="memberSinceColumn" prefWidth="120.0" />
+                    <TableColumn fx:id="memberUntilColumn" prefWidth="120.0" />
+                    <TableColumn fx:id="createdAtColumn" prefWidth="140.0" />
+                    <TableColumn fx:id="updatedAtColumn" prefWidth="140.0" />
                 </columns>
             </TableView>
         </ScrollPane>

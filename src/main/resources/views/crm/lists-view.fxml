@@ -12,19 +12,19 @@
                 <!-- Header Section -->
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <Label fx:id="listsTitle" text="Lists Management" textFill="#0099cc">
+                        <Label fx:id="listsTitle" textFill="#0099cc">
                             <font>
                                 <Font name="System Bold" size="24.0" />
                             </font>
                         </Label>
-                        <Label fx:id="listsCount" text="0 Lists" textFill="#71757a">
+                        <Label fx:id="listsCount" textFill="#71757a">
                             <font>
                                 <Font size="12.0" />
                             </font>
                         </Label>
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
-                                <Button fx:id="createListButton" mnemonicParsing="false" text="Create New List"
+                                <Button fx:id="createListButton" mnemonicParsing="false"
                                         style="-fx-background-color: #ff7a59; -fx-text-fill: white; -fx-border-radius: 4;" />
                             </children>
                         </HBox>
@@ -34,10 +34,10 @@
                 <!-- Search Section -->
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <TextField fx:id="searchField" prefHeight="30.0" prefWidth="250.0" promptText="Search lists by name..." style="-fx-border-color: #dfe3eb;" />
+                        <TextField fx:id="searchField" prefHeight="30.0" prefWidth="250.0" style="-fx-border-color: #dfe3eb;" />
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                             <children>
-                                <Button fx:id="refreshButton" mnemonicParsing="false" text="Refresh" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                                <Button fx:id="refreshButton" mnemonicParsing="false" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                             </children>
                         </HBox>
                     </children>
@@ -53,12 +53,12 @@
         <ScrollPane fitToHeight="true" fitToWidth="true">
             <TableView fx:id="listsTable" prefHeight="400.0">
                 <columns>
-                    <TableColumn fx:id="nameColumn" prefWidth="200.0" text="LIST NAME" />
-                    <TableColumn fx:id="listSizeColumn" text="CONTACTS" />
-                    <TableColumn fx:id="typeColumn" prefWidth="120.0" text="TYPE" />
-                    <TableColumn fx:id="creatorColumn" prefWidth="150.0" text="CREATOR" />
-                    <TableColumn fx:id="lastUpdatedColumn" prefWidth="140.0" text="LAST UPDATED" />
-                    <TableColumn fx:id="actionsColumn" prefWidth="300.0" text="ACTIONS" />
+                    <TableColumn fx:id="nameColumn" prefWidth="200.0" />
+                    <TableColumn fx:id="listSizeColumn" />
+                    <TableColumn fx:id="typeColumn" prefWidth="120.0" />
+                    <TableColumn fx:id="creatorColumn" prefWidth="150.0" />
+                    <TableColumn fx:id="lastUpdatedColumn" prefWidth="140.0" />
+                    <TableColumn fx:id="actionsColumn" prefWidth="300.0" />
                 </columns>
             </TableView>
         </ScrollPane>
