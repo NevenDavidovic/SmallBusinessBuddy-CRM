@@ -66,7 +66,7 @@
                     </graphic>
                     <items>
                         <MenuItem fx:id="profileMenuItem" onAction="#handleOrganizationAction" />
-                        <MenuItem fx:id="settingsMenuItem"/>
+                        <MenuItem fx:id="settingsMenuItem" onAction="#handleSettingsAction"/>
                     </items>
                 </MenuButton>
             </HBox>
@@ -91,7 +91,6 @@
                         </graphic>
                         <VBox spacing="5">
                             <Button fx:id="contactsButton" styleClass="sidebar-sub-item" onAction="#handleContactsAction"/>
-                            <Button fx:id="listsButton" styleClass="sidebar-sub-item" onAction="#handleListsAction"/>
                             <Button fx:id="workshopsButton" styleClass="sidebar-sub-item" onAction="#handleWorkshopsAction"/>
                             <Button fx:id="teachersButton" styleClass="sidebar-sub-item" onAction="#handleTeachersAction"/>
                         </VBox>
@@ -105,7 +104,9 @@
                         </graphic>
                         <VBox spacing="5">
                             <Button fx:id="createEmailButton" styleClass="sidebar-sub-item" onAction="#handleEmailAction"/>
+                            <Button fx:id="listsButton" styleClass="sidebar-sub-item" onAction="#handleListsAction"/>
                         </VBox>
+
                     </TitledPane>
 
                     <TitledPane fx:id="commercePane" styleClass="sidebar-accordion">

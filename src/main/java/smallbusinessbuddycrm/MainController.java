@@ -229,7 +229,6 @@ public class MainController {
     @FXML private void handleUnderagedReportingScreen() { navigateTo("/views/reporting/underaged-report.fxml"); }
     @FXML private void handleWorkshopReportingScreen() { navigateTo("/views/reporting/workshops-report.fxml"); }
 
-
     private void loadOrganizationName() {
         try {
             Optional<Organization> organization = organizationDAO.getFirst();
