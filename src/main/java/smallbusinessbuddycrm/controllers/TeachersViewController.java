@@ -92,6 +92,11 @@ public class TeachersViewController implements Initializable {
             teachersTable.setPlaceholder(new Label(languageManager.getText("teachers.no.teachers.found")));
         }
 
+        // IMPORTANT: Refresh the table to update edit button texts
+        if (teachersTable != null) {
+            teachersTable.refresh();
+        }
+
         System.out.println("Teachers view texts updated");
     }
 
@@ -121,7 +126,7 @@ public class TeachersViewController implements Initializable {
             return cell;
         });
 
-        // Set up edit button column
+        // FIXED: Set up edit button column with proper translation updates
         editColumn.setCellFactory(tc -> new TableCell<Teacher, Void>() {
             private final Button editButton = new Button();
 
@@ -132,9 +137,6 @@ public class TeachersViewController implements Initializable {
                     Teacher teacher = getTableView().getItems().get(getIndex());
                     handleEditTeacher(teacher);
                 });
-
-                // Set initial text
-                editButton.setText(LanguageManager.getInstance().getText("teachers.action.edit"));
             }
 
             @Override
@@ -143,7 +145,7 @@ public class TeachersViewController implements Initializable {
                 if (empty) {
                     setGraphic(null);
                 } else {
-                    // Update button text when table refreshes
+                    // FIXED: Always get fresh translation text when cell updates
                     editButton.setText(LanguageManager.getInstance().getText("teachers.action.edit"));
                     setGraphic(editButton);
                 }
@@ -272,10 +274,14 @@ public class TeachersViewController implements Initializable {
             );
 
             dialog.getDialogPane().setContent(content);
-            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            // FIXED: Create custom button types with proper translations
+            ButtonType okButtonType = new ButtonType(languageManager.getText("common.ok"), ButtonBar.ButtonData.OK_DONE);
+            ButtonType cancelButtonType = new ButtonType(languageManager.getText("common.cancel"), ButtonBar.ButtonData.CANCEL_CLOSE);
+            dialog.getDialogPane().getButtonTypes().addAll(okButtonType, cancelButtonType);
 
             // Enable/disable OK button based on input
-            Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+            Button okButton = (Button) dialog.getDialogPane().lookupButton(okButtonType);
             okButton.setDisable(true);
 
             // Validation
@@ -288,7 +294,7 @@ public class TeachersViewController implements Initializable {
 
             // Convert result
             dialog.setResultConverter(dialogButton -> {
-                if (dialogButton == ButtonType.OK) {
+                if (dialogButton == okButtonType) {
                     Teacher teacher = new Teacher();
                     teacher.setFirstName(firstNameField.getText().trim());
                     teacher.setLastName(lastNameField.getText().trim());
@@ -367,10 +373,14 @@ public class TeachersViewController implements Initializable {
             );
 
             dialog.getDialogPane().setContent(content);
-            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            // FIXED: Create custom button types with proper translations
+            ButtonType okButtonType = new ButtonType(languageManager.getText("common.ok"), ButtonBar.ButtonData.OK_DONE);
+            ButtonType cancelButtonType = new ButtonType(languageManager.getText("common.cancel"), ButtonBar.ButtonData.CANCEL_CLOSE);
+            dialog.getDialogPane().getButtonTypes().addAll(okButtonType, cancelButtonType);
 
             // Enable/disable OK button based on input
-            Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
+            Button okButton = (Button) dialog.getDialogPane().lookupButton(okButtonType);
 
             // Validation
             firstNameField.textProperty().addListener((obs, oldText, newText) -> {
@@ -382,7 +392,7 @@ public class TeachersViewController implements Initializable {
 
             // Convert result
             dialog.setResultConverter(dialogButton -> {
-                if (dialogButton == ButtonType.OK) {
+                if (dialogButton == okButtonType) {
                     teacher.setFirstName(firstNameField.getText().trim());
                     teacher.setLastName(lastNameField.getText().trim());
                     teacher.setEmail(emailField.getText().trim().isEmpty() ? null : emailField.getText().trim());
