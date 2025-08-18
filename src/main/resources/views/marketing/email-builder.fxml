@@ -6,301 +6,307 @@
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.web.WebView?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="smallbusinessbuddycrm.controllers.NewsletterBuilderController"
-            style="-fx-background-color: white;">
+<ScrollPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="smallbusinessbuddycrm.controllers.utilities.NewsletterBuilderController"
+            fitToWidth="true" fitToHeight="false" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED"
+            pannable="true" style="-fx-background-color: white;">
 
-    <!-- Header -->
-    <top>
-        <VBox spacing="10.0" BorderPane.alignment="CENTER">
-            <padding>
-                <Insets top="10" right="10" bottom="10" left="10" />
-            </padding>
-            <children>
-                <!-- Newsletters & Templates Collapsible Section -->
-                <TitledPane text="Newsletters &amp; Templates" animated="true" expanded="true" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #333;">
-                    <content>
-                        <VBox spacing="10" style="-fx-padding: 10;">
-                            <children>
-                                <!-- Newsletter Table -->
-                                <ScrollPane fitToHeight="true" fitToWidth="true">
-                                    <TableView fx:id="newsletterTable" prefHeight="200.0">
-                                        <columns>
-                                            <TableColumn fx:id="nameColumn" text="NAME" prefWidth="160" />
-                                            <TableColumn fx:id="typeColumn" text="TYPE" prefWidth="90" />
-                                            <TableColumn fx:id="statusColumn" text="STATUS" prefWidth="80" />
-                                            <TableColumn fx:id="createdColumn" text="CREATED" prefWidth="100" />
-                                        </columns>
-                                    </TableView>
-                                </ScrollPane>
+    <content>
+        <BorderPane style="-fx-background-color: white; -fx-min-height: 800;">
 
-                                <!-- Action Buttons -->
-                                <HBox spacing="5.0">
+            <!-- Header -->
+            <top>
+                <VBox spacing="10.0" BorderPane.alignment="CENTER">
+                    <padding>
+                        <Insets top="10" right="10" bottom="10" left="10" />
+                    </padding>
+                    <children>
+                        <!-- Newsletters & Templates Collapsible Section -->
+                        <TitledPane fx:id="newslettersTemplatesTitle" text="Newsletters &amp; Templates" animated="true" expanded="true" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #333;">
+                            <content>
+                                <VBox spacing="10" style="-fx-padding: 10;">
                                     <children>
-                                        <Button fx:id="editButton" text="Edit"
-                                                style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-border-radius: 4;"
-                                                disable="true" />
-                                        <Button fx:id="duplicateButton" text="Duplicate"
-                                                style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;"
-                                                disable="true" />
-                                        <Button fx:id="deleteButton" text="Delete"
-                                                style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-radius: 4;"
-                                                disable="true" />
+                                        <!-- Newsletter Table -->
+                                        <ScrollPane fitToHeight="true" fitToWidth="true">
+                                            <TableView fx:id="newsletterTable" prefHeight="200.0">
+                                                <columns>
+                                                    <TableColumn fx:id="nameColumn" text="NAME" prefWidth="160" />
+                                                    <TableColumn fx:id="typeColumn" text="TYPE" prefWidth="90" />
+                                                    <TableColumn fx:id="statusColumn" text="STATUS" prefWidth="80" />
+                                                    <TableColumn fx:id="createdColumn" text="CREATED" prefWidth="100" />
+                                                </columns>
+                                            </TableView>
+                                        </ScrollPane>
+
+                                        <!-- Action Buttons -->
+                                        <HBox spacing="5.0">
+                                            <children>
+                                                <Button fx:id="editButton" text="Edit"
+                                                        style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-border-radius: 4;"
+                                                        disable="true" />
+                                                <Button fx:id="duplicateButton" text="Duplicate"
+                                                        style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;"
+                                                        disable="true" />
+                                                <Button fx:id="deleteButton" text="Delete"
+                                                        style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-radius: 4;"
+                                                        disable="true" />
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                </VBox>
+                            </content>
+                        </TitledPane>
+
+                        <!-- Title and Actions Row -->
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <children>
+                                <Label fx:id="newsletterBuilderTitle" text="Newsletter Builder" textFill="#0099cc">
+                                    <font>
+                                        <Font name="System Bold" size="24.0" />
+                                    </font>
+                                </Label>
+                                <Label fx:id="itemCountLabel" text="0 items" textFill="#71757a">
+                                    <font>
+                                        <Font size="12.0" />
+                                    </font>
+                                </Label>
+                                <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS" spacing="5.0">
+                                    <children>
+                                        <Button fx:id="refreshButton" text="Refresh"
+                                                style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;">
+                                            <HBox.margin>
+                                                <Insets right="5.0" />
+                                            </HBox.margin>
+                                        </Button>
+                                        <Button fx:id="newNewsletterButton" text="Create Newsletter"
+                                                style="-fx-background-color: #ff7a59; -fx-text-fill: white; -fx-border-radius: 4;" />
                                     </children>
                                 </HBox>
                             </children>
-                        </VBox>
-                    </content>
-                </TitledPane>
+                        </HBox>
 
-                <!-- Title and Actions Row -->
-                <HBox alignment="CENTER_LEFT" spacing="10.0">
-                    <children>
-                        <Label text="Newsletter Builder" textFill="#0099cc">
-                            <font>
-                                <Font name="System Bold" size="24.0" />
-                            </font>
-                        </Label>
-                        <Label fx:id="itemCountLabel" text="0 items" textFill="#71757a">
-                            <font>
-                                <Font size="12.0" />
-                            </font>
-                        </Label>
-                        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS" spacing="5.0">
+                        <!-- Filter Buttons Row -->
+                        <HBox spacing="5.0">
                             <children>
-                                <Button fx:id="refreshButton" text="Refresh"
-                                        style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;">
-                                    <HBox.margin>
-                                        <Insets right="5.0" />
-                                    </HBox.margin>
-                                </Button>
-                                <Button fx:id="newNewsletterButton" text="Create Newsletter"
-                                        style="-fx-background-color: #ff7a59; -fx-text-fill: white; -fx-border-radius: 4;" />
+                                <ComboBox fx:id="typeFilterCombo" promptText="All Items"
+                                          style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
                             </children>
                         </HBox>
-                    </children>
-                </HBox>
 
-                <!-- Filter Buttons Row -->
-                <HBox spacing="5.0">
-                    <children>
-                        <ComboBox fx:id="typeFilterCombo" promptText="All Items"
-                                  style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                    </children>
-                </HBox>
-
-                <!-- Search and Export Row -->
-                <HBox alignment="CENTER_LEFT" spacing="10.0">
-                    <children>
-                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search newsletters and templates..."
-                                   style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                        <Button fx:id="clearSearchButton" text="Clear"
-                                style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS" spacing="5.0">
+                        <!-- Search and Export Row -->
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
                             <children>
-                                <Button fx:id="exportHtmlButton" text="Export"
+                                <TextField fx:id="searchField" prefWidth="250.0" promptText="Search newsletters and templates..."
+                                           style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                <Button fx:id="clearSearchButton" text="Clear"
                                         style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                                <Button fx:id="sendButton" text="Send Newsletter"
-                                        style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4;" />
+                                <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS" spacing="5.0">
+                                    <children>
+                                        <Button fx:id="exportHtmlButton" text="Export"
+                                                style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                        <Button fx:id="sendButton" text="Send Newsletter"
+                                                style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4;" />
+                                    </children>
+                                </HBox>
                             </children>
                         </HBox>
                     </children>
-                </HBox>
-            </children>
-        </VBox>
-    </top>
+                </VBox>
+            </top>
 
-    <!-- Main Content -->
-    <center>
-        <SplitPane dividerPositions="0.35" style="-fx-background-color: white;">
+            <!-- Main Content -->
+            <center>
+                <SplitPane dividerPositions="0.35" style="-fx-background-color: white;" VBox.vgrow="ALWAYS" prefHeight="600">
 
-            <!-- Left Panel - Newsletter Builder -->
-            <VBox spacing="10" style="-fx-padding: 10;" VBox.vgrow="ALWAYS">
-                <children>
-                    <!-- Editor Tabs -->
-                    <TabPane fx:id="editorTabPane" VBox.vgrow="ALWAYS">
+                    <!-- Left Panel - Newsletter Builder -->
+                    <VBox spacing="10" style="-fx-padding: 10;" VBox.vgrow="ALWAYS">
+                        <children>
+                            <!-- Editor Tabs -->
+                            <TabPane fx:id="editorTabPane" VBox.vgrow="ALWAYS" prefHeight="500">
 
-                        <!-- Details Tab -->
-                        <Tab text="Details" closable="false">
-                            <content>
-                                <ScrollPane fitToWidth="true" style="-fx-background-color: white;">
+                                <!-- Details Tab -->
+                                <Tab fx:id="detailsTab" text="Details" closable="false">
                                     <content>
-                                        <VBox spacing="15" style="-fx-padding: 20;">
-                                            <children>
-                                                <!-- Newsletter Name -->
-                                                <VBox spacing="5">
+                                        <ScrollPane fitToWidth="true" style="-fx-background-color: white;">
+                                            <content>
+                                                <VBox spacing="15" style="-fx-padding: 20;">
                                                     <children>
-                                                        <Label text="Newsletter Name:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
-                                                        <TextField fx:id="newsletterNameField" promptText="Enter newsletter name..."
-                                                                   style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                                                    </children>
-                                                </VBox>
-
-                                                <!-- Subject Line -->
-                                                <VBox spacing="5">
-                                                    <children>
-                                                        <Label text="Email Subject Line:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
-                                                        <TextField fx:id="subjectField" promptText="Enter email subject..."
-                                                                   style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                                                    </children>
-                                                </VBox>
-
-                                                <!-- Company Information -->
-                                                <VBox spacing="5">
-                                                    <children>
-                                                        <Label text="Company Name:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
-                                                        <TextField fx:id="companyNameField" promptText="Your company name..."
-                                                                   style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                                                    </children>
-                                                </VBox>
-
-                                                <!-- Newsletter Type -->
-                                                <VBox spacing="5">
-                                                    <children>
-                                                        <Label text="Newsletter Type:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
-                                                        <ComboBox fx:id="typeCombo" prefWidth="200"
-                                                                  style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                                                    </children>
-                                                </VBox>
-
-                                                <!-- Design Settings -->
-                                                <VBox spacing="10" style="-fx-background-color: #f5f8fa; -fx-padding: 15; -fx-border-radius: 4;">
-                                                    <children>
-                                                        <Label text="Design Settings" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #333;" />
-
-                                                        <!-- Header Color -->
+                                                        <!-- Newsletter Name -->
                                                         <VBox spacing="5">
                                                             <children>
-                                                                <Label text="Header Color:" style="-fx-font-weight: bold; -fx-text-fill: #555;" />
-                                                                <ColorPicker fx:id="headerColorPicker" prefWidth="150" />
+                                                                <Label fx:id="newsletterNameLabel" text="Newsletter Name:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
+                                                                <TextField fx:id="newsletterNameField" promptText="Enter newsletter name..."
+                                                                           style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
                                                             </children>
                                                         </VBox>
 
-                                                        <!-- Template Style -->
+                                                        <!-- Subject Line -->
                                                         <VBox spacing="5">
                                                             <children>
-                                                                <Label text="Template Style:" style="-fx-font-weight: bold; -fx-text-fill: #555;" />
-                                                                <ComboBox fx:id="templateCombo" prefWidth="200"
+                                                                <Label fx:id="subjectLineLabel" text="Email Subject Line:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
+                                                                <TextField fx:id="subjectField" promptText="Enter email subject..."
+                                                                           style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                                            </children>
+                                                        </VBox>
+
+                                                        <!-- Company Information -->
+                                                        <VBox spacing="5">
+                                                            <children>
+                                                                <Label fx:id="companyNameLabel" text="Company Name:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
+                                                                <TextField fx:id="companyNameField" promptText="Your company name..."
+                                                                           style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                                            </children>
+                                                        </VBox>
+
+                                                        <!-- Newsletter Type -->
+                                                        <VBox spacing="5">
+                                                            <children>
+                                                                <Label fx:id="newsletterTypeLabel" text="Newsletter Type:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
+                                                                <ComboBox fx:id="typeCombo" prefWidth="200"
+                                                                          style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                                            </children>
+                                                        </VBox>
+
+                                                        <!-- Design Settings -->
+                                                        <VBox spacing="10" style="-fx-background-color: #f5f8fa; -fx-padding: 15; -fx-border-radius: 4;">
+                                                            <children>
+                                                                <Label fx:id="designSettingsLabel" text="Design Settings" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #333;" />
+
+                                                                <!-- Header Color -->
+                                                                <VBox spacing="5">
+                                                                    <children>
+                                                                        <Label fx:id="headerColorLabel" text="Header Color:" style="-fx-font-weight: bold; -fx-text-fill: #555;" />
+                                                                        <ColorPicker fx:id="headerColorPicker" prefWidth="150" />
+                                                                    </children>
+                                                                </VBox>
+
+                                                                <!-- Template Style -->
+                                                                <VBox spacing="5">
+                                                                    <children>
+                                                                        <Label fx:id="templateStyleLabel" text="Template Style:" style="-fx-font-weight: bold; -fx-text-fill: #555;" />
+                                                                        <ComboBox fx:id="templateCombo" prefWidth="200"
+                                                                                  style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                                                    </children>
+                                                                </VBox>
+                                                            </children>
+                                                        </VBox>
+
+                                                        <!-- Content Editor -->
+                                                        <VBox spacing="5">
+                                                            <children>
+                                                                <Label fx:id="contentLabel" text="Content:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
+                                                                <TextArea fx:id="contentEditor" prefRowCount="8" wrapText="true"
+                                                                          promptText="Enter your newsletter content here..."
                                                                           style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
                                                             </children>
                                                         </VBox>
                                                     </children>
                                                 </VBox>
+                                            </content>
+                                        </ScrollPane>
+                                    </content>
+                                </Tab>
 
-                                                <!-- Content Editor -->
-                                                <VBox spacing="5">
+                                <!-- Visual Builder Tab -->
+                                <Tab fx:id="visualBuilderTab" text="Visual Builder" closable="false">
+                                    <content>
+                                        <HBox spacing="0" style="-fx-background-color: white;">
+                                            <!-- Component Palette -->
+                                            <VBox spacing="10" prefWidth="200" style="-fx-padding: 15; -fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb; -fx-border-width: 0 1 0 0;">
+                                                <children>
+                                                    <Label fx:id="componentsLabel" text="Components" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #333;" />
+
+                                                    <!-- Component Buttons -->
+                                                    <GridPane hgap="5" vgap="5">
+                                                        <children>
+                                                            <Button fx:id="addTextButton" text="Add Text" prefWidth="170"
+                                                                    style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
+                                                                    GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                                                            <Button fx:id="addHeadingButton" text="Add Heading" prefWidth="170"
+                                                                    style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
+                                                                    GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                                                            <Button fx:id="addImageButton" text="Add Image" prefWidth="170"
+                                                                    style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
+                                                                    GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                                                            <Button fx:id="addButtonButton" text="Add Button" prefWidth="170"
+                                                                    style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
+                                                                    GridPane.rowIndex="3" GridPane.columnIndex="0" />
+                                                            <Button fx:id="addDividerButton" text="Add Divider" prefWidth="170"
+                                                                    style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
+                                                                    GridPane.rowIndex="4" GridPane.columnIndex="0" />
+                                                        </children>
+                                                    </GridPane>
+                                                </children>
+                                            </VBox>
+
+                                            <!-- Visual Editor Area -->
+                                            <VBox spacing="10" HBox.hgrow="ALWAYS" style="-fx-padding: 15;">
+                                                <children>
+                                                    <!-- Editor Toolbar -->
+                                                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: #f5f8fa; -fx-border-radius: 4;">
+                                                        <children>
+                                                            <Label fx:id="livePreviewLabel" text="Live Preview" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
+                                                            <Region HBox.hgrow="ALWAYS" />
+                                                            <Button fx:id="refreshPreviewButton" text="Refresh"
+                                                                    style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                                        </children>
+                                                    </HBox>
+
+                                                    <!-- Preview WebView -->
+                                                    <WebView fx:id="previewWebView" VBox.vgrow="ALWAYS" style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                                </children>
+                                            </VBox>
+                                        </HBox>
+                                    </content>
+                                </Tab>
+
+                                <!-- Preview Tab -->
+                                <Tab fx:id="previewTab" text="Preview" closable="false">
+                                    <content>
+                                        <VBox spacing="10" style="-fx-padding: 15;">
+                                            <children>
+                                                <!-- Preview Toolbar -->
+                                                <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: #f5f8fa; -fx-border-radius: 4;">
                                                     <children>
-                                                        <Label text="Content:" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
-                                                        <TextArea fx:id="contentEditor" prefRowCount="8" wrapText="true"
-                                                                  promptText="Enter your newsletter content here..."
-                                                                  style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                                        <Label fx:id="finalPreviewLabel" text="Final Preview" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
+                                                        <Region HBox.hgrow="ALWAYS" />
                                                     </children>
-                                                </VBox>
+                                                </HBox>
+
+                                                <!-- Preview Container -->
+                                                <Label fx:id="previewPlaceholderLabel" text="Preview appears here when Visual Builder tab is active"
+                                                       style="-fx-text-fill: #71757a; -fx-font-style: italic; -fx-alignment: center;"
+                                                       VBox.vgrow="ALWAYS" />
                                             </children>
                                         </VBox>
                                     </content>
-                                </ScrollPane>
-                            </content>
-                        </Tab>
+                                </Tab>
+                            </TabPane>
 
-                        <!-- Visual Builder Tab -->
-                        <Tab text="Visual Builder" closable="false">
-                            <content>
-                                <HBox spacing="0" style="-fx-background-color: white;">
-                                    <!-- Component Palette -->
-                                    <VBox spacing="10" prefWidth="200" style="-fx-padding: 15; -fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb; -fx-border-width: 0 1 0 0;">
-                                        <children>
-                                            <Label text="Components" style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #333;" />
-
-                                            <!-- Component Buttons -->
-                                            <GridPane hgap="5" vgap="5">
-                                                <children>
-                                                    <Button fx:id="addTextButton" text="Add Text" prefWidth="170"
-                                                            style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
-                                                            GridPane.rowIndex="0" GridPane.columnIndex="0" />
-                                                    <Button fx:id="addHeadingButton" text="Add Heading" prefWidth="170"
-                                                            style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
-                                                            GridPane.rowIndex="1" GridPane.columnIndex="0" />
-                                                    <Button fx:id="addImageButton" text="Add Image" prefWidth="170"
-                                                            style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
-                                                            GridPane.rowIndex="2" GridPane.columnIndex="0" />
-                                                    <Button fx:id="addButtonButton" text="Add Button" prefWidth="170"
-                                                            style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
-                                                            GridPane.rowIndex="3" GridPane.columnIndex="0" />
-                                                    <Button fx:id="addDividerButton" text="Add Divider" prefWidth="170"
-                                                            style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-alignment: center-left;"
-                                                            GridPane.rowIndex="4" GridPane.columnIndex="0" />
-                                                </children>
-                                            </GridPane>
-                                        </children>
-                                    </VBox>
-
-                                    <!-- Visual Editor Area -->
-                                    <VBox spacing="10" HBox.hgrow="ALWAYS" style="-fx-padding: 15;">
-                                        <children>
-                                            <!-- Editor Toolbar -->
-                                            <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: #f5f8fa; -fx-border-radius: 4;">
-                                                <children>
-                                                    <Label text="Live Preview" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
-                                                    <Region HBox.hgrow="ALWAYS" />
-                                                    <Button fx:id="refreshPreviewButton" text="Refresh"
-                                                            style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                                                </children>
-                                            </HBox>
-
-                                            <!-- Preview WebView -->
-                                            <WebView fx:id="previewWebView" VBox.vgrow="ALWAYS" style="-fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                                        </children>
-                                    </VBox>
-                                </HBox>
-                            </content>
-                        </Tab>
-
-                        <!-- Preview Tab -->
-                        <Tab text="Preview" closable="false">
-                            <content>
-                                <VBox spacing="10" style="-fx-padding: 15;">
-                                    <children>
-                                        <!-- Preview Toolbar -->
-                                        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: #f5f8fa; -fx-border-radius: 4;">
-                                            <children>
-                                                <Label text="Final Preview" style="-fx-font-weight: bold; -fx-text-fill: #333;" />
-                                                <Region HBox.hgrow="ALWAYS" />
-                                            </children>
-                                        </HBox>
-
-                                        <!-- Preview Container -->
-                                        <Label text="Preview appears here when Visual Builder tab is active"
-                                               style="-fx-text-fill: #71757a; -fx-font-style: italic; -fx-alignment: center;"
-                                               VBox.vgrow="ALWAYS" />
-                                    </children>
-                                </VBox>
-                            </content>
-                        </Tab>
-                    </TabPane>
-
-                    <!-- Save/Cancel Buttons -->
-                    <HBox spacing="5.0" alignment="CENTER_RIGHT">
-                        <children>
-                            <Button fx:id="cancelButton" text="Cancel"
-                                    style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
-                            <Button fx:id="saveButton" text="Save Newsletter"
-                                    style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-border-radius: 4;" />
+                            <!-- Save/Cancel Buttons -->
+                            <HBox spacing="5.0" alignment="CENTER_RIGHT">
+                                <children>
+                                    <Button fx:id="cancelButton" text="Cancel"
+                                            style="-fx-background-color: white; -fx-border-color: #dfe3eb; -fx-border-radius: 4;" />
+                                    <Button fx:id="saveButton" text="Save Newsletter"
+                                            style="-fx-background-color: #007bff; -fx-text-fill: white; -fx-border-radius: 4;" />
+                                </children>
+                            </HBox>
                         </children>
-                    </HBox>
-                </children>
-            </VBox>
-        </SplitPane>
-    </center>
+                    </VBox>
+                </SplitPane>
+            </center>
 
-    <!-- Status Bar -->
-    <bottom>
-        <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb; -fx-border-width: 1 0 0 0; -fx-padding: 10 10;">
-            <children>
-                <Label fx:id="statusLabel" text="Ready" style="-fx-text-fill: #71757a;" />
-                <Region HBox.hgrow="ALWAYS" />
-                <Label text="Newsletter Builder v1.0" style="-fx-text-fill: #71757a; -fx-font-size: 11px;" />
-            </children>
-        </HBox>
-    </bottom>
-</BorderPane>
+            <!-- Status Bar -->
+            <bottom>
+                <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb; -fx-border-width: 1 0 0 0; -fx-padding: 10 10;">
+                    <children>
+                        <Label fx:id="statusLabel" text="Ready" style="-fx-text-fill: #71757a;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="versionLabel" text="Newsletter Builder v1.0" style="-fx-text-fill: #71757a; -fx-font-size: 11px;" />
+                    </children>
+                </HBox>
+            </bottom>
+        </BorderPane>
+    </content>
+</ScrollPane>

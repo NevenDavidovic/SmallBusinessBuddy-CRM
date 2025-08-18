@@ -7,7 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import smallbusinessbuddycrm.database.OrganizationDAO;
 import smallbusinessbuddycrm.model.Organization;
-import smallbusinessbuddycrm.controllers.OrganizationSetupDialog;
+import smallbusinessbuddycrm.controllers.organization.OrganizationSetupDialog;
 
 import java.util.Optional;
 

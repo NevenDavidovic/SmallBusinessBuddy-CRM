@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
@@ -14,81 +15,97 @@
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.NumberAxis?>
 
-<VBox fx:id="root" prefWidth="800" prefHeight="800" spacing="15" style="-fx-background-color: #f4f4f4;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.ContactsReportController">
-    <padding>
-        <Insets top="20" right="20" bottom="20" left="20"/>
-    </padding>
+<ScrollPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.contact.ContactsReportController" fitToWidth="true" style="-fx-background-color: #f4f4f4;">
+    <content>
+        <VBox fx:id="root" prefWidth="1200" spacing="15" style="-fx-background-color: #f4f4f4;">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
 
-    <!-- Title -->
-    <Label text="Contacts Report" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+            <!-- Title -->
+            <Label fx:id="titleLabel" text="Contacts Report" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
 
-    <!-- Filter Section -->
-    <VBox spacing="10">
-        <Label text="Filters" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Name:"/>
-            <TextField fx:id="nameFilterField" promptText="Enter name" prefWidth="150"/>
-            <Label text="Age Range:"/>
-            <TextField fx:id="minAgeField" promptText="Min age" prefWidth="60"/>
-            <Label text="-"/>
-            <TextField fx:id="maxAgeField" promptText="Max age" prefWidth="60"/>
-            <Label text="Upcoming Birthdays (days):"/>
-            <TextField fx:id="birthdayDaysField" promptText="Days ahead" prefWidth="80"/>
-            <Label text="List:"/>
-            <ComboBox fx:id="listComboBox" prefWidth="150"/>
-            <Button fx:id="applyFilterButton" text="Apply Filters" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
-            <Button fx:id="clearFilterButton" text="Clear Filters" style="-fx-background-color: #ff6b6b; -fx-text-fill: white;"/>
-        </HBox>
-    </VBox>
+            <!-- Filter Section -->
+            <VBox spacing="10">
+                <Label fx:id="filtersLabel" text="Filters" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
 
-    <!-- Summary Statistics -->
-    <VBox spacing="5">
-        <Label text="Summary Statistics" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
-        <HBox spacing="20">
-            <Label fx:id="totalContactsLabel" text="Total Contacts: 0" style="-fx-font-size: 12px;"/>
-            <Label fx:id="totalMembersLabel" text="Total Members: 0" style="-fx-font-size: 12px;"/>
-            <Label fx:id="totalNonMembersLabel" text="Total Non-Members: 0" style="-fx-font-size: 12px;"/>
-            <Label fx:id="averageAgeLabel" text="Average Age: 0" style="-fx-font-size: 12px;"/>
-        </HBox>
-    </VBox>
+                <!-- First row of filters -->
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <Label fx:id="nameLabel" text="Name:" minWidth="80" prefWidth="80"/>
+                    <TextField fx:id="nameFilterField" promptText="Enter name" prefWidth="200"/>
 
-    <!-- Charts Section -->
-    <VBox spacing="10">
-        <Label text="Visual Analytics" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
-        <HBox spacing="20">
-            <!-- Pie Chart for Member Distribution -->
-            <PieChart fx:id="memberPieChart" prefWidth="350" prefHeight="200" title="Member Distribution"/>
-            <!-- Bar Chart for Age Distribution -->
-            <BarChart fx:id="ageBarChart" prefWidth="350" prefHeight="200" title="Age Distribution">
-                <xAxis>
-                    <CategoryAxis label="Age Group"/>
-                </xAxis>
-                <yAxis>
-                    <NumberAxis label="Number of Contacts"/>
-                </yAxis>
-            </BarChart>
-        </HBox>
-    </VBox>
+                    <Label fx:id="ageRangeLabel" text="Age Range:" minWidth="180" prefWidth="180"/>
+                    <TextField fx:id="minAgeField" promptText="Min age" prefWidth="80"/>
+                    <Label text="-" minWidth="10"/>
+                    <TextField fx:id="maxAgeField" promptText="Max age" prefWidth="80"/>
+                </HBox>
 
-    <!-- Table View -->
-    <TableView fx:id="contactsTable" prefHeight="300">
-        <columns>
-            <TableColumn fx:id="firstNameColumn" text="First Name" prefWidth="100"/>
-            <TableColumn fx:id="lastNameColumn" text="Last Name" prefWidth="100"/>
-            <TableColumn fx:id="emailColumn" text="Email" prefWidth="150"/>
-            <TableColumn fx:id="phoneColumn" text="Phone" prefWidth="100"/>
-            <TableColumn fx:id="addressColumn" text="Address" prefWidth="150"/>
-            <TableColumn fx:id="birthdayColumn" text="Birthday" prefWidth="100"/>
-            <TableColumn fx:id="ageColumn" text="Age" prefWidth="50"/>
-            <TableColumn fx:id="pinColumn" text="PIN" prefWidth="100"/>
-            <TableColumn fx:id="memberColumn" text="Member" prefWidth="80"/>
-            <TableColumn fx:id="memberSinceColumn" text="Member Since" prefWidth="100"/>
-            <TableColumn fx:id="memberUntilColumn" text="Member Until" prefWidth="100"/>
-        </columns>
-    </TableView>
+                <!-- Second row of filters -->
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <Label fx:id="upcomingBirthdaysLabel" text="Upcoming Birthdays:" minWidth="250" prefWidth="250"/>
+                    <TextField fx:id="birthdayDaysField" promptText="Days ahead" prefWidth="120"/>
 
-    <!-- Export Button -->
-    <HBox spacing="10" alignment="CENTER_RIGHT">
-        <Button fx:id="exportButton" text="Export to CSV" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
-    </HBox>
-</VBox>
+                    <Label fx:id="listLabel" text="List:" minWidth="80" prefWidth="80"/>
+                    <ComboBox fx:id="listComboBox" prefWidth="200"/>
+                </HBox>
+
+                <!-- Buttons row -->
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <Button fx:id="applyFilterButton" text="Apply Filters" prefWidth="150" style="-fx-background-color: #4CAF50; -fx-text-fill: white;"/>
+                    <Button fx:id="clearFilterButton" text="Clear Filters" prefWidth="150" style="-fx-background-color: #ff6b6b; -fx-text-fill: white;"/>
+                </HBox>
+            </VBox>
+
+            <!-- Summary Statistics -->
+            <VBox spacing="8">
+                <Label fx:id="summaryLabel" text="Summary Statistics" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+                <HBox spacing="40">
+                    <Label fx:id="totalContactsLabel" text="Total Contacts: 0" style="-fx-font-size: 12px;" minWidth="180" prefWidth="180"/>
+                    <Label fx:id="totalMembersLabel" text="Total Members: 0" style="-fx-font-size: 12px;" minWidth="180" prefWidth="180"/>
+                    <Label fx:id="totalNonMembersLabel" text="Total Non-Members: 0" style="-fx-font-size: 12px;" minWidth="180" prefWidth="180"/>
+                    <Label fx:id="averageAgeLabel" text="Average Age: 0" style="-fx-font-size: 12px;" minWidth="180" prefWidth="180"/>
+                </HBox>
+            </VBox>
+
+            <!-- Charts Section -->
+            <VBox spacing="10">
+                <Label fx:id="visualAnalyticsLabel" text="Visual Analytics" style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;"/>
+                <HBox spacing="20">
+                    <!-- Pie Chart for Member Distribution -->
+                    <PieChart fx:id="memberPieChart" prefWidth="400" prefHeight="250" title="Member Distribution"/>
+                    <!-- Bar Chart for Age Distribution -->
+                    <BarChart fx:id="ageBarChart" prefWidth="400" prefHeight="250" title="Age Distribution">
+                        <xAxis>
+                            <CategoryAxis fx:id="ageGroupAxis" label="Age Group"/>
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis fx:id="contactsCountAxis" label="Number of Contacts"/>
+                        </yAxis>
+                    </BarChart>
+                </HBox>
+            </VBox>
+
+            <!-- Table View -->
+            <TableView fx:id="contactsTable" prefHeight="500" minHeight="500" maxHeight="500">
+                <columns>
+                    <TableColumn fx:id="firstNameColumn" text="First Name" prefWidth="100" minWidth="80"/>
+                    <TableColumn fx:id="lastNameColumn" text="Last Name" prefWidth="100" minWidth="80"/>
+                    <TableColumn fx:id="emailColumn" text="Email" prefWidth="150" minWidth="120"/>
+                    <TableColumn fx:id="phoneColumn" text="Phone" prefWidth="110" minWidth="90"/>
+                    <TableColumn fx:id="addressColumn" text="Address" prefWidth="150" minWidth="120"/>
+                    <TableColumn fx:id="birthdayColumn" text="Birthday" prefWidth="100" minWidth="90"/>
+                    <TableColumn fx:id="ageColumn" text="Age" prefWidth="60" minWidth="50"/>
+                    <TableColumn fx:id="pinColumn" text="PIN" prefWidth="90" minWidth="70"/>
+                    <TableColumn fx:id="memberColumn" text="Member" prefWidth="80" minWidth="60"/>
+                    <TableColumn fx:id="memberSinceColumn" text="Member Since" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="memberUntilColumn" text="Member Until" prefWidth="120" minWidth="100"/>
+                </columns>
+            </TableView>
+
+            <!-- Export Button -->
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button fx:id="exportButton" text="Export to CSV" prefWidth="120" style="-fx-background-color: #2196F3; -fx-text-fill: white;"/>
+            </HBox>
+        </VBox>
+    </content>
+</ScrollPane>

@@ -285,6 +285,69 @@
     -fx-text-fill: #2c3e50;
 }
 
-.language-button-pill.language-active:hover {
-    -fx-background-color: #f8f9fa;
+
+/* Notification Menu Button */
+.notification-menu-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 8;
+}
+
+.notification-menu-button .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-shape: "";
+}
+
+.notification-menu-button .arrow {
+    -fx-background-color: transparent;
+    -fx-shape: "";
+    -fx-scale-x: 0;
+    -fx-scale-y: 0;
+    -fx-padding: 0;
+    -fx-border-width: 0;
+    visibility: hidden;
+}
+
+/* Make sure the MenuButton behaves like a regular button */
+.notification-menu-button > .label {
+    -fx-text-fill: transparent;
+    -fx-font-size: 0;
+}
+
+/* Notification Badge */
+
+
+/* Dropdown Menu Styles */
+.notification-menu-button .context-menu {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 1;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 10, 0, 0, 2);
+    -fx-padding: 4;
+}
+
+.notification-menu-button .menu-item {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.notification-menu-button .menu-item:focused {
+    -fx-background-color: transparent;
+}
+
+/* Notification Content Styles */
+.notification-content {
+    -fx-background-color: white;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-cursor: hand;
+}
+
+.notification-content.unread {
+    -fx-background-color: #f0f8ff;
+    -fx-border-color: #2196F3;
+    -fx-border-width: 0 0 0 3;
 }
