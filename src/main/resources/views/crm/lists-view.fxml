@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.ListsController">
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.list.ListsController">
     <top>
         <VBox spacing="10.0" BorderPane.alignment="CENTER">
             <children>

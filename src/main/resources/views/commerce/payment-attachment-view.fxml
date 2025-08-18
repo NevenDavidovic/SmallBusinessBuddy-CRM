@@ -7,7 +7,7 @@
 <?import javafx.scene.web.WebView?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="smallbusinessbuddycrm.controllers.PaymentAttachmentController">
+            fx:controller="smallbusinessbuddycrm.controllers.utilities.PaymentAttachmentController">
 
     <!-- Header -->
     <top>
@@ -18,7 +18,7 @@
             <children>
                 <HBox alignment="CENTER_LEFT" spacing="15">
                     <children>
-                        <Label text="📋 Payment Attachment Templates" textFill="#0099cc">
+                        <Label fx:id="titleLabel" text="📋 Payment Attachment Templates" textFill="#0099cc">
                             <font>
                                 <Font name="System Bold" size="24.0" />
                             </font>
@@ -42,7 +42,7 @@
                 <!-- Search Bar -->
                 <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-padding: 10 0 0 0;">
                     <children>
-                        <Label text="Search:" />
+                        <Label fx:id="searchLabel" text="Search:" />
                         <TextField fx:id="searchField" promptText="Search templates..." prefWidth="200" />
                         <Button fx:id="clearSearchButton" text="Clear"
                                 style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 4 8;">
@@ -63,7 +63,7 @@
             <!-- Left Panel - Template List -->
             <VBox spacing="10" style="-fx-padding: 20;">
                 <children>
-                    <Label text="Templates" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
+                    <Label fx:id="templatesLabel" text="Templates" style="-fx-font-weight: bold; -fx-font-size: 14px;" />
 
                     <!-- Template Table -->
                     <TableView fx:id="templateTable" VBox.vgrow="ALWAYS" style="-fx-border-color: #dee2e6; -fx-border-radius: 4;">
@@ -121,14 +121,14 @@
                     <TabPane fx:id="editorTabPane" VBox.vgrow="ALWAYS" style="-fx-border-color: #dee2e6; -fx-border-radius: 4;">
 
                         <!-- Template Details Tab -->
-                        <Tab text="Details" closable="false">
+                        <Tab fx:id="detailsTab" text="Details" closable="false">
                             <content>
                                 <VBox spacing="15" style="-fx-padding: 20;">
                                     <children>
                                         <!-- Template Name -->
                                         <VBox spacing="5">
                                             <children>
-                                                <Label text="Template Name:" style="-fx-font-weight: bold;" />
+                                                <Label fx:id="templateNameLabel" text="Template Name:" style="-fx-font-weight: bold;" />
                                                 <TextField fx:id="templateNameField" promptText="Enter template name..." />
                                             </children>
                                         </VBox>
@@ -136,7 +136,7 @@
                                         <!-- Template Description -->
                                         <VBox spacing="5">
                                             <children>
-                                                <Label text="Description:" style="-fx-font-weight: bold;" />
+                                                <Label fx:id="descriptionLabel" text="Description:" style="-fx-font-weight: bold;" />
                                                 <TextArea fx:id="templateDescriptionField" promptText="Enter template description..."
                                                           prefRowCount="3" wrapText="true" />
                                             </children>
@@ -154,7 +154,7 @@
                                                         <Font size="12.0" />
                                                     </font>
                                                 </Button>
-                                                <Label text="Click to see all template variables you can use"
+                                                <Label fx:id="variablesHelpLabel" text="Click to see all template variables you can use"
                                                        style="-fx-text-fill: #6c757d; -fx-font-size: 11px;" />
                                             </children>
                                         </HBox>
@@ -166,14 +166,14 @@
                         </Tab>
 
                         <!-- HTML Editor Tab -->
-                        <Tab text="HTML Editor" closable="false">
+                        <Tab fx:id="htmlEditorTab" text="HTML Editor" closable="false">
                             <content>
                                 <VBox spacing="10" style="-fx-padding: 10;">
                                     <children>
                                         <!-- Editor Toolbar -->
                                         <HBox spacing="10" alignment="CENTER_LEFT">
                                             <children>
-                                                <Label text="HTML Content:" style="-fx-font-weight: bold;" />
+                                                <Label fx:id="htmlContentLabel" text="HTML Content:" style="-fx-font-weight: bold;" />
                                                 <Region HBox.hgrow="ALWAYS" />
                                                 <Button fx:id="formatHtmlButton" text="Format"
                                                         style="-fx-background-color: #6c757d; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 4 8;">
@@ -206,14 +206,14 @@
                         </Tab>
 
                         <!-- Preview Tab -->
-                        <Tab text="Preview" closable="false">
+                        <Tab fx:id="previewTab" text="Preview" closable="false">
                             <content>
                                 <VBox spacing="10" style="-fx-padding: 10;">
                                     <children>
                                         <!-- Preview Toolbar -->
                                         <HBox spacing="10" alignment="CENTER_LEFT">
                                             <children>
-                                                <Label text="Preview:" style="-fx-font-weight: bold;" />
+                                                <Label fx:id="previewLabel" text="Preview:" style="-fx-font-weight: bold;" />
                                                 <Region HBox.hgrow="ALWAYS" />
                                                 <Button fx:id="refreshPreviewButton" text="🔄 Refresh Preview"
                                                         style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4; -fx-padding: 4 8;">

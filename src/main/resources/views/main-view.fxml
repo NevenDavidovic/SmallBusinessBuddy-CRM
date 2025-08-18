@@ -41,14 +41,17 @@
                     </graphic>
                 </Button>
 
-                <!-- Notification Bell -->
-                <Button styleClass="icon-button">
+                <!-- Notification Bell with Dropdown (No Chevron) -->
+                <MenuButton fx:id="notificationMenuButton" styleClass="icon-button, notification-menu-button">
                     <graphic>
-                        <ImageView fitHeight="24.0" fitWidth="24.0">
-                            <Image url="@../images/icons/notification-icon.png"/>
-                        </ImageView>
+                        <StackPane fx:id="notificationIconContainer">
+                            <ImageView fitHeight="24.0" fitWidth="24.0">
+                                <Image url="@../images/icons/notification-icon.png"/>
+                            </ImageView>
+                            <!-- Notification badge will be added programmatically -->
+                        </StackPane>
                     </graphic>
-                </Button>
+                </MenuButton>
 
                 <!-- Settings Gear -->
                 <Button styleClass="icon-button" onAction="#handleSettingsAction">
@@ -106,7 +109,6 @@
                             <Button fx:id="createEmailButton" styleClass="sidebar-sub-item" onAction="#handleEmailAction"/>
                             <Button fx:id="listsButton" styleClass="sidebar-sub-item" onAction="#handleListsAction"/>
                         </VBox>
-
                     </TitledPane>
 
                     <TitledPane fx:id="commercePane" styleClass="sidebar-accordion">
@@ -147,32 +149,6 @@
                             <Button fx:id="workshopStatsButton" styleClass="sidebar-sub-item" onAction="#handleWorkshopReportingScreen"/>
                         </VBox>
                     </TitledPane>
-
-                    <TitledPane fx:id="dataManagementPane" styleClass="sidebar-accordion">
-                        <graphic>
-                            <ImageView fitHeight="24.0" fitWidth="24.0">
-                                <Image url="@../images/icons/data-managment-icon.png"/>
-                            </ImageView>
-                        </graphic>
-                        <VBox spacing="5">
-                            <Button fx:id="propertiesButton" styleClass="sidebar-sub-item"/>
-                            <Button fx:id="importsButton" styleClass="sidebar-sub-item"/>
-                            <Button fx:id="exportButton" styleClass="sidebar-sub-item"/>
-                        </VBox>
-                    </TitledPane>
-
-                    <TitledPane fx:id="libraryPane" styleClass="sidebar-accordion">
-                        <graphic>
-                            <ImageView fitHeight="24.0" fitWidth="24.0">
-                                <Image url="@../images/icons/library-icon.png"/>
-                            </ImageView>
-                        </graphic>
-                        <VBox spacing="5">
-                            <Button fx:id="documentsButton" styleClass="sidebar-sub-item"/>
-                            <Button fx:id="tasksButton" styleClass="sidebar-sub-item"/>
-                            <Button fx:id="resourcesButton" styleClass="sidebar-sub-item"/>
-                        </VBox>
-                    </TitledPane>
                 </panes>
             </Accordion>
 
@@ -193,7 +169,11 @@
     </left>
 
     <center>
-        <StackPane fx:id="contentArea" styleClass="content-area"/>
+        <StackPane fx:id="contentArea" styleClass="content-area">
+            <!-- Welcome Image -->
+            <ImageView fx:id="welcomeImage" fitHeight="400.0" fitWidth="600.0" preserveRatio="true">
+                <Image url="@../images/welcome-page.png" />
+            </ImageView>
+        </StackPane>
     </center>
-
 </BorderPane>

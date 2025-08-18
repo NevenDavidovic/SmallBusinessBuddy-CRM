@@ -5,37 +5,39 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.PaymentTemplateViewController">
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.utilities.PaymentTemplateViewController">
     <top>
         <VBox spacing="10.0" BorderPane.alignment="CENTER">
             <children>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <Label text="💳 Payment Templates" textFill="#0099cc">
+                        <!-- Add fx:id to make title translatable -->
+                        <Label fx:id="titleLabel" text="" textFill="#0099cc">
                             <font>
                                 <Font name="System Bold" size="24.0" />
                             </font>
                         </Label>
-                        <Label fx:id="recordCountLabel" text="0 templates" textFill="#71757a">
+                        <Label fx:id="recordCountLabel" text="" textFill="#71757a">
                             <font>
                                 <Font size="12.0" />
                             </font>
                         </Label>
                         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS" spacing="5.0">
                             <children>
-                                <Button fx:id="deleteSelectedButton" text="Delete Selected"
+                                <!-- Remove hardcoded text - controller will set it -->
+                                <Button fx:id="deleteSelectedButton" text=""
                                         style="-fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-radius: 4;">
                                     <HBox.margin>
                                         <Insets right="5.0" />
                                     </HBox.margin>
                                 </Button>
-                                <Button fx:id="toggleStatusButton" text="Toggle Status"
+                                <Button fx:id="toggleStatusButton" text=""
                                         style="-fx-background-color: #ffc107; -fx-text-fill: white; -fx-border-radius: 4;">
                                     <HBox.margin>
                                         <Insets right="5.0" />
                                     </HBox.margin>
                                 </Button>
-                                <Button fx:id="createTemplateButton" text="Create Template"
+                                <Button fx:id="createTemplateButton" text=""
                                         style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4;" />
                             </children>
                         </HBox>
@@ -43,14 +45,16 @@
                 </HBox>
                 <HBox spacing="5.0">
                     <children>
-                        <Button fx:id="allTemplatesButton" text="All Templates" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="activeTemplatesButton" text="Active" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
-                        <Button fx:id="inactiveTemplatesButton" text="Inactive" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                        <!-- Remove hardcoded text - controller will set it -->
+                        <Button fx:id="allTemplatesButton" text="" style="-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="activeTemplatesButton" text="" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
+                        <Button fx:id="inactiveTemplatesButton" text="" style="-fx-background-color: white; -fx-border-color: #dfe3eb;" />
                     </children>
                 </HBox>
                 <HBox alignment="CENTER_LEFT" spacing="10.0">
                     <children>
-                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search templates..." style="-fx-border-color: #dfe3eb;" />
+                        <!-- Remove hardcoded promptText - controller will set it -->
+                        <TextField fx:id="searchField" prefWidth="250.0" promptText="" style="-fx-border-color: #dfe3eb;" />
                     </children>
                 </HBox>
             </children>
@@ -64,15 +68,16 @@
             <TableView fx:id="templatesTable" prefHeight="400.0">
                 <columns>
                     <TableColumn fx:id="selectColumn" prefWidth="40.0" text="" />
-                    <TableColumn fx:id="editColumn" prefWidth="60.0" text="EDIT" />
-                    <TableColumn fx:id="nameColumn" text="TEMPLATE NAME" prefWidth="150.0" />
-                    <TableColumn fx:id="descriptionColumn" text="DESCRIPTION" prefWidth="200.0" />
-                    <TableColumn fx:id="amountColumn" text="AMOUNT" prefWidth="100.0" />
-                    <TableColumn fx:id="modelColumn" text="MODEL" prefWidth="80.0" />
-                    <TableColumn fx:id="referenceColumn" text="REFERENCE" prefWidth="120.0" />
-                    <TableColumn fx:id="statusColumn" text="STATUS" prefWidth="80.0" />
-                    <TableColumn fx:id="createdAtColumn" text="CREATED" prefWidth="140.0" />
-                    <TableColumn fx:id="updatedAtColumn" text="UPDATED" prefWidth="140.0" />
+                    <!-- Remove hardcoded text - controller will set it -->
+                    <TableColumn fx:id="editColumn" prefWidth="60.0" text="" />
+                    <TableColumn fx:id="nameColumn" text="" prefWidth="150.0" />
+                    <TableColumn fx:id="descriptionColumn" text="" prefWidth="200.0" />
+                    <TableColumn fx:id="amountColumn" text="" prefWidth="100.0" />
+                    <TableColumn fx:id="modelColumn" text="" prefWidth="80.0" />
+                    <TableColumn fx:id="referenceColumn" text="" prefWidth="120.0" />
+                    <TableColumn fx:id="statusColumn" text="" prefWidth="80.0" />
+                    <TableColumn fx:id="createdAtColumn" text="" prefWidth="140.0" />
+                    <TableColumn fx:id="updatedAtColumn" text="" prefWidth="140.0" />
                 </columns>
             </TableView>
         </ScrollPane>

@@ -28,7 +28,20 @@ module smallbusinessbuddycrm {
     opens smallbusinessbuddycrm to javafx.fxml;
     exports smallbusinessbuddycrm;
 
-    opens smallbusinessbuddycrm.controllers to javafx.fxml;
-    exports smallbusinessbuddycrm.controllers;
+
     opens smallbusinessbuddycrm.model to javafx.base;
+    exports smallbusinessbuddycrm.controllers.contact;
+    opens smallbusinessbuddycrm.controllers.contact to javafx.fxml;
+    exports smallbusinessbuddycrm.controllers.list;
+    opens smallbusinessbuddycrm.controllers.list to javafx.fxml;
+    exports smallbusinessbuddycrm.controllers.workshop;
+    opens smallbusinessbuddycrm.controllers.workshop to javafx.fxml;
+    exports smallbusinessbuddycrm.controllers.utilities;
+    opens smallbusinessbuddycrm.controllers.utilities to javafx.fxml;
+    exports smallbusinessbuddycrm.controllers.teacher;
+    opens smallbusinessbuddycrm.controllers.teacher to javafx.fxml;
+    exports smallbusinessbuddycrm.controllers.organization;
+    opens smallbusinessbuddycrm.controllers.organization to javafx.fxml;
+    exports smallbusinessbuddycrm.controllers.underaged;
+    opens smallbusinessbuddycrm.controllers.underaged to javafx.fxml;
 }

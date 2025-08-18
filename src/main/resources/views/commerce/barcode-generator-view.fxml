@@ -7,7 +7,7 @@
 <?import javafx.scene.text.Font?>
 
 <ScrollPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="smallbusinessbuddycrm.controllers.BarcodeGeneratorViewController"
+            fx:controller="smallbusinessbuddycrm.controllers.underaged.BarcodeGeneratorViewController"
             fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
             style="-fx-background-color: #f5f7fa;">
 
