@@ -8,20 +8,41 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Data Access Object for Workshop entity operations.
+ * Handles database interactions for workshop management including CRUD operations,
+ * teacher assignments, date-based filtering, and participant management.
+ *
+ * Features:
+ * - Complete workshop lifecycle management
+ * - Teacher assignment and management
+ * - Date-based workshop filtering (active, upcoming, past)
+ * - Search and filtering capabilities
+ * - Bulk operations support
+ * - Workshop status tracking
+ * - Teacher relationship management
+ *
+ * @author Small Business Buddy CRM Team
+ * @version 1.0
+ */
 public class WorkshopDAO {
 
+    /**
+     * Retrieves all workshops from the database.
+     * Includes comprehensive logging for debugging purposes.
+     * Results are ordered by start date (most recent first), then by name.
+     *
+     * @return List of all workshops with full details, ordered by date and name
+     */
     public List<Workshop> getAllWorkshops() {
         List<Workshop> workshops = new ArrayList<>();
         String query = "SELECT * FROM workshops ORDER BY from_date DESC, name";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-
-            // Debug: Print connection info
             System.out.println("=== WorkshopDAO Debug Info ===");
             System.out.println("Database URL: " + conn.getMetaData().getURL());
             System.out.println("Connection valid: " + conn.isValid(5));
 
-            // Debug: Check if table exists and has data
             String countQuery = "SELECT COUNT(*) as count FROM workshops";
             try (Statement countStmt = conn.createStatement();
                  ResultSet countRs = countStmt.executeQuery(countQuery)) {
@@ -32,7 +53,6 @@ public class WorkshopDAO {
                 }
             }
 
-            // Debug: Show table structure
             String tableInfoQuery = "PRAGMA table_info(workshops)";
             try (Statement infoStmt = conn.createStatement();
                  ResultSet infoRs = infoStmt.executeQuery(tableInfoQuery)) {
@@ -43,7 +63,6 @@ public class WorkshopDAO {
                 }
             }
 
-            // Main query
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(query)) {
 
@@ -55,7 +74,6 @@ public class WorkshopDAO {
                     Workshop workshop = createWorkshopFromResultSet(rs);
                     workshops.add(workshop);
 
-                    // Debug: Print first workshop details
                     if (rowCount == 1) {
                         System.out.println("First workshop loaded: " + workshop.getName() + " (" + workshop.getDateRange() + ")");
                         System.out.println("  Duration: " + workshop.getDurationInDays() + " days");
@@ -78,6 +96,14 @@ public class WorkshopDAO {
         return workshops;
     }
 
+    /**
+     * Creates a new workshop in the database.
+     * Automatically generates ID and handles date conversions.
+     * Teacher assignment is optional and can be set later.
+     *
+     * @param workshop The workshop object to create
+     * @return true if workshop was created successfully, false otherwise
+     */
     public boolean createWorkshop(Workshop workshop) {
         String query = """
         INSERT INTO workshops (
@@ -90,12 +116,9 @@ public class WorkshopDAO {
              PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setString(1, workshop.getName());
-
-            // Handle dates - convert LocalDate to String
             stmt.setString(2, workshop.getFromDate() != null ? workshop.getFromDate().toString() : null);
             stmt.setString(3, workshop.getToDate() != null ? workshop.getToDate().toString() : null);
 
-            // Handle teacher_id
             if (workshop.getTeacherId() != null) {
                 stmt.setInt(4, workshop.getTeacherId());
             } else {
@@ -108,7 +131,6 @@ public class WorkshopDAO {
             int rowsAffected = stmt.executeUpdate();
 
             if (rowsAffected > 0) {
-                // Get the generated ID
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         workshop.setId(generatedKeys.getInt(1));
@@ -126,6 +148,14 @@ public class WorkshopDAO {
         return false;
     }
 
+    /**
+     * Updates an existing workshop in the database.
+     * Automatically updates the updated_at timestamp.
+     * Handles date conversions and teacher assignment changes.
+     *
+     * @param workshop The workshop object with updated information
+     * @return true if workshop was updated successfully, false otherwise
+     */
     public boolean updateWorkshop(Workshop workshop) {
         String query = """
         UPDATE workshops SET 
@@ -138,12 +168,9 @@ public class WorkshopDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, workshop.getName());
-
-            // Handle dates - convert LocalDate to String
             stmt.setString(2, workshop.getFromDate() != null ? workshop.getFromDate().toString() : null);
             stmt.setString(3, workshop.getToDate() != null ? workshop.getToDate().toString() : null);
 
-            // Handle teacher_id
             if (workshop.getTeacherId() != null) {
                 stmt.setInt(4, workshop.getTeacherId());
             } else {
@@ -168,6 +195,13 @@ public class WorkshopDAO {
         return false;
     }
 
+    /**
+     * Deletes a single workshop from the database.
+     * This operation will cascade to workshop participants and related data.
+     *
+     * @param workshopId The ID of the workshop to delete
+     * @return true if workshop was deleted successfully, false otherwise
+     */
     public boolean deleteWorkshop(int workshopId) {
         String query = "DELETE FROM workshops WHERE id = ?";
 
@@ -190,19 +224,25 @@ public class WorkshopDAO {
         return false;
     }
 
+    /**
+     * Deletes multiple workshops in a single database operation.
+     * Uses optimized IN clause for better performance than individual deletes.
+     * This operation will cascade to participants and related data.
+     *
+     * @param workshopIds List of workshop IDs to delete
+     * @return true if all workshops were deleted successfully, false otherwise
+     */
     public boolean deleteWorkshops(List<Integer> workshopIds) {
         if (workshopIds.isEmpty()) {
             return false;
         }
 
-        // Create placeholders for IN clause (?, ?, ?, ...)
         String placeholders = String.join(",", Collections.nCopies(workshopIds.size(), "?"));
         String query = "DELETE FROM workshops WHERE id IN (" + placeholders + ")";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
-            // Set the workshop IDs as parameters
             for (int i = 0; i < workshopIds.size(); i++) {
                 stmt.setInt(i + 1, workshopIds.get(i));
             }
@@ -222,6 +262,12 @@ public class WorkshopDAO {
         return false;
     }
 
+    /**
+     * Retrieves a specific workshop by ID.
+     *
+     * @param workshopId The ID of the workshop to retrieve
+     * @return Workshop object if found, null otherwise
+     */
     public Workshop getWorkshopById(int workshopId) {
         String query = "SELECT * FROM workshops WHERE id = ?";
 
@@ -243,6 +289,13 @@ public class WorkshopDAO {
         return null;
     }
 
+    /**
+     * Retrieves all workshops that are currently active (running today).
+     * A workshop is active if today's date falls between start and end dates.
+     * Results are ordered by start date.
+     *
+     * @return List of currently active workshops, ordered by start date
+     */
     public List<Workshop> getActiveWorkshops() {
         List<Workshop> workshops = new ArrayList<>();
         String today = LocalDate.now().toString();
@@ -274,6 +327,14 @@ public class WorkshopDAO {
         return workshops;
     }
 
+    /**
+     * Retrieves workshops that are starting within the specified number of days.
+     * Used for upcoming workshop notifications and planning.
+     * Results are ordered by start date.
+     *
+     * @param daysAhead Number of days in the future to check for workshops
+     * @return List of upcoming workshops, ordered by start date
+     */
     public List<Workshop> getUpcomingWorkshops(int daysAhead) {
         List<Workshop> workshops = new ArrayList<>();
         String today = LocalDate.now().toString();
@@ -307,6 +368,13 @@ public class WorkshopDAO {
         return workshops;
     }
 
+    /**
+     * Searches for workshops by name using partial matching.
+     * Results are ordered by start date (most recent first), then by name.
+     *
+     * @param searchTerm The search term to match against workshop names
+     * @return List of workshops with names containing the search term
+     */
     public List<Workshop> searchWorkshops(String searchTerm) {
         List<Workshop> workshops = new ArrayList<>();
         String query = """
@@ -337,7 +405,13 @@ public class WorkshopDAO {
         return workshops;
     }
 
-    // NEW: Get workshops by teacher
+    /**
+     * Retrieves all workshops assigned to a specific teacher.
+     * Results are ordered by start date (most recent first), then by name.
+     *
+     * @param teacherId The ID of the teacher
+     * @return List of workshops assigned to the teacher
+     */
     public List<Workshop> getWorkshopsByTeacher(int teacherId) {
         List<Workshop> workshops = new ArrayList<>();
         String query = """
@@ -366,7 +440,14 @@ public class WorkshopDAO {
         return workshops;
     }
 
-    // NEW: Assign teacher to workshop
+    /**
+     * Assigns a teacher to a specific workshop.
+     * Updates the workshop's teacher assignment and timestamp.
+     *
+     * @param workshopId The ID of the workshop
+     * @param teacherId The ID of the teacher to assign
+     * @return true if teacher was assigned successfully, false otherwise
+     */
     public boolean assignTeacherToWorkshop(int workshopId, int teacherId) {
         String query = "UPDATE workshops SET teacher_id = ?, updated_at = ? WHERE id = ?";
 
@@ -392,7 +473,13 @@ public class WorkshopDAO {
         return false;
     }
 
-    // NEW: Remove teacher from workshop
+    /**
+     * Removes the teacher assignment from a workshop.
+     * Sets the teacher_id to NULL and updates timestamp.
+     *
+     * @param workshopId The ID of the workshop to remove teacher from
+     * @return true if teacher was removed successfully, false otherwise
+     */
     public boolean removeTeacherFromWorkshop(int workshopId) {
         String query = "UPDATE workshops SET teacher_id = NULL, updated_at = ? WHERE id = ?";
 
@@ -417,7 +504,13 @@ public class WorkshopDAO {
         return false;
     }
 
-    // NEW: Get workshops with teacher information
+    /**
+     * Retrieves all workshops with their associated teacher information.
+     * Uses LEFT JOIN to include workshops without assigned teachers.
+     * Results are ordered by start date (most recent first), then by name.
+     *
+     * @return List of workshops with teacher information included
+     */
     public List<Workshop> getWorkshopsWithTeachers() {
         List<Workshop> workshops = new ArrayList<>();
         String query = """
@@ -433,7 +526,6 @@ public class WorkshopDAO {
 
             while (rs.next()) {
                 Workshop workshop = createWorkshopFromResultSet(rs);
-                // You could add teacher name to workshop model or handle it separately
                 workshops.add(workshop);
             }
 
@@ -446,20 +538,26 @@ public class WorkshopDAO {
         return workshops;
     }
 
-    // Helper method: Extract workshop creation logic
+    /**
+     * Creates a Workshop object from a database ResultSet.
+     * Handles proper type conversion, date parsing, and null value management.
+     * Includes comprehensive error handling for date parsing operations.
+     *
+     * @param rs ResultSet containing workshop data
+     * @return Populated Workshop object
+     * @throws SQLException if database access error occurs
+     */
     private Workshop createWorkshopFromResultSet(ResultSet rs) throws SQLException {
         Workshop workshop = new Workshop();
 
         workshop.setId(rs.getInt("id"));
         workshop.setName(rs.getString("name"));
 
-        // Handle teacher_id
         int teacherId = rs.getInt("teacher_id");
         if (!rs.wasNull()) {
             workshop.setTeacherId(teacherId);
         }
 
-        // Handle dates
         String fromDateStr = rs.getString("from_date");
         if (fromDateStr != null && !fromDateStr.trim().isEmpty()) {
             try {

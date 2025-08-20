@@ -6,8 +6,30 @@ import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
+/**
+ * Data Access Object for List entity operations.
+ * Handles database interactions for contact list management including CRUD operations,
+ * membership management, and search functionality.
+ *
+ * Features:
+ * - Complete list lifecycle management
+ * - Contact membership operations
+ * - Search and filtering capabilities
+ * - Soft delete functionality
+ * - Automatic contact counting
+ *
+ * @author Small Business Buddy CRM Team
+ * @version 1.0
+ */
 public class ListsDAO {
 
+    /**
+     * Retrieves all active (non-deleted) lists from the database.
+     * Includes contact count for each list and comprehensive debugging information.
+     * Uses optimized two-phase loading to prevent database connection issues.
+     *
+     * @return ArrayList of active lists, ordered by most recently updated
+     */
     public ArrayList<List> getAllActiveLists() {
         ArrayList<List> lists = new ArrayList<>();
         String query = "SELECT * FROM lists WHERE is_deleted = 0 ORDER BY updated_at DESC";
@@ -16,12 +38,11 @@ public class ListsDAO {
             System.out.println("=== ListsDAO Debug Info ===");
             System.out.println("Database URL: " + conn.getMetaData().getURL());
 
-            // Debug: Check counts
             String countQuery = "SELECT COUNT(*) as total FROM lists";
             try (Statement countStmt = conn.createStatement();
                  ResultSet countRs = countStmt.executeQuery(countQuery)) {
                 if (countRs.next()) {
-                    System.out.println("📊 Total records in lists table: " + countRs.getInt("total"));
+                    System.out.println("Total records in lists table: " + countRs.getInt("total"));
                 }
             }
 
@@ -29,64 +50,68 @@ public class ListsDAO {
             try (Statement activeStmt = conn.createStatement();
                  ResultSet activeRs = activeStmt.executeQuery(activeQuery)) {
                 if (activeRs.next()) {
-                    System.out.println("✅ Active records (is_deleted = 0): " + activeRs.getInt("active"));
+                    System.out.println("Active records (is_deleted = 0): " + activeRs.getInt("active"));
                 }
             }
 
-            // ✅ FIX: First, collect all list data WITHOUT calling getContactCountForList
             ArrayList<List> tempLists = new ArrayList<>();
 
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(query)) {
 
-                System.out.println("🔍 Executing main query: " + query);
+                System.out.println("Executing main query: " + query);
                 int rowCount = 0;
 
                 while (rs.next()) {
                     rowCount++;
-                    System.out.println("⚙️ Processing row " + rowCount + ":");
+                    System.out.println("Processing row " + rowCount + ":");
 
                     try {
                         List list = createListFromResultSetWithoutCount(rs);
                         tempLists.add(list);
-                        System.out.println("  ✅ Successfully created list: " + list.getName() + " (ID: " + list.getId() + ")");
+                        System.out.println("  Successfully created list: " + list.getName() + " (ID: " + list.getId() + ")");
 
                     } catch (Exception e) {
-                        System.err.println("  ❌ ERROR creating list from row " + rowCount + ":");
+                        System.err.println("  ERROR creating list from row " + rowCount + ":");
                         System.err.println("      Exception: " + e.getClass().getSimpleName());
                         System.err.println("      Message: " + e.getMessage());
                         e.printStackTrace();
                     }
                 }
 
-                System.out.println("📊 Main query processed " + rowCount + " rows");
+                System.out.println("Main query processed " + rowCount + " rows");
             }
 
-            // ✅ FIX: Now get contact counts for each list using separate connections
             for (List list : tempLists) {
                 try {
                     int contactCount = getContactCountForList(list.getId());
                     list.setListSize(contactCount);
                     lists.add(list);
-                    System.out.println("📊 Set contact count for '" + list.getName() + "': " + contactCount);
+                    System.out.println("Set contact count for '" + list.getName() + "': " + contactCount);
                 } catch (Exception e) {
-                    System.err.println("❌ Error getting contact count for list " + list.getId() + ": " + e.getMessage());
-                    // Still add the list even if contact count fails
+                    System.err.println("Error getting contact count for list " + list.getId() + ": " + e.getMessage());
                     list.setListSize(0);
                     lists.add(list);
                 }
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ SQL Error in getAllActiveLists: " + e.getMessage());
+            System.err.println("SQL Error in getAllActiveLists: " + e.getMessage());
             e.printStackTrace();
         }
 
-        System.out.println("🎯 FINAL RESULT: Returning " + lists.size() + " lists from DAO");
+        System.out.println("FINAL RESULT: Returning " + lists.size() + " lists from DAO");
         System.out.println("==========================================");
         return lists;
     }
 
+    /**
+     * Searches for lists by name using partial matching.
+     * Only returns active (non-deleted) lists.
+     *
+     * @param searchTerm The search term to match against list names
+     * @return ArrayList of matching lists, ordered by most recently updated
+     */
     public ArrayList<List> searchListsByName(String searchTerm) {
         ArrayList<List> lists = new ArrayList<>();
         String query = "SELECT * FROM lists WHERE name LIKE ? AND is_deleted = 0 ORDER BY updated_at DESC";
@@ -97,14 +122,12 @@ public class ListsDAO {
             stmt.setString(1, "%" + searchTerm + "%");
             ResultSet rs = stmt.executeQuery();
 
-            // Collect lists first, then get contact counts
             ArrayList<List> tempLists = new ArrayList<>();
             while (rs.next()) {
                 List list = createListFromResultSetWithoutCount(rs);
                 tempLists.add(list);
             }
 
-            // Get contact counts separately
             for (List list : tempLists) {
                 int contactCount = getContactCountForList(list.getId());
                 list.setListSize(contactCount);
@@ -120,6 +143,13 @@ public class ListsDAO {
         return lists;
     }
 
+    /**
+     * Creates a new list in the database.
+     * Automatically sets creation and update timestamps.
+     *
+     * @param list The list object to create
+     * @return true if list was created successfully, false otherwise
+     */
     public boolean createList(List list) {
         String query = """
             INSERT INTO lists (name, description, type, object_type, creator, folder, created_at, updated_at, is_deleted)
@@ -161,6 +191,13 @@ public class ListsDAO {
         return false;
     }
 
+    /**
+     * Updates an existing list in the database.
+     * Automatically updates the updated_at timestamp.
+     *
+     * @param list The list object with updated information
+     * @return true if list was updated successfully, false otherwise
+     */
     public boolean updateList(List list) {
         String query = "UPDATE lists SET name = ?, description = ?, updated_at = ? WHERE id = ?";
 
@@ -187,6 +224,13 @@ public class ListsDAO {
         return false;
     }
 
+    /**
+     * Soft deletes a list by marking it as deleted rather than removing it.
+     * Preserves data integrity and allows for potential recovery.
+     *
+     * @param listId The ID of the list to delete
+     * @return true if list was marked as deleted successfully, false otherwise
+     */
     public boolean deleteList(int listId) {
         String query = "UPDATE lists SET is_deleted = 1, deleted_at = ? WHERE id = ?";
 
@@ -211,6 +255,14 @@ public class ListsDAO {
         return false;
     }
 
+    /**
+     * Adds a contact to a specific list.
+     * Checks for existing membership to prevent duplicates.
+     *
+     * @param listId The ID of the list
+     * @param contactId The ID of the contact to add
+     * @return true if contact was added successfully, false if already exists or error occurs
+     */
     public boolean addContactToList(int listId, int contactId) {
         String checkQuery = "SELECT COUNT(*) FROM list_contacts WHERE list_id = ? AND contact_id = ?";
 
@@ -254,6 +306,13 @@ public class ListsDAO {
         return false;
     }
 
+    /**
+     * Removes a contact from a specific list.
+     *
+     * @param listId The ID of the list
+     * @param contactId The ID of the contact to remove
+     * @return true if contact was removed successfully, false otherwise
+     */
     public boolean removeContactFromList(int listId, int contactId) {
         String query = "DELETE FROM list_contacts WHERE list_id = ? AND contact_id = ?";
 
@@ -278,6 +337,13 @@ public class ListsDAO {
         return false;
     }
 
+    /**
+     * Gets the number of contacts in a specific list.
+     * Used for displaying list size information.
+     *
+     * @param listId The ID of the list
+     * @return Number of contacts in the list, 0 if error occurs
+     */
     public int getContactCountForList(int listId) {
         String query = "SELECT COUNT(*) FROM list_contacts WHERE list_id = ?";
 
@@ -300,7 +366,15 @@ public class ListsDAO {
         return 0;
     }
 
-    // ✅ NEW: Create list without getting contact count (to avoid statement closure)
+    /**
+     * Creates a List object from a database ResultSet without contact count.
+     * Used in two-phase loading to prevent database connection conflicts.
+     * Contact count is set separately after this method returns.
+     *
+     * @param rs ResultSet containing list data
+     * @return Populated List object (without contact count)
+     * @throws SQLException if database access error occurs
+     */
     private List createListFromResultSetWithoutCount(ResultSet rs) throws SQLException {
         List list = new List();
         list.setId(rs.getInt("id"));
@@ -316,7 +390,6 @@ public class ListsDAO {
 
         list.setCreatedAt(createdAt);
         list.setUpdatedAt(updatedAt);
-        // Note: listSize will be set separately after this method returns
 
         return list;
     }

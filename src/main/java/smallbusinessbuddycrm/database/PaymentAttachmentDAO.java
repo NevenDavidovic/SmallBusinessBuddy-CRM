@@ -1,4 +1,3 @@
-// PaymentAttachmentDAO.java - Data Access Object
 package smallbusinessbuddycrm.database;
 
 import smallbusinessbuddycrm.model.PaymentAttachment;
@@ -9,12 +8,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Data Access Object for PaymentAttachment entity operations.
+ * Handles database interactions for payment attachment template management including
+ * CRUD operations, default template management, duplication, and validation.
+ *
+ * Features:
+ * - Complete template lifecycle management
+ * - Default template designation and management
+ * - HTML content storage and retrieval
+ * - Template duplication functionality
+ * - Name-based search and validation
+ * - Transaction-safe default switching
+ *
+ * @author Small Business Buddy CRM Team
+ * @version 1.0
+ */
 public class PaymentAttachmentDAO {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     /**
-     * Find all payment attachment templates
+     * Retrieves all payment attachment templates from the database.
+     * Results are ordered with default template first, then alphabetically by name.
+     *
+     * @return List of all payment attachment templates, ordered by default status and name
      */
     public List<PaymentAttachment> findAll() {
         List<PaymentAttachment> attachments = new ArrayList<>();
@@ -36,7 +54,10 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Find payment attachment by ID
+     * Retrieves a payment attachment template by its ID.
+     *
+     * @param id The ID of the payment attachment to retrieve
+     * @return Optional containing the payment attachment if found, empty Optional otherwise
      */
     public Optional<PaymentAttachment> findById(Long id) {
         String sql = "SELECT * FROM payment_attachment WHERE id = ?";
@@ -60,7 +81,10 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Find the default payment attachment template
+     * Retrieves the default payment attachment template.
+     * Only one template can be marked as default at any time.
+     *
+     * @return Optional containing the default payment attachment if found, empty Optional otherwise
      */
     public Optional<PaymentAttachment> findDefault() {
         String sql = "SELECT * FROM payment_attachment WHERE is_default = 1 LIMIT 1";
@@ -81,7 +105,11 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Find templates by name (case-insensitive search)
+     * Searches for payment attachment templates by name using case-insensitive partial matching.
+     * Results are ordered with default template first, then alphabetically by name.
+     *
+     * @param searchTerm The search term to match against template names
+     * @return List of payment attachments with names containing the search term
      */
     public List<PaymentAttachment> findByNameContaining(String searchTerm) {
         List<PaymentAttachment> attachments = new ArrayList<>();
@@ -106,7 +134,12 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Save (insert or update) payment attachment
+     * Saves a payment attachment template to the database.
+     * Automatically determines whether to insert or update based on ID presence.
+     * Handles default template management to ensure only one default exists.
+     *
+     * @param attachment The payment attachment to save
+     * @return true if attachment was saved successfully, false otherwise
      */
     public boolean save(PaymentAttachment attachment) {
         if (attachment.getId() == null) {
@@ -117,7 +150,11 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Insert new payment attachment
+     * Inserts a new payment attachment template into the database.
+     * Automatically generates ID and manages default template exclusivity.
+     *
+     * @param attachment The attachment to insert
+     * @return true if insertion was successful, false otherwise
      */
     private boolean insert(PaymentAttachment attachment) {
         String sql = """
@@ -129,7 +166,6 @@ public class PaymentAttachmentDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            // If this is being set as default, unset other defaults first
             if (attachment.isDefault()) {
                 unsetAllDefaults();
             }
@@ -165,7 +201,11 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Update existing payment attachment
+     * Updates an existing payment attachment template in the database.
+     * Automatically updates timestamp and manages default template exclusivity.
+     *
+     * @param attachment The attachment to update
+     * @return true if update was successful, false otherwise
      */
     private boolean update(PaymentAttachment attachment) {
         String sql = """
@@ -177,7 +217,6 @@ public class PaymentAttachmentDAO {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            // If this is being set as default, unset other defaults first
             if (attachment.isDefault()) {
                 unsetAllDefaults();
             }
@@ -201,10 +240,13 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Delete payment attachment by ID
+     * Deletes a payment attachment template from the database.
+     * Prevents deletion of the default template to maintain system integrity.
+     *
+     * @param id The ID of the payment attachment to delete
+     * @return true if deletion was successful, false if template is default or error occurs
      */
     public boolean delete(Long id) {
-        // Check if this is the default template
         Optional<PaymentAttachment> attachment = findById(id);
         if (attachment.isPresent() && attachment.get().isDefault()) {
             System.err.println("Cannot delete default payment attachment template");
@@ -227,17 +269,20 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Set a template as the default (and unset others)
+     * Sets a payment attachment template as the default template.
+     * Uses transaction to ensure atomicity when switching default status.
+     * Unsets all other templates as default before setting the new one.
+     *
+     * @param id The ID of the template to set as default
+     * @return true if operation was successful, false otherwise
      */
     public boolean setAsDefault(Long id) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);
 
             try {
-                // First unset all defaults
                 unsetAllDefaults();
 
-                // Then set the specified one as default
                 String sql = "UPDATE payment_attachment SET is_default = 1, updated_at = ? WHERE id = ?";
                 try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
                     pstmt.setString(1, LocalDateTime.now().format(FORMATTER));
@@ -267,7 +312,13 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Duplicate an existing template with a new name
+     * Creates a duplicate of an existing payment attachment template with a new name.
+     * The duplicate is never set as default and gets a modified description.
+     * Useful for creating template variations.
+     *
+     * @param id The ID of the template to duplicate
+     * @param newName The name for the new duplicate template
+     * @return The newly created duplicate template, or null if duplication fails
      */
     public PaymentAttachment duplicate(Long id, String newName) {
         Optional<PaymentAttachment> original = findById(id);
@@ -278,7 +329,7 @@ public class PaymentAttachmentDAO {
             copy.setName(newName);
             copy.setDescription("Copy of " + orig.getDescription());
             copy.setHtmlContent(orig.getHtmlContent());
-            copy.setDefault(false); // Copies are never default
+            copy.setDefault(false);
 
             if (save(copy)) {
                 return copy;
@@ -288,7 +339,12 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Check if a name already exists (for validation)
+     * Checks if a template name already exists in the database.
+     * Supports case-insensitive checking and can exclude a specific ID for update validation.
+     *
+     * @param name The name to check for existence
+     * @param excludeId Optional ID to exclude from the check (for updates)
+     * @return true if name exists, false otherwise
      */
     public boolean nameExists(String name, Long excludeId) {
         String sql = excludeId != null ?
@@ -317,7 +373,10 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Get count of all templates
+     * Gets the total count of payment attachment templates in the database.
+     * Useful for dashboard statistics and pagination.
+     *
+     * @return Number of payment attachment templates, 0 if error occurs
      */
     public int getCount() {
         String sql = "SELECT COUNT(*) FROM payment_attachment";
@@ -338,7 +397,10 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Unset all default flags (helper method)
+     * Unsets the default flag for all payment attachment templates.
+     * Helper method used internally to maintain default template exclusivity.
+     *
+     * @throws SQLException if database operation fails
      */
     private void unsetAllDefaults() throws SQLException {
         String sql = "UPDATE payment_attachment SET is_default = 0";
@@ -349,7 +411,12 @@ public class PaymentAttachmentDAO {
     }
 
     /**
-     * Map ResultSet to PaymentAttachment object
+     * Maps a database ResultSet to a PaymentAttachment object.
+     * Handles proper type conversion, date parsing, and boolean conversion.
+     *
+     * @param rs ResultSet containing payment attachment data
+     * @return Populated PaymentAttachment object
+     * @throws SQLException if database access error occurs or date parsing fails
      */
     private PaymentAttachment mapResultSetToAttachment(ResultSet rs) throws SQLException {
         PaymentAttachment attachment = new PaymentAttachment();

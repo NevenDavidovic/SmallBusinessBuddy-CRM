@@ -7,20 +7,40 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Data Access Object for Teacher entity operations.
+ * Handles database interactions for teacher management including CRUD operations,
+ * search functionality, workshop assignments, and availability checking.
+ *
+ * Features:
+ * - Complete teacher lifecycle management
+ * - Multi-field search capabilities
+ * - Workshop assignment tracking
+ * - Availability conflict detection
+ * - Bulk operations support
+ * - Contact information management
+ *
+ * @author Small Business Buddy CRM Team
+ * @version 1.0
+ */
 public class TeacherDAO {
 
+    /**
+     * Retrieves all teachers from the database.
+     * Includes comprehensive logging for debugging purposes.
+     * Results are ordered alphabetically by first name, then last name.
+     *
+     * @return List of all teachers, ordered by name
+     */
     public List<Teacher> getAllTeachers() {
         List<Teacher> teachers = new ArrayList<>();
         String query = "SELECT * FROM teachers ORDER BY first_name, last_name";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-
-            // Debug: Print connection info
             System.out.println("=== TeacherDAO Debug Info ===");
             System.out.println("Database URL: " + conn.getMetaData().getURL());
             System.out.println("Connection valid: " + conn.isValid(5));
 
-            // Debug: Check if table exists and has data
             String countQuery = "SELECT COUNT(*) as count FROM teachers";
             try (Statement countStmt = conn.createStatement();
                  ResultSet countRs = countStmt.executeQuery(countQuery)) {
@@ -31,7 +51,6 @@ public class TeacherDAO {
                 }
             }
 
-            // Debug: Show table structure
             String tableInfoQuery = "PRAGMA table_info(teachers)";
             try (Statement infoStmt = conn.createStatement();
                  ResultSet infoRs = infoStmt.executeQuery(tableInfoQuery)) {
@@ -42,7 +61,6 @@ public class TeacherDAO {
                 }
             }
 
-            // Main query
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(query)) {
 
@@ -54,7 +72,6 @@ public class TeacherDAO {
                     Teacher teacher = createTeacherFromResultSet(rs);
                     teachers.add(teacher);
 
-                    // Debug: Print first teacher details
                     if (rowCount == 1) {
                         System.out.println("First teacher loaded: " + teacher.getFirstName() + " " + teacher.getLastName() + " (" + teacher.getEmail() + ")");
                     }
@@ -74,6 +91,13 @@ public class TeacherDAO {
         return teachers;
     }
 
+    /**
+     * Creates a new teacher in the database.
+     * Automatically generates ID and sets creation timestamp.
+     *
+     * @param teacher The teacher object to create
+     * @return true if teacher was created successfully, false otherwise
+     */
     public boolean createTeacher(Teacher teacher) {
         String query = """
         INSERT INTO teachers (
@@ -95,7 +119,6 @@ public class TeacherDAO {
             int rowsAffected = stmt.executeUpdate();
 
             if (rowsAffected > 0) {
-                // Get the generated ID
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         teacher.setId(generatedKeys.getInt(1));
@@ -113,6 +136,13 @@ public class TeacherDAO {
         return false;
     }
 
+    /**
+     * Updates an existing teacher in the database.
+     * Automatically updates the updated_at timestamp.
+     *
+     * @param teacher The teacher object with updated information
+     * @return true if teacher was updated successfully, false otherwise
+     */
     public boolean updateTeacher(Teacher teacher) {
         String query = """
         UPDATE teachers SET 
@@ -146,6 +176,13 @@ public class TeacherDAO {
         return false;
     }
 
+    /**
+     * Deletes a single teacher from the database.
+     * This operation will cascade to workshop assignments.
+     *
+     * @param teacherId The ID of the teacher to delete
+     * @return true if teacher was deleted successfully, false otherwise
+     */
     public boolean deleteTeacher(int teacherId) {
         String query = "DELETE FROM teachers WHERE id = ?";
 
@@ -168,19 +205,25 @@ public class TeacherDAO {
         return false;
     }
 
+    /**
+     * Deletes multiple teachers in a single database operation.
+     * Uses optimized IN clause for better performance than individual deletes.
+     * This operation will cascade to workshop assignments.
+     *
+     * @param teacherIds List of teacher IDs to delete
+     * @return true if all teachers were deleted successfully, false otherwise
+     */
     public boolean deleteTeachers(List<Integer> teacherIds) {
         if (teacherIds.isEmpty()) {
             return false;
         }
 
-        // Create placeholders for IN clause (?, ?, ?, ...)
         String placeholders = String.join(",", Collections.nCopies(teacherIds.size(), "?"));
         String query = "DELETE FROM teachers WHERE id IN (" + placeholders + ")";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
-            // Set the teacher IDs as parameters
             for (int i = 0; i < teacherIds.size(); i++) {
                 stmt.setInt(i + 1, teacherIds.get(i));
             }
@@ -200,6 +243,12 @@ public class TeacherDAO {
         return false;
     }
 
+    /**
+     * Retrieves a specific teacher by ID.
+     *
+     * @param teacherId The ID of the teacher to retrieve
+     * @return Teacher object if found, null otherwise
+     */
     public Teacher getTeacherById(int teacherId) {
         String query = "SELECT * FROM teachers WHERE id = ?";
 
@@ -221,6 +270,14 @@ public class TeacherDAO {
         return null;
     }
 
+    /**
+     * Searches for teachers using multiple criteria.
+     * Performs partial matching against first name, last name, and email.
+     * Results are ordered alphabetically by name.
+     *
+     * @param searchTerm The search term to match against teacher information
+     * @return List of teachers matching the search criteria, ordered by name
+     */
     public List<Teacher> searchTeachers(String searchTerm) {
         List<Teacher> teachers = new ArrayList<>();
         String query = """
@@ -253,23 +310,12 @@ public class TeacherDAO {
         return teachers;
     }
 
-    // Helper method: Extract teacher creation logic
-    private Teacher createTeacherFromResultSet(ResultSet rs) throws SQLException {
-        Teacher teacher = new Teacher();
-
-        teacher.setId(rs.getInt("id"));
-        teacher.setFirstName(rs.getString("first_name"));
-        teacher.setLastName(rs.getString("last_name"));
-        teacher.setEmail(rs.getString("email"));
-        teacher.setPhoneNum(rs.getString("phone_num"));
-        teacher.setCreatedAt(rs.getString("created_at"));
-        teacher.setUpdatedAt(rs.getString("updated_at"));
-
-        return teacher;
-    }
-
     /**
-     * Get teachers assigned to a specific workshop
+     * Retrieves all teachers assigned to a specific workshop.
+     * Uses JOIN query to link teachers with workshop assignments.
+     *
+     * @param workshopId The ID of the workshop
+     * @return List of teachers assigned to the workshop
      */
     public List<Teacher> getTeachersForWorkshop(int workshopId) {
         String sql = """
@@ -310,7 +356,14 @@ public class TeacherDAO {
     }
 
     /**
-     * Check if a teacher is assigned to any workshop on conflicting dates
+     * Checks if a teacher is available for a workshop during the specified date range.
+     * Performs conflict detection by checking existing workshop assignments.
+     * Handles overlapping date scenarios comprehensively.
+     *
+     * @param teacherId The ID of the teacher to check
+     * @param fromDate The start date of the proposed workshop (ISO format)
+     * @param toDate The end date of the proposed workshop (ISO format)
+     * @return true if teacher is available, false if there are scheduling conflicts
      */
     public boolean isTeacherAvailable(int teacherId, String fromDate, String toDate) {
         String sql = """
@@ -344,7 +397,28 @@ public class TeacherDAO {
             e.printStackTrace();
         }
 
-        return false; // Assume not available if error occurs
+        return false;
     }
 
+    /**
+     * Creates a Teacher object from a database ResultSet.
+     * Handles proper field mapping and type conversion.
+     *
+     * @param rs ResultSet containing teacher data
+     * @return Populated Teacher object
+     * @throws SQLException if database access error occurs
+     */
+    private Teacher createTeacherFromResultSet(ResultSet rs) throws SQLException {
+        Teacher teacher = new Teacher();
+
+        teacher.setId(rs.getInt("id"));
+        teacher.setFirstName(rs.getString("first_name"));
+        teacher.setLastName(rs.getString("last_name"));
+        teacher.setEmail(rs.getString("email"));
+        teacher.setPhoneNum(rs.getString("phone_num"));
+        teacher.setCreatedAt(rs.getString("created_at"));
+        teacher.setUpdatedAt(rs.getString("updated_at"));
+
+        return teacher;
+    }
 }

@@ -10,10 +10,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Data Access Object for Organization entity operations.
+ * Handles database interactions for organization management including CRUD operations,
+ * search functionality, and existence validation.
+ *
+ * Features:
+ * - Complete organization lifecycle management
+ * - Name-based search capabilities
+ * - Image/logo storage and retrieval
+ * - Single organization setup support
+ * - Existence validation
+ * - Statistics and counting
+ *
+ * @author Small Business Buddy CRM Team
+ * @version 1.0
+ */
 public class OrganizationDAO {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    // Create a new organization
+    /**
+     * Creates a new organization in the database.
+     * Automatically generates ID and sets creation timestamp.
+     * Handles binary image data storage.
+     *
+     * @param organization The organization object to save
+     * @return true if organization was created successfully, false otherwise
+     */
     public boolean save(Organization organization) {
         String sql = """
             INSERT INTO organization (name, IBAN, street_name, street_num, postal_code, 
@@ -53,13 +76,20 @@ public class OrganizationDAO {
             return false;
 
         } catch (SQLException e) {
-            System.err.println("Greška pri spremanju organizacije: " + e.getMessage());
+            System.err.println("Error saving organization: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    // Update existing organization
+    /**
+     * Updates an existing organization in the database.
+     * Automatically updates the updated_at timestamp.
+     * Handles binary image data updates.
+     *
+     * @param organization The organization object with updated information
+     * @return true if organization was updated successfully, false otherwise
+     */
     public boolean update(Organization organization) {
         String sql = """
             UPDATE organization 
@@ -92,13 +122,18 @@ public class OrganizationDAO {
             return pstmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.err.println("Greška pri ažuriranju organizacije: " + e.getMessage());
+            System.err.println("Error updating organization: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    // Find organization by ID
+    /**
+     * Retrieves an organization by its ID.
+     *
+     * @param id The ID of the organization to retrieve
+     * @return Optional containing the organization if found, empty Optional otherwise
+     */
     public Optional<Organization> findById(int id) {
         String sql = "SELECT * FROM organization WHERE id = ?";
 
@@ -114,13 +149,18 @@ public class OrganizationDAO {
             return Optional.empty();
 
         } catch (SQLException e) {
-            System.err.println("Greška pri dohvaćanju organizacije: " + e.getMessage());
+            System.err.println("Error retrieving organization: " + e.getMessage());
             e.printStackTrace();
             return Optional.empty();
         }
     }
 
-    // Get all organizations
+    /**
+     * Retrieves all organizations from the database.
+     * Results are ordered alphabetically by name.
+     *
+     * @return List of all organizations, ordered by name
+     */
     public List<Organization> findAll() {
         String sql = "SELECT * FROM organization ORDER BY name";
         List<Organization> organizations = new ArrayList<>();
@@ -134,14 +174,20 @@ public class OrganizationDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Greška pri dohvaćanju organizacija: " + e.getMessage());
+            System.err.println("Error retrieving organizations: " + e.getMessage());
             e.printStackTrace();
         }
 
         return organizations;
     }
 
-    // Search organizations by name
+    /**
+     * Searches for organizations by name using partial matching.
+     * Uses LIKE query for flexible name searching.
+     *
+     * @param name The name or partial name to search for
+     * @return List of organizations with names containing the search term, ordered by name
+     */
     public List<Organization> findByName(String name) {
         String sql = "SELECT * FROM organization WHERE name LIKE ? ORDER BY name";
         List<Organization> organizations = new ArrayList<>();
@@ -157,14 +203,20 @@ public class OrganizationDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Greška pri pretraživanju organizacija: " + e.getMessage());
+            System.err.println("Error searching organizations: " + e.getMessage());
             e.printStackTrace();
         }
 
         return organizations;
     }
 
-    // Delete organization
+    /**
+     * Permanently deletes an organization from the database.
+     * This operation cannot be undone and will cascade to related data.
+     *
+     * @param id The ID of the organization to delete
+     * @return true if organization was deleted successfully, false otherwise
+     */
     public boolean delete(int id) {
         String sql = "DELETE FROM organization WHERE id = ?";
 
@@ -175,13 +227,19 @@ public class OrganizationDAO {
             return pstmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.err.println("Greška pri brisanju organizacije: " + e.getMessage());
+            System.err.println("Error deleting organization: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    // Check if organization exists
+    /**
+     * Checks if an organization exists with the specified ID.
+     * Efficient existence check without retrieving full organization data.
+     *
+     * @param id The ID to check for existence
+     * @return true if organization exists, false otherwise
+     */
     public boolean exists(int id) {
         String sql = "SELECT 1 FROM organization WHERE id = ?";
 
@@ -193,13 +251,18 @@ public class OrganizationDAO {
             return rs.next();
 
         } catch (SQLException e) {
-            System.err.println("Greška pri provjeri postojanja organizacije: " + e.getMessage());
+            System.err.println("Error checking organization existence: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
-    // Get organization count
+    /**
+     * Gets the total count of organizations in the database.
+     * Useful for dashboard statistics and pagination.
+     *
+     * @return Number of organizations in the database, 0 if error occurs
+     */
     public int getCount() {
         String sql = "SELECT COUNT(*) FROM organization";
 
@@ -212,14 +275,20 @@ public class OrganizationDAO {
             }
 
         } catch (SQLException e) {
-            System.err.println("Greška pri brojanju organizacija: " + e.getMessage());
+            System.err.println("Error counting organizations: " + e.getMessage());
             e.printStackTrace();
         }
 
         return 0;
     }
 
-    // Get the first organization (useful for single organization setups)
+    /**
+     * Retrieves the first organization from the database.
+     * Useful for single organization setups where only one organization exists.
+     * Commonly used for loading the primary organization configuration.
+     *
+     * @return Optional containing the first organization if found, empty Optional otherwise
+     */
     public Optional<Organization> getFirst() {
         String sql = "SELECT * FROM organization ORDER BY id LIMIT 1";
 
@@ -233,13 +302,20 @@ public class OrganizationDAO {
             return Optional.empty();
 
         } catch (SQLException e) {
-            System.err.println("Greška pri dohvaćanju prve organizacije: " + e.getMessage());
+            System.err.println("Error retrieving first organization: " + e.getMessage());
             e.printStackTrace();
             return Optional.empty();
         }
     }
 
-    // Helper method to map ResultSet to Organization object
+    /**
+     * Maps a database ResultSet to an Organization object.
+     * Handles proper type conversion, date parsing, and binary data retrieval.
+     *
+     * @param rs ResultSet containing organization data
+     * @return Populated Organization object
+     * @throws SQLException if database access error occurs or date parsing fails
+     */
     private Organization mapResultSetToOrganization(ResultSet rs) throws SQLException {
         Organization org = new Organization();
         org.setId(rs.getInt("id"));
