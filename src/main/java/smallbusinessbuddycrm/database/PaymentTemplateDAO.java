@@ -11,10 +11,30 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data Access Object for PaymentTemplate entity operations.
+ * Handles database interactions for payment template management including CRUD operations,
+ * status management, bulk operations, and validation.
+ *
+ * Features:
+ * - Complete template lifecycle management
+ * - Active/inactive status filtering and toggling
+ * - Bulk deletion operations
+ * - Name uniqueness validation
+ * - Croatian payment system integration (poziv na broj)
+ * - Amount and payment model management
+ *
+ * @author Small Business Buddy CRM Team
+ * @version 1.0
+ */
 public class PaymentTemplateDAO {
 
     /**
-     * Gets all payment templates (active and inactive)
+     * Retrieves all payment templates from the database, both active and inactive.
+     * Results are ordered alphabetically by name for consistent display.
+     *
+     * @return List of all payment templates, ordered by name
+     * @throws SQLException if database access error occurs
      */
     public List<PaymentTemplate> getAllPaymentTemplates() throws SQLException {
         List<PaymentTemplate> templates = new ArrayList<>();
@@ -34,7 +54,12 @@ public class PaymentTemplateDAO {
     }
 
     /**
-     * Gets all active payment templates
+     * Retrieves only active payment templates from the database.
+     * Used for normal operations where inactive templates should be hidden.
+     * Results are ordered alphabetically by name.
+     *
+     * @return List of active payment templates, ordered by name
+     * @throws SQLException if database access error occurs
      */
     public List<PaymentTemplate> getActivePaymentTemplates() throws SQLException {
         List<PaymentTemplate> templates = new ArrayList<>();
@@ -54,7 +79,11 @@ public class PaymentTemplateDAO {
     }
 
     /**
-     * Gets a payment template by ID
+     * Retrieves a payment template by its ID.
+     *
+     * @param id The ID of the payment template to retrieve
+     * @return The payment template if found, null otherwise
+     * @throws SQLException if database access error occurs
      */
     public PaymentTemplate getPaymentTemplateById(int id) throws SQLException {
         String sql = "SELECT * FROM payment_template WHERE id = ?";
@@ -74,7 +103,13 @@ public class PaymentTemplateDAO {
     }
 
     /**
-     * Saves a payment template (insert or update)
+     * Saves a payment template to the database.
+     * Automatically determines whether to insert or update based on template ID.
+     * Sets creation and update timestamps appropriately.
+     *
+     * @param template The payment template to save
+     * @return true if template was saved successfully, false otherwise
+     * @throws SQLException if database operation fails
      */
     public boolean save(PaymentTemplate template) throws SQLException {
         if (template.getId() == 0) {
@@ -85,7 +120,12 @@ public class PaymentTemplateDAO {
     }
 
     /**
-     * Inserts a new payment template
+     * Inserts a new payment template into the database.
+     * Automatically generates ID and sets creation/update timestamps.
+     *
+     * @param template The template to insert
+     * @return true if insertion was successful, false otherwise
+     * @throws SQLException if insertion fails
      */
     private boolean insert(PaymentTemplate template) throws SQLException {
         String sql = """
@@ -111,7 +151,6 @@ public class PaymentTemplateDAO {
             int rowsAffected = stmt.executeUpdate();
 
             if (rowsAffected > 0) {
-                // Get the generated ID
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         template.setId(generatedKeys.getInt(1));
@@ -127,7 +166,12 @@ public class PaymentTemplateDAO {
     }
 
     /**
-     * Updates an existing payment template
+     * Updates an existing payment template in the database.
+     * Automatically updates the updated_at timestamp.
+     *
+     * @param template The template to update
+     * @return true if update was successful, false otherwise
+     * @throws SQLException if update fails
      */
     private boolean update(PaymentTemplate template) throws SQLException {
         String sql = """
@@ -162,7 +206,13 @@ public class PaymentTemplateDAO {
     }
 
     /**
-     * Deletes payment templates by IDs
+     * Deletes multiple payment templates in a single batch operation.
+     * Uses batch processing for optimal performance when deleting multiple templates.
+     * This operation is permanent and cannot be undone.
+     *
+     * @param templateIds List of template IDs to delete
+     * @return true if all deletions were successful, false if any failed or list is empty
+     * @throws SQLException if database operation fails
      */
     public boolean deleteTemplates(List<Integer> templateIds) throws SQLException {
         if (templateIds == null || templateIds.isEmpty()) {
@@ -181,7 +231,6 @@ public class PaymentTemplateDAO {
 
             int[] results = stmt.executeBatch();
 
-            // Check if all deletions were successful
             for (int result : results) {
                 if (result == PreparedStatement.EXECUTE_FAILED) {
                     return false;
@@ -193,7 +242,13 @@ public class PaymentTemplateDAO {
     }
 
     /**
-     * Toggles the active status of a payment template
+     * Toggles the active status of a payment template.
+     * If template is active, it becomes inactive and vice versa.
+     * Automatically updates the updated_at timestamp.
+     *
+     * @param templateId The ID of the template to toggle
+     * @return true if status was toggled successfully, false otherwise
+     * @throws SQLException if database operation fails
      */
     public boolean toggleActiveStatus(int templateId) throws SQLException {
         String sql = """
@@ -217,7 +272,14 @@ public class PaymentTemplateDAO {
     }
 
     /**
-     * Checks if a template name already exists (for validation)
+     * Checks if a template name already exists in the database.
+     * Performs case-insensitive name checking and can exclude a specific ID for update validation.
+     * Used to prevent duplicate template names.
+     *
+     * @param name The name to check for existence
+     * @param excludeId The ID to exclude from the check (for updates)
+     * @return true if name exists, false otherwise
+     * @throws SQLException if database access error occurs
      */
     public boolean nameExists(String name, int excludeId) throws SQLException {
         String sql = "SELECT COUNT(*) FROM payment_template WHERE LOWER(name) = LOWER(?) AND id != ?";
@@ -239,7 +301,13 @@ public class PaymentTemplateDAO {
     }
 
     /**
-     * Maps a ResultSet row to a PaymentTemplate object
+     * Maps a database ResultSet to a PaymentTemplate object.
+     * Handles proper type conversion for all payment template fields including
+     * BigDecimal for amounts and Croatian payment references.
+     *
+     * @param rs ResultSet containing payment template data
+     * @return Populated PaymentTemplate object
+     * @throws SQLException if database access error occurs
      */
     private PaymentTemplate mapResultSetToTemplate(ResultSet rs) throws SQLException {
         PaymentTemplate template = new PaymentTemplate();

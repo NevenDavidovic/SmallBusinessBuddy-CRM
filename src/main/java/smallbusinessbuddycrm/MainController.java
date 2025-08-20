@@ -1,7 +1,6 @@
 package smallbusinessbuddycrm;
 
 import javafx.application.Platform;
-import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -9,23 +8,21 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.layout.HBox;
 import javafx.scene.Node;
 import javafx.scene.shape.Circle;
 import javafx.scene.paint.Color;
-import javafx.util.Duration;
-import javafx.animation.Timeline;
-import javafx.animation.KeyFrame;
-
 import smallbusinessbuddycrm.database.*;
 import smallbusinessbuddycrm.model.*;
 import smallbusinessbuddycrm.utilities.LanguageManager;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.concurrent.*;
 
 public class MainController {
 
@@ -100,13 +97,19 @@ public class MainController {
     private LanguageManager languageManager;
     private Runnable languageChangeListener;
 
-    // 🔔 NOTIFICATION SYSTEM COMPONENTS - Real-time only
+    // 🔔 FIXED NOTIFICATION SYSTEM - SEQUENTIAL ACCESS
     private ContactDAO contactDAO;
     private UnderagedDAO underagedDAO;
     private WorkshopDAO workshopDAO;
     private Circle notificationBadge;
     private Label badgeLabel;
-    private Timeline notificationUpdateTimeline;
+
+    // Smart caching for SQLite optimization
+    private volatile List<NotificationItem> notificationCache = new ArrayList<>();
+    private volatile LocalDateTime lastCacheUpdate = null;
+    private static final java.time.Duration CACHE_DURATION = java.time.Duration.ofMinutes(2);
+    private final Object cacheLock = new Object();
+    private ScheduledExecutorService cacheRefreshExecutor;
 
     @FXML
     public void initialize() {
@@ -119,20 +122,18 @@ public class MainController {
         loadOrganizationName();
         updateLanguageButtons();
         updateAllTexts();
-
-        // Load welcome screen or show default message
         loadInitialContent();
 
-        // 🔔 Initialize real-time notification system
-        initializeNotificationSystem();
-
-        System.out.println("MainController initialized");
+        // Initialize fixed notification system
+        initializeOptimizedNotificationSystem();
     }
 
-    // 🔔 REAL-TIME NOTIFICATION SYSTEM INITIALIZATION
-    private void initializeNotificationSystem() {
+    // 🔔 FIXED NOTIFICATION SYSTEM INITIALIZATION
+    public void initializeOptimizedNotificationSystem() {
         try {
-            // Initialize only existing DAOs
+            System.out.println("🔄 Initializing fixed notification system...");
+
+            // Initialize DAOs - using single instances
             contactDAO = new ContactDAO();
             underagedDAO = new UnderagedDAO();
             workshopDAO = new WorkshopDAO();
@@ -140,300 +141,384 @@ public class MainController {
             // Setup notification badge
             setupNotificationBadge();
 
-            // Update badge immediately
-            updateNotificationBadge();
+            // Update badge immediately using safe fallback method
+            updateNotificationBadgeFromSafeSystem();
 
-            // Setup periodic updates (every 5 minutes for more responsiveness)
-            setupNotificationUpdates();
+            // Pre-load cache immediately in background
+            refreshNotificationCacheSafely();
 
-            System.out.println("Real-time notification system initialized successfully");
+            // Setup automatic cache refresh every 30 seconds
+            cacheRefreshExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
+                Thread t = new Thread(r, "SQLite-NotificationCache");
+                t.setDaemon(true);
+                t.setPriority(Thread.MIN_PRIORITY);
+                return t;
+            });
+
+            cacheRefreshExecutor.scheduleAtFixedRate(
+                    this::refreshNotificationCacheSafely,
+                    30, 30, TimeUnit.SECONDS
+            );
+
+            System.out.println("✅ Fixed notification system initialized");
         } catch (Exception e) {
-            System.err.println("Error initializing notification system: " + e.getMessage());
+            System.err.println("❌ Error initializing notification system: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    // 🔔 SETUP NOTIFICATION BADGE
+    // 🔴 SAFE FALLBACK: Use old synchronous system for immediate badge update
+    private void updateNotificationBadgeFromSafeSystem() {
+        Platform.runLater(() -> {
+            try {
+                List<NotificationItem> notifications = getNotificationsSafely(8);
+                int count = notifications.size();
+
+                System.out.println("🔴 Initial badge update: " + count + " notifications found");
+
+                if (count > 0) {
+                    notificationBadge.setVisible(true);
+                    badgeLabel.setVisible(true);
+                    badgeLabel.setText(String.valueOf(Math.min(count, 99)));
+                } else {
+                    notificationBadge.setVisible(false);
+                    badgeLabel.setVisible(false);
+                }
+            } catch (Exception e) {
+                System.err.println("Error in initial badge update: " + e.getMessage());
+                // Hide badge on error
+                notificationBadge.setVisible(false);
+                badgeLabel.setVisible(false);
+            }
+        });
+    }
+
+    // 🔴 SAFE NOTIFICATION GENERATION (synchronous, no concurrency issues)
+    private List<NotificationItem> getNotificationsSafely(int limit) {
+        List<NotificationItem> notifications = new ArrayList<>();
+
+        try {
+            generateNotificationsSafely(notifications);
+
+            // Sort by priority
+            notifications.sort((a, b) -> {
+                if (a.message.contains(getTranslation("notification.today")) && !b.message.contains(getTranslation("notification.today"))) return -1;
+                if (!a.message.contains(getTranslation("notification.today")) && b.message.contains(getTranslation("notification.today"))) return 1;
+                if (a.message.contains(getTranslation("notification.tomorrow")) && !b.message.contains(getTranslation("notification.tomorrow"))) return -1;
+                if (!a.message.contains(getTranslation("notification.tomorrow")) && b.message.contains(getTranslation("notification.tomorrow"))) return 1;
+                return a.createdAt.compareTo(b.createdAt);
+            });
+
+            return notifications.size() > limit ? notifications.subList(0, limit) : notifications;
+        } catch (Exception e) {
+            System.err.println("❌ Error generating notifications safely: " + e.getMessage());
+            return new ArrayList<>(); // Return empty list on error
+        }
+    }
+
+    // 🔴 SAFE NOTIFICATION GENERATION (sequential database access)
+    private void generateNotificationsSafely(List<NotificationItem> notifications) {
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd");
+
+        // Sequential database calls with individual error handling
+        try {
+            // 1. Contact birthdays
+            List<Contact> contactsWithBirthdays = contactDAO.getContactsWithUpcomingBirthdays(3);
+            for (Contact contact : contactsWithBirthdays) {
+                if (contact.getBirthday() != null) {
+                    NotificationItem item = createBirthdayNotification(
+                            contact.getFirstName(), contact.getLastName(),
+                            contact.getBirthday(), today, formatter,
+                            "BIRTHDAY_CONTACT", contact.getId()
+                    );
+                    if (item != null) notifications.add(item);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading contact birthdays: " + e.getMessage());
+        }
+
+        try {
+            // 2. Underaged member birthdays
+            List<UnderagedMember> allUnderagedMembers = underagedDAO.getAllUnderagedMembers();
+            for (UnderagedMember underaged : allUnderagedMembers) {
+                if (underaged.getBirthDate() != null) {
+                    NotificationItem item = createBirthdayNotification(
+                            underaged.getFirstName(), underaged.getLastName(),
+                            underaged.getBirthDate(), today, formatter,
+                            "BIRTHDAY_UNDERAGED", underaged.getId()
+                    );
+                    if (item != null) notifications.add(item);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading underaged birthdays: " + e.getMessage());
+        }
+
+        try {
+            // 3. Upcoming workshops
+            List<Workshop> upcomingWorkshops = workshopDAO.getUpcomingWorkshops(3);
+            for (Workshop workshop : upcomingWorkshops) {
+                if (workshop.getFromDate() != null) {
+                    long daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, workshop.getFromDate());
+                    if (daysUntil >= 0 && daysUntil <= 3) {
+                        NotificationItem item = createWorkshopNotification(workshop, daysUntil, formatter, "upcoming");
+                        notifications.add(item);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading upcoming workshops: " + e.getMessage());
+        }
+
+        try {
+            // 4. Active workshops ending today
+            List<Workshop> activeWorkshops = workshopDAO.getActiveWorkshops();
+            for (Workshop workshop : activeWorkshops) {
+                if (workshop.getToDate() != null && workshop.getToDate().equals(today)) {
+                    NotificationItem item = createWorkshopNotification(workshop, 0, formatter, "ending");
+                    notifications.add(item);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading active workshops: " + e.getMessage());
+        }
+    }
+
     private void setupNotificationBadge() {
         if (notificationMenuButton != null && notificationIconContainer != null) {
             // Create notification badge
-            notificationBadge = new Circle(10); // Increased to match 20x20 dimensions
+            notificationBadge = new Circle(8); // Slightly larger for visibility
             notificationBadge.setFill(Color.web("#f44336"));
             notificationBadge.setVisible(false);
 
             // Create count label
             badgeLabel = new Label();
             badgeLabel.setStyle(
-                    "-fx-background-color: #f44336;" +
-                            "-fx-background-radius: 10;" +
-                            "-fx-text-fill: white;" +
-                            "-fx-font-size: 10px;" +
-                            "-fx-font-weight: bold;" +
-                            "-fx-alignment: center;" +
-                            "-fx-text-alignment: center;" +
-                            "-fx-min-width: 20;" +
-                            "-fx-min-height: 20;" +
-                            "-fx-max-width: 24;" +
-                            "-fx-max-height: 24;" +
-                            "-fx-translate-x: -3;" // Simulates margin-right: 3px
+                    "-fx-text-fill: white; " +
+                            "-fx-font-size: 10px; " +
+                            "-fx-font-weight: bold; " +
+                            "-fx-alignment: center; " +
+                            "-fx-text-alignment: center;"
             );
             badgeLabel.setAlignment(Pos.CENTER);
+            badgeLabel.setMinSize(16, 16);
+            badgeLabel.setMaxSize(16, 16);
             badgeLabel.setVisible(false);
 
             // Position badge at top-right
             StackPane.setAlignment(notificationBadge, Pos.TOP_RIGHT);
             StackPane.setAlignment(badgeLabel, Pos.TOP_RIGHT);
-            StackPane.setMargin(notificationBadge, new Insets(-5, -5, 0, 0));
-            StackPane.setMargin(badgeLabel, new Insets(-5, -5, 0, 0));
+            StackPane.setMargin(notificationBadge, new Insets(-6, -6, 0, 0));
+            StackPane.setMargin(badgeLabel, new Insets(-6, -6, 0, 0));
 
             notificationIconContainer.getChildren().addAll(notificationBadge, badgeLabel);
 
-            // Setup dropdown behavior
-            notificationMenuButton.setOnShowing(e -> loadNotificationDropdown());
+            // Setup dropdown behavior with safe loading
+            notificationMenuButton.setOnShowing(e -> loadNotificationDropdownSafely());
 
-            System.out.println("Notification badge setup completed");
+            System.out.println("✅ Notification badge setup completed");
         } else {
-            System.err.println("NotificationMenuButton or IconContainer not found - check FXML fx:id");
+            System.err.println("❌ NotificationMenuButton or IconContainer not found - check FXML fx:id");
         }
     }
 
-    // 🔔 GET CURRENT NOTIFICATIONS (only today/upcoming events)
-    private List<NotificationItem> getNotifications(int limit) {
-        List<NotificationItem> notifications = new java.util.ArrayList<>();
+    // 🔔 SAFE DROPDOWN LOADING (no concurrency issues)
+    private void loadNotificationDropdownSafely() {
+        synchronized (cacheLock) {
+            if (isCacheFresh() && !notificationCache.isEmpty()) {
+                System.out.println("⚡ Loading notifications from cache (0ms)");
+                updateDropdownWithNotifications(new ArrayList<>(notificationCache));
+                return;
+            }
+        }
 
-        // Generate notifications in real-time
-        generateCurrentNotifications(notifications);
+        // Cache is stale or empty, show loading
+        showLoadingState();
 
-        // Sort by priority (today events first, then tomorrow, etc.)
-        notifications.sort((a, b) -> {
-            // Priority: TODAY events first, then TOMORROW, then others
-            if (a.message.contains(getTranslation("notification.today")) && !b.message.contains(getTranslation("notification.today"))) return -1;
-            if (!a.message.contains(getTranslation("notification.today")) && b.message.contains(getTranslation("notification.today"))) return 1;
-            if (a.message.contains(getTranslation("notification.tomorrow")) && !b.message.contains(getTranslation("notification.tomorrow"))) return -1;
-            if (!a.message.contains(getTranslation("notification.tomorrow")) && b.message.contains(getTranslation("notification.tomorrow"))) return 1;
-            return a.createdAt.compareTo(b.createdAt);
+        // Load fresh data safely with timeout protection
+        CompletableFuture.supplyAsync(this::loadNotificationsSequentially)
+                .orTimeout(5, TimeUnit.SECONDS) // Increased timeout for safety
+                .thenAccept(notifications -> {
+                    synchronized (cacheLock) {
+                        notificationCache = notifications;
+                        lastCacheUpdate = LocalDateTime.now();
+                    }
+
+                    Platform.runLater(() -> {
+                        if (notificationMenuButton.isShowing()) {
+                            updateDropdownWithNotifications(notifications);
+                        }
+                    });
+                })
+                .exceptionally(throwable -> {
+                    System.err.println("❌ SQLite query failed or timed out: " + throwable.getMessage());
+                    Platform.runLater(() -> {
+                        if (notificationMenuButton.isShowing()) {
+                            synchronized (cacheLock) {
+                                if (!notificationCache.isEmpty()) {
+                                    System.out.println("Using cached notifications as fallback");
+                                    updateDropdownWithNotifications(new ArrayList<>(notificationCache));
+                                } else {
+                                    notificationMenuButton.getItems().clear();
+                                    createErrorMenuItem();
+                                }
+                            }
+                        }
+                    });
+                    return null;
+                });
+    }
+
+    // 🔔 SEQUENTIAL SQLITE DATA LOADING (FIXED VERSION)
+    private List<NotificationItem> loadNotificationsSequentially() {
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // Use the safe sequential method instead of concurrent access
+            List<NotificationItem> notifications = getNotificationsSafely(8);
+
+            long duration = System.currentTimeMillis() - startTime;
+            System.out.println("✅ Sequential SQLite queries completed in " + duration + "ms (" + notifications.size() + " notifications)");
+
+            return notifications;
+
+        } catch (Exception e) {
+            System.err.println("❌ Sequential SQLite query error: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    // Helper methods (unchanged)
+    private NotificationItem createBirthdayNotification(String firstName, String lastName, LocalDate birthday,
+                                                        LocalDate today, DateTimeFormatter formatter,
+                                                        String type, int id) {
+        if (birthday == null) return null;
+
+        LocalDate thisYearBirthday = birthday.withYear(today.getYear());
+        if (thisYearBirthday.isBefore(today)) {
+            thisYearBirthday = thisYearBirthday.plusYears(1);
+        }
+
+        long daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, thisYearBirthday);
+
+        if (daysUntil >= 0 && daysUntil <= 3) {
+            String title = daysUntil == 0 ? "🎉 " + getTranslation("notification.birthday.today") :
+                    daysUntil == 1 ? "🎂 " + getTranslation("notification.birthday.tomorrow") :
+                            "🎈 " + getTranslation("notification.birthday.upcoming");
+
+            String timeText = daysUntil == 0 ? getTranslation("notification.today") :
+                    daysUntil == 1 ? getTranslation("notification.tomorrow") :
+                            getTranslation("notification.in") + " " + daysUntil + " " + getTranslation("notification.days");
+
+            String message = String.format("%s %s%s %s (%s)",
+                    firstName, lastName, getTranslation("notification.birthday.is"),
+                    timeText, thisYearBirthday.format(formatter));
+
+            return createNotificationItem(title, message, type, id);
+        }
+
+        return null;
+    }
+
+    private NotificationItem createWorkshopNotification(Workshop workshop, long daysUntil,
+                                                        DateTimeFormatter formatter, String eventType) {
+        String title, timeText, message;
+
+        if (eventType.equals("ending")) {
+            title = "🏁 " + getTranslation("notification.workshop.ending.today");
+            message = String.format("%s '%s' %s",
+                    getTranslation("notification.workshop"), workshop.getName(),
+                    getTranslation("notification.ends.today"));
+            return createNotificationItem(title, message, "WORKSHOP_ENDING_TODAY", workshop.getId());
+        } else {
+            title = daysUntil == 0 ? "🚀 " + getTranslation("notification.workshop.starting.today") :
+                    daysUntil == 1 ? "📅 " + getTranslation("notification.workshop.tomorrow") :
+                            "🔔 " + getTranslation("notification.workshop.upcoming");
+
+            timeText = daysUntil == 0 ? getTranslation("notification.starts.today") :
+                    daysUntil == 1 ? getTranslation("notification.starts.tomorrow") :
+                            getTranslation("notification.starts.in") + " " + daysUntil + " " + getTranslation("notification.days");
+
+            message = String.format("%s '%s' %s (%s)",
+                    getTranslation("notification.workshop"), workshop.getName(),
+                    timeText, workshop.getFromDate().format(formatter));
+
+            return createNotificationItem(title, message, "WORKSHOP_UPCOMING", workshop.getId());
+        }
+    }
+
+    // SAFE Background cache refresh
+    private void refreshNotificationCacheSafely() {
+        CompletableFuture.supplyAsync(() -> {
+            System.out.println("🔄 Refreshing notification cache safely...");
+            return loadNotificationsSequentially();
+        }).thenAccept(notifications -> {
+            synchronized (cacheLock) {
+                notificationCache = notifications;
+                lastCacheUpdate = LocalDateTime.now();
+            }
+
+            Platform.runLater(this::updateNotificationBadge);
+            System.out.println("✅ Cache refreshed safely (" + notifications.size() + " items)");
+        }).exceptionally(throwable -> {
+            System.err.println("❌ Error refreshing cache safely: " + throwable.getMessage());
+            return null;
         });
-
-        // Limit results
-        return notifications.size() > limit ?
-                notifications.subList(0, limit) : notifications;
     }
 
-    // 🔔 GENERATE CURRENT NOTIFICATIONS (real-time, no database storage)
-    private void generateCurrentNotifications(List<NotificationItem> notifications) {
-        LocalDate today = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd");
+    private void showLoadingState() {
+        notificationMenuButton.getItems().clear();
+        Label loadingLabel = new Label("🔄 " + getTranslation("notification.loading"));
+        loadingLabel.setStyle("-fx-text-fill: #666666; -fx-font-style: italic; -fx-padding: 20 12 20 12;");
+        CustomMenuItem loadingItem = new CustomMenuItem(loadingLabel);
+        loadingItem.setDisable(true);
+        loadingItem.setHideOnClick(false);
+        notificationMenuButton.getItems().add(loadingItem);
+    }
 
-        try {
-            // 🎂 TODAY'S AND UPCOMING BIRTHDAYS
-            generateCurrentBirthdayNotifications(notifications, today, formatter);
+    private boolean isCacheFresh() {
+        return lastCacheUpdate != null &&
+                java.time.Duration.between(lastCacheUpdate, LocalDateTime.now()).compareTo(CACHE_DURATION) < 0;
+    }
 
-            // 🚀 TODAY'S AND UPCOMING WORKSHOPS
-            generateCurrentWorkshopNotifications(notifications, today, formatter);
-
-        } catch (Exception e) {
-            System.err.println("❌ Error generating current notifications: " + e.getMessage());
+    // 🔔 GET UNREAD COUNT FROM CACHE (FAST!)
+    private int getUnreadCount() {
+        synchronized (cacheLock) {
+            return notificationCache.size();
         }
     }
 
-    // 🔔 GENERATE CURRENT BIRTHDAY NOTIFICATIONS
-    private void generateCurrentBirthdayNotifications(List<NotificationItem> notifications, LocalDate today, DateTimeFormatter formatter) {
-        try {
-            // Contact birthdays (next 3 days only)
-            List<Contact> contactsWithBirthdays = contactDAO.getContactsWithUpcomingBirthdays(3);
-            for (Contact contact : contactsWithBirthdays) {
-                if (contact.getBirthday() != null) {
-                    LocalDate thisYearBirthday = contact.getBirthday().withYear(today.getYear());
-                    if (thisYearBirthday.isBefore(today)) {
-                        thisYearBirthday = thisYearBirthday.plusYears(1);
-                    }
+    private void updateDropdownWithNotifications(List<NotificationItem> notifications) {
+        notificationMenuButton.getItems().clear();
 
-                    long daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, thisYearBirthday);
+        if (notifications.isEmpty()) {
+            createEmptyStateMenuItem();
+        } else {
+            createHeaderMenuItem();
+            notificationMenuButton.getItems().add(new SeparatorMenuItem());
 
-                    // Only show if within next 3 days
-                    if (daysUntil >= 0 && daysUntil <= 3) {
-                        String title = daysUntil == 0 ? "🎉 " + getTranslation("notification.birthday.today") :
-                                daysUntil == 1 ? "🎂 " + getTranslation("notification.birthday.tomorrow") :
-                                        "🎈 " + getTranslation("notification.birthday.upcoming");
-
-                        String timeText = daysUntil == 0 ? getTranslation("notification.today") :
-                                daysUntil == 1 ? getTranslation("notification.tomorrow") :
-                                        getTranslation("notification.in") + " " + daysUntil + " " + getTranslation("notification.days");
-
-                        String message = String.format("%s %s %s %s (%s)",
-                                contact.getFirstName(),
-                                contact.getLastName(),
-                                getTranslation("notification.birthday.is"),
-                                timeText,
-                                thisYearBirthday.format(formatter)
-                        );
-
-                        NotificationItem notification = createNotificationItem(
-                                title, message, "BIRTHDAY_CONTACT", contact.getId()
-                        );
-                        notifications.add(notification);
-                    }
-                }
+            for (NotificationItem notification : notifications) {
+                CustomMenuItem notificationItem = createNotificationMenuItem(notification);
+                notificationMenuButton.getItems().add(notificationItem);
             }
-
-            // Underaged member birthdays (next 3 days only)
-            List<UnderagedMember> allUnderagedMembers = underagedDAO.getAllUnderagedMembers();
-            for (UnderagedMember underaged : allUnderagedMembers) {
-                if (underaged.getBirthDate() != null) {
-                    LocalDate thisYearBirthday = underaged.getBirthDate().withYear(today.getYear());
-                    if (thisYearBirthday.isBefore(today)) {
-                        thisYearBirthday = thisYearBirthday.plusYears(1);
-                    }
-
-                    long daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, thisYearBirthday);
-
-                    // Only show if within next 3 days
-                    if (daysUntil >= 0 && daysUntil <= 3) {
-                        String title = daysUntil == 0 ? "🎉 " + getTranslation("notification.birthday.today") :
-                                daysUntil == 1 ? "🎂 " + getTranslation("notification.birthday.tomorrow") :
-                                        "🎈 " + getTranslation("notification.birthday.upcoming");
-
-                        String timeText = daysUntil == 0 ? getTranslation("notification.today") :
-                                daysUntil == 1 ? getTranslation("notification.tomorrow") :
-                                        getTranslation("notification.in") + " " + daysUntil + " " + getTranslation("notification.days");
-
-                        String message = String.format("%s %s %s %s (%s)",
-                                underaged.getFirstName(),
-                                underaged.getLastName(),
-                                getTranslation("notification.birthday.is"),
-                                timeText,
-                                thisYearBirthday.format(formatter)
-                        );
-
-                        NotificationItem notification = createNotificationItem(
-                                title, message, "BIRTHDAY_UNDERAGED", underaged.getId()
-                        );
-                        notifications.add(notification);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("❌ Error generating birthday notifications: " + e.getMessage());
         }
     }
 
-    // 🔔 GENERATE CURRENT WORKSHOP NOTIFICATIONS
-    private void generateCurrentWorkshopNotifications(List<NotificationItem> notifications, LocalDate today, DateTimeFormatter formatter) {
-        try {
-            // Upcoming workshops (next 3 days only)
-            List<Workshop> upcomingWorkshops = workshopDAO.getUpcomingWorkshops(3);
-            for (Workshop workshop : upcomingWorkshops) {
-                if (workshop.getFromDate() != null) {
-                    long daysUntil = java.time.temporal.ChronoUnit.DAYS.between(today, workshop.getFromDate());
-
-                    // Only show if within next 3 days
-                    if (daysUntil >= 0 && daysUntil <= 3) {
-                        String title = daysUntil == 0 ? "🚀 " + getTranslation("notification.workshop.starting.today") :
-                                daysUntil == 1 ? "📅 " + getTranslation("notification.workshop.tomorrow") :
-                                        "🔔 " + getTranslation("notification.workshop.upcoming");
-
-                        String timeText = daysUntil == 0 ? getTranslation("notification.starts.today") :
-                                daysUntil == 1 ? getTranslation("notification.starts.tomorrow") :
-                                        getTranslation("notification.starts.in") + " " + daysUntil + " " + getTranslation("notification.days");
-
-                        String message = String.format("%s '%s' %s (%s)",
-                                getTranslation("notification.workshop"),
-                                workshop.getName(),
-                                timeText,
-                                workshop.getFromDate().format(formatter)
-                        );
-
-                        NotificationItem notification = createNotificationItem(
-                                title, message, "WORKSHOP_UPCOMING", workshop.getId()
-                        );
-                        notifications.add(notification);
-                    }
-                }
-            }
-
-            // Active workshops ending today
-            List<Workshop> activeWorkshops = workshopDAO.getActiveWorkshops();
-            for (Workshop workshop : activeWorkshops) {
-                if (workshop.getToDate() != null && workshop.getToDate().equals(today)) {
-                    String title = "🏁 " + getTranslation("notification.workshop.ending.today");
-                    String message = String.format("%s '%s' %s",
-                            getTranslation("notification.workshop"),
-                            workshop.getName(),
-                            getTranslation("notification.ends.today")
-                    );
-
-                    NotificationItem notification = createNotificationItem(
-                            title, message, "WORKSHOP_ENDING_TODAY", workshop.getId()
-                    );
-                    notifications.add(notification);
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("❌ Error generating workshop notifications: " + e.getMessage());
-        }
-    }
-
-    // 🔔 CREATE NOTIFICATION ITEM (helper method)
+    // 🔔 CREATE NOTIFICATION ITEM
     private NotificationItem createNotificationItem(String title, String message, String type, int relatedId) {
         NotificationItem notification = new NotificationItem();
-        notification.id = 0; // Not stored in database
+        notification.id = 0;
         notification.title = title;
         notification.message = message;
         notification.type = type;
         notification.relatedId = relatedId;
-        notification.isRead = false; // Always unread since they're current
-        notification.createdAt = java.time.LocalDateTime.now();
+        notification.isRead = false;
+        notification.createdAt = LocalDateTime.now();
         return notification;
     }
 
-    // 🔔 GET UNREAD COUNT (real-time count)
-    private int getUnreadCount() {
-        List<NotificationItem> currentNotifications = new java.util.ArrayList<>();
-        generateCurrentNotifications(currentNotifications);
-        return currentNotifications.size(); // All current notifications are "unread"
-    }
-
-    // 🔔 SETUP PERIODIC NOTIFICATION UPDATES (more frequent)
-    private void setupNotificationUpdates() {
-        // Update notifications every 5 minutes for real-time feel
-        notificationUpdateTimeline = new Timeline(new KeyFrame(Duration.minutes(5), e -> {
-            updateNotificationBadge();
-        }));
-        notificationUpdateTimeline.setCycleCount(Timeline.INDEFINITE);
-        notificationUpdateTimeline.play();
-
-        System.out.println("Real-time notification update timeline started (5 min intervals)");
-    }
-
-    // 🔔 LOAD NOTIFICATION DROPDOWN
-    private void loadNotificationDropdown() {
-        Platform.runLater(() -> {
-            try {
-                // Clear existing menu items
-                notificationMenuButton.getItems().clear();
-
-                List<NotificationItem> notifications = getNotifications(8);
-
-                if (notifications.isEmpty()) {
-                    createEmptyStateMenuItem();
-                } else {
-                    createHeaderMenuItem();
-                    notificationMenuButton.getItems().add(new SeparatorMenuItem());
-
-                    for (NotificationItem notification : notifications) {
-                        CustomMenuItem notificationItem = createNotificationMenuItem(notification);
-                        notificationMenuButton.getItems().add(notificationItem);
-                    }
-                }
-
-            } catch (Exception e) {
-                System.err.println("❌ Error loading notification dropdown: " + e.getMessage());
-                e.printStackTrace();
-                createErrorMenuItem();
-            }
-        });
-    }
-
-    // 🔔 SIMPLIFIED DROPDOWN MENU ITEMS
     private void createHeaderMenuItem() {
         int currentCount = getUnreadCount();
         String headerText = currentCount > 0 ?
@@ -450,48 +535,32 @@ public class MainController {
         notificationMenuButton.getItems().add(headerItem);
     }
 
-    // 🔔 SIMPLIFIED MENU ITEM CREATION (no read/unread state)
     private CustomMenuItem createNotificationMenuItem(NotificationItem notification) {
         VBox notificationContent = new VBox(3);
         notificationContent.setPadding(new Insets(12, 16, 12, 16));
         notificationContent.setMaxWidth(350);
         notificationContent.setPrefWidth(350);
 
-        // Title (always fresh/current)
         Label titleLabel = new Label(notification.title);
         titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 12px;");
 
-        // Message
         Label messageLabel = new Label(notification.message);
         messageLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666;");
         messageLabel.setWrapText(true);
         messageLabel.setMaxWidth(330);
 
-        // Current time indicator
         Label timeLabel = new Label(getTranslation("notification.now"));
         timeLabel.setStyle("-fx-font-size: 10px; -fx-text-fill: #2196F3; -fx-font-weight: bold;");
 
         notificationContent.getChildren().addAll(titleLabel, messageLabel, timeLabel);
-
-        // Always fresh appearance
         notificationContent.setStyle("-fx-background-color: #f0f8ff;");
 
         CustomMenuItem menuItem = new CustomMenuItem(notificationContent);
         menuItem.setHideOnClick(true);
 
-        // Add hover effect
-        notificationContent.setOnMouseEntered(e -> {
-            notificationContent.setStyle("-fx-background-color: #e3f2fd;");
-        });
-
-        notificationContent.setOnMouseExited(e -> {
-            notificationContent.setStyle("-fx-background-color: #f0f8ff;");
-        });
-
         return menuItem;
     }
 
-    // 🔔 CREATE EMPTY STATE MENU ITEM
     private void createEmptyStateMenuItem() {
         Label emptyLabel = new Label("📭 " + getTranslation("notification.no.events"));
         emptyLabel.setStyle("-fx-text-fill: #999999; -fx-font-style: italic; -fx-padding: 20 12 20 12;");
@@ -503,7 +572,6 @@ public class MainController {
         notificationMenuButton.getItems().add(emptyItem);
     }
 
-    // 🔔 CREATE ERROR MENU ITEM
     private void createErrorMenuItem() {
         Label errorLabel = new Label("❌ " + getTranslation("notification.error.loading"));
         errorLabel.setStyle("-fx-text-fill: #f44336; -fx-padding: 12;");
@@ -515,15 +583,17 @@ public class MainController {
         notificationMenuButton.getItems().add(errorItem);
     }
 
-    // 🔔 UPDATE NOTIFICATION BADGE
+    // 🔔 UPDATE NOTIFICATION BADGE - ENHANCED VERSION
     private void updateNotificationBadge() {
         Platform.runLater(() -> {
             int unreadCount = getUnreadCount();
 
+            System.out.println("🔔 Updating badge: " + unreadCount + " notifications");
+
             if (unreadCount > 0) {
                 notificationBadge.setVisible(true);
                 badgeLabel.setVisible(true);
-                badgeLabel.setText(String.valueOf(Math.min(unreadCount, 99))); // Cap at 99
+                badgeLabel.setText(String.valueOf(Math.min(unreadCount, 99)));
             } else {
                 notificationBadge.setVisible(false);
                 badgeLabel.setVisible(false);
@@ -539,16 +609,26 @@ public class MainController {
         String type;
         int relatedId;
         boolean isRead;
-        java.time.LocalDateTime createdAt;
+        LocalDateTime createdAt;
     }
 
-    // 🔔 TRANSLATION HELPER METHOD
+    // 🔔 ENHANCED TRANSLATION HELPER METHOD
     private String getTranslation(String key) {
         try {
-            return languageManager.getText(key);
+            // First try to get from language manager
+            String translation = languageManager.getText(key);
+            if (translation != null && !translation.trim().isEmpty() && !translation.equals(key)) {
+                return translation;
+            }
         } catch (Exception e) {
-            // Fallback to English if translation missing
+            System.err.println("Translation error for key '" + key + "': " + e.getMessage());
+        }
+
+        // Fallback to appropriate language fallback
+        if (languageManager.isEnglish()) {
             return getEnglishFallback(key);
+        } else {
+            return getCroatianFallback(key);
         }
     }
 
@@ -577,7 +657,38 @@ public class MainController {
             case "notification.now" -> "Now";
             case "notification.no.events" -> "No notifications";
             case "notification.error.loading" -> "Error loading notifications";
-            default -> key;
+            case "notification.loading" -> "Loading...";
+            default -> key; // Return key if no translation found
+        };
+    }
+
+    // 🔔 CROATIAN FALLBACKS FOR NOTIFICATIONS
+    private String getCroatianFallback(String key) {
+        return switch (key) {
+            case "notification.birthday.today" -> "Rođendan Danas!";
+            case "notification.birthday.tomorrow" -> "Rođendan Sutra";
+            case "notification.birthday.upcoming" -> "Nadolazeći Rođendan";
+            case "notification.birthday.is" -> " ima rođendan";
+            case "notification.workshop.starting.today" -> "Radionica Počinje Danas!";
+            case "notification.workshop.tomorrow" -> "Radionica Sutra";
+            case "notification.workshop.upcoming" -> "Nadolazeća Radionica";
+            case "notification.workshop.ending.today" -> "Radionica Završava Danas";
+            case "notification.workshop" -> "Radionica";
+            case "notification.today" -> "danas";
+            case "notification.tomorrow" -> "sutra";
+            case "notification.in" -> "za";
+            case "notification.days" -> "dana";
+            case "notification.starts.today" -> "počinje danas";
+            case "notification.starts.tomorrow" -> "počinje sutra";
+            case "notification.starts.in" -> "počinje za";
+            case "notification.ends.today" -> "završava danas";
+            case "notification.current.events" -> "Trenutni Događaji";
+            case "notification.no.current.events" -> "Nema Trenutnih Događaja";
+            case "notification.now" -> "Sada";
+            case "notification.no.events" -> "Nema obavještenja";
+            case "notification.error.loading" -> "Greška pri učitavanju obavještenja";
+            case "notification.loading" -> "Učitavanje...";
+            default -> getEnglishFallback(key); // Fallback to English if Croatian not found
         };
     }
 
@@ -587,10 +698,8 @@ public class MainController {
 
     private void loadInitialContent() {
         try {
-            // Try to load welcome screen first
             navigateTo("/views/welcome-view.fxml");
         } catch (Exception e) {
-            // If welcome screen doesn't exist, show a simple welcome message
             showSimpleWelcome();
         }
     }
@@ -611,7 +720,6 @@ public class MainController {
 
             System.out.println("Showing simple welcome message");
         } catch (Exception ex) {
-            // Final fallback - just show "Hello World"
             Label fallbackLabel = new Label("Hello World - Small Business Buddy CRM");
             fallbackLabel.setStyle(
                     "-fx-font-size: 20px; " +
@@ -727,18 +835,15 @@ public class MainController {
     }
 
     private void updateCurrentViewTexts() {
-        // Update the simple welcome message if it's currently shown
         Node currentView = contentArea.getChildren().isEmpty() ? null : contentArea.getChildren().get(0);
         if (currentView instanceof Label) {
             Label label = (Label) currentView;
             if (label.getText().contains("Hello World") ||
                     label.getText().contains("Small Business Buddy") ||
                     label.getText().contains("Dobrodošli")) {
-                // This is our simple welcome message, update it
                 try {
                     label.setText(languageManager.getText("welcome.simple.message"));
                 } catch (Exception e) {
-                    // Fallback text
                     String fallbackText = languageManager.isEnglish() ?
                             "Welcome to Small Business Buddy CRM" :
                             "Dobrodošli u Small Business Buddy CRM";
@@ -761,8 +866,6 @@ public class MainController {
         } catch (IOException e) {
             System.err.println("Could not load view: " + fxmlPath);
             e.printStackTrace();
-
-            // Show error message in content area
             showErrorMessage("Could not load: " + fxmlPath);
         }
     }
@@ -786,15 +889,14 @@ public class MainController {
             System.out.println("MainController: Language change listener removed");
         }
 
-        // 🔔 Stop notification timeline
-        if (notificationUpdateTimeline != null) {
-            notificationUpdateTimeline.stop();
-            System.out.println("MainController: Notification update timeline stopped");
+        if (cacheRefreshExecutor != null) {
+            cacheRefreshExecutor.shutdown();
+            System.out.println("MainController: Cache refresh executor stopped");
         }
     }
 
-    // 🔔 PUBLIC METHOD TO REFRESH NOTIFICATIONS
     public void refreshNotifications() {
+        refreshNotificationCacheSafely();
         updateNotificationBadge();
     }
 

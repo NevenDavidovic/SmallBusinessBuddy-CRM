@@ -315,7 +315,7 @@
     -fx-font-size: 0;
 }
 
-/* Notification Badge */
+
 
 
 /* Dropdown Menu Styles */
@@ -350,4 +350,42 @@
     -fx-background-color: #f0f8ff;
     -fx-border-color: #2196F3;
     -fx-border-width: 0 0 0 3;
+}
+
+/* Force text colors in notification items */
+.notification-menu-button .menu-item .label {
+    -fx-text-fill: #333333 !important;
+}
+
+/* Fix for notification title text */
+.notification-content .label {
+    -fx-text-fill: inherit !important;
+}
+
+/* Override menu item focus states */
+.notification-menu-button .menu-item:focused .label {
+    -fx-text-fill: #333333 !important;
+}
+
+.notification-menu-button .menu-item:selected .label {
+    -fx-text-fill: #333333 !important;
+}
+
+/* Fix for different text elements in notifications */
+.notification-content > * {
+    -fx-text-fill: #333333;
+}
+
+/* Specifically target your notification labels */
+.notification-content .label[styleClass~="title"] {
+    -fx-text-fill: #000000 !important;
+    -fx-font-weight: bold;
+}
+
+.notification-content .label[styleClass~="message"] {
+    -fx-text-fill: #666666 !important;
+}
+
+.notification-content .label[styleClass~="time"] {
+    -fx-text-fill: #2196F3 !important;
 }

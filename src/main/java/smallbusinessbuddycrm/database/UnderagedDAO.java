@@ -8,20 +8,41 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Data Access Object for UnderagedMember entity operations.
+ * Handles database interactions for underaged member management including CRUD operations,
+ * contact relationships, age tracking, and membership management.
+ *
+ * Features:
+ * - Complete underaged member lifecycle management
+ * - Contact relationship tracking
+ * - Age and birth date management
+ * - Membership status and period tracking
+ * - Gender and personal information storage
+ * - Bulk operations support
+ * - Guardian contact association
+ *
+ * @author Small Business Buddy CRM Team
+ * @version 1.0
+ */
 public class UnderagedDAO {
 
+    /**
+     * Retrieves all underaged members from the database.
+     * Includes comprehensive logging for debugging purposes.
+     * Contains complete member information including contact relationships.
+     *
+     * @return List of all underaged members with full details
+     */
     public List<UnderagedMember> getAllUnderagedMembers() {
         List<UnderagedMember> underagedMembers = new ArrayList<>();
         String query = "SELECT * FROM underaged";
 
         try (Connection conn = DatabaseConnection.getConnection()) {
-
-            // Debug: Print connection info
             System.out.println("=== UnderagedDAO Debug Info ===");
             System.out.println("Database URL: " + conn.getMetaData().getURL());
             System.out.println("Connection valid: " + conn.isValid(5));
 
-            // Debug: Check if table exists and has data
             String countQuery = "SELECT COUNT(*) as count FROM underaged";
             try (Statement countStmt = conn.createStatement();
                  ResultSet countRs = countStmt.executeQuery(countQuery)) {
@@ -32,7 +53,6 @@ public class UnderagedDAO {
                 }
             }
 
-            // Debug: Show table structure
             String tableInfoQuery = "PRAGMA table_info(underaged)";
             try (Statement infoStmt = conn.createStatement();
                  ResultSet infoRs = infoStmt.executeQuery(tableInfoQuery)) {
@@ -43,7 +63,6 @@ public class UnderagedDAO {
                 }
             }
 
-            // Main query
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(query)) {
 
@@ -55,7 +74,6 @@ public class UnderagedDAO {
                     UnderagedMember underagedMember = createUnderagedMemberFromResultSet(rs);
                     underagedMembers.add(underagedMember);
 
-                    // Debug: Print first underaged member details
                     if (rowCount == 1) {
                         System.out.println("First underaged member loaded: " + underagedMember.getFirstName() + " " + underagedMember.getLastName() + " (Age: " + underagedMember.getAge() + ")");
                         System.out.println("  Birth Date: " + underagedMember.getBirthDate());
@@ -79,7 +97,14 @@ public class UnderagedDAO {
         return underagedMembers;
     }
 
-    // RENAMED METHOD: Changed from getUnderagedMembersByContact to getUnderagedMembersByContactId
+    /**
+     * Retrieves all underaged members associated with a specific contact (guardian).
+     * Used to display children/dependents for a particular contact.
+     * Results are ordered alphabetically by name.
+     *
+     * @param contactId The ID of the guardian contact
+     * @return List of underaged members associated with the contact, ordered by name
+     */
     public List<UnderagedMember> getUnderagedMembersByContactId(int contactId) {
         List<UnderagedMember> underagedMembers = new ArrayList<>();
         String query = "SELECT * FROM underaged WHERE contact_id = ? ORDER BY first_name, last_name";
@@ -104,6 +129,14 @@ public class UnderagedDAO {
         return underagedMembers;
     }
 
+    /**
+     * Creates a new underaged member in the database.
+     * Automatically generates ID and handles date conversions.
+     * Establishes guardian relationship through contact_id.
+     *
+     * @param underagedMember The underaged member object to create
+     * @return true if member was created successfully, false otherwise
+     */
     public boolean createUnderagedMember(UnderagedMember underagedMember) {
         String query = """
         INSERT INTO underaged (
@@ -118,22 +151,13 @@ public class UnderagedDAO {
 
             stmt.setString(1, underagedMember.getFirstName());
             stmt.setString(2, underagedMember.getLastName());
-
-            // Handle birth date - convert LocalDate to String
             stmt.setString(3, underagedMember.getBirthDate() != null ? underagedMember.getBirthDate().toString() : null);
-
             stmt.setInt(4, underagedMember.getAge());
-
-            // Handle PIN
             stmt.setString(5, underagedMember.getPin());
-
             stmt.setString(6, underagedMember.getGender());
             stmt.setInt(7, underagedMember.isMember() ? 1 : 0);
-
-            // Handle member dates - convert LocalDate to String
             stmt.setString(8, underagedMember.getMemberSince() != null ? underagedMember.getMemberSince().toString() : null);
             stmt.setString(9, underagedMember.getMemberUntil() != null ? underagedMember.getMemberUntil().toString() : null);
-
             stmt.setString(10, underagedMember.getNote());
             stmt.setString(11, underagedMember.getCreatedAt());
             stmt.setString(12, underagedMember.getUpdatedAt());
@@ -142,7 +166,6 @@ public class UnderagedDAO {
             int rowsAffected = stmt.executeUpdate();
 
             if (rowsAffected > 0) {
-                // Get the generated ID
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
                         underagedMember.setId(generatedKeys.getInt(1));
@@ -160,6 +183,62 @@ public class UnderagedDAO {
         return false;
     }
 
+    /**
+     * Updates an existing underaged member in the database.
+     * Automatically updates the updated_at timestamp.
+     * Handles date conversions and guardian relationship updates.
+     *
+     * @param underagedMember The underaged member object with updated information
+     * @return true if member was updated successfully, false otherwise
+     */
+    public boolean updateUnderagedMember(UnderagedMember underagedMember) {
+        String query = """
+        UPDATE underaged SET 
+            first_name = ?, last_name = ?, birth_date = ?, age = ?, pin = ?, 
+            gender = ?, is_member = ?, member_since = ?, member_until = ?, 
+            note = ?, updated_at = ?, contact_id = ?
+        WHERE id = ?
+        """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+
+            stmt.setString(1, underagedMember.getFirstName());
+            stmt.setString(2, underagedMember.getLastName());
+            stmt.setString(3, underagedMember.getBirthDate() != null ? underagedMember.getBirthDate().toString() : null);
+            stmt.setInt(4, underagedMember.getAge());
+            stmt.setString(5, underagedMember.getPin());
+            stmt.setString(6, underagedMember.getGender());
+            stmt.setInt(7, underagedMember.isMember() ? 1 : 0);
+            stmt.setString(8, underagedMember.getMemberSince() != null ? underagedMember.getMemberSince().toString() : null);
+            stmt.setString(9, underagedMember.getMemberUntil() != null ? underagedMember.getMemberUntil().toString() : null);
+            stmt.setString(10, underagedMember.getNote());
+            stmt.setString(11, java.time.LocalDateTime.now().toString());
+            stmt.setInt(12, underagedMember.getContactId());
+            stmt.setInt(13, underagedMember.getId());
+
+            int rowsAffected = stmt.executeUpdate();
+
+            if (rowsAffected > 0) {
+                System.out.println("Underaged member updated successfully with ID: " + underagedMember.getId());
+                return true;
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error updating underaged member: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Deletes a single underaged member from the database.
+     * This operation will remove all associated records including workshop participations.
+     *
+     * @param underagedMemberId The ID of the underaged member to delete
+     * @return true if member was deleted successfully, false otherwise
+     */
     public boolean deleteUnderagedMember(int underagedMemberId) {
         String query = "DELETE FROM underaged WHERE id = ?";
 
@@ -182,19 +261,25 @@ public class UnderagedDAO {
         return false;
     }
 
+    /**
+     * Deletes multiple underaged members in a single database operation.
+     * Uses optimized IN clause for better performance than individual deletes.
+     * This operation will cascade to workshop participations.
+     *
+     * @param underagedMemberIds List of underaged member IDs to delete
+     * @return true if all members were deleted successfully, false otherwise
+     */
     public boolean deleteUnderagedMembers(List<Integer> underagedMemberIds) {
         if (underagedMemberIds.isEmpty()) {
             return false;
         }
 
-        // Create placeholders for IN clause (?, ?, ?, ...)
         String placeholders = String.join(",", Collections.nCopies(underagedMemberIds.size(), "?"));
         String query = "DELETE FROM underaged WHERE id IN (" + placeholders + ")";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
-            // Set the underaged member IDs as parameters
             for (int i = 0; i < underagedMemberIds.size(); i++) {
                 stmt.setInt(i + 1, underagedMemberIds.get(i));
             }
@@ -214,57 +299,12 @@ public class UnderagedDAO {
         return false;
     }
 
-    public boolean updateUnderagedMember(UnderagedMember underagedMember) {
-        String query = """
-        UPDATE underaged SET 
-            first_name = ?, last_name = ?, birth_date = ?, age = ?, pin = ?, 
-            gender = ?, is_member = ?, member_since = ?, member_until = ?, 
-            note = ?, updated_at = ?, contact_id = ?
-        WHERE id = ?
-        """;
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-
-            stmt.setString(1, underagedMember.getFirstName());
-            stmt.setString(2, underagedMember.getLastName());
-
-            // Handle birth date - convert LocalDate to String
-            stmt.setString(3, underagedMember.getBirthDate() != null ? underagedMember.getBirthDate().toString() : null);
-
-            stmt.setInt(4, underagedMember.getAge());
-
-            // Handle PIN
-            stmt.setString(5, underagedMember.getPin());
-
-            stmt.setString(6, underagedMember.getGender());
-            stmt.setInt(7, underagedMember.isMember() ? 1 : 0);
-
-            // Handle member dates - convert LocalDate to String
-            stmt.setString(8, underagedMember.getMemberSince() != null ? underagedMember.getMemberSince().toString() : null);
-            stmt.setString(9, underagedMember.getMemberUntil() != null ? underagedMember.getMemberUntil().toString() : null);
-
-            stmt.setString(10, underagedMember.getNote());
-            stmt.setString(11, java.time.LocalDateTime.now().toString());
-            stmt.setInt(12, underagedMember.getContactId());
-            stmt.setInt(13, underagedMember.getId());
-
-            int rowsAffected = stmt.executeUpdate();
-
-            if (rowsAffected > 0) {
-                System.out.println("Underaged member updated successfully with ID: " + underagedMember.getId());
-                return true;
-            }
-
-        } catch (SQLException e) {
-            System.err.println("Error updating underaged member: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        return false;
-    }
-
-    // Helper method to get underaged member by ID
+    /**
+     * Retrieves a specific underaged member by ID.
+     *
+     * @param id The ID of the underaged member to retrieve
+     * @return UnderagedMember object if found, null otherwise
+     */
     public UnderagedMember getUnderagedMemberById(int id) {
         String query = "SELECT * FROM underaged WHERE id = ?";
 
@@ -286,7 +326,15 @@ public class UnderagedDAO {
         return null;
     }
 
-    // Helper method: Extract underaged member creation logic
+    /**
+     * Creates an UnderagedMember object from a database ResultSet.
+     * Handles proper type conversion, date parsing, and null value management.
+     * Includes comprehensive error handling for date parsing operations.
+     *
+     * @param rs ResultSet containing underaged member data
+     * @return Populated UnderagedMember object
+     * @throws SQLException if database access error occurs
+     */
     private UnderagedMember createUnderagedMemberFromResultSet(ResultSet rs) throws SQLException {
         UnderagedMember underagedMember = new UnderagedMember();
 
@@ -294,7 +342,6 @@ public class UnderagedDAO {
         underagedMember.setFirstName(rs.getString("first_name"));
         underagedMember.setLastName(rs.getString("last_name"));
 
-        // Handle birth_date
         String birthDateStr = rs.getString("birth_date");
         if (birthDateStr != null && !birthDateStr.trim().isEmpty()) {
             try {
@@ -305,14 +352,10 @@ public class UnderagedDAO {
         }
 
         underagedMember.setAge(rs.getInt("age"));
-
-        // Handle PIN
         underagedMember.setPin(rs.getString("pin"));
-
         underagedMember.setGender(rs.getString("gender"));
         underagedMember.setMember(rs.getInt("is_member") == 1);
 
-        // Handle member_since and member_until dates
         String memberSinceStr = rs.getString("member_since");
         if (memberSinceStr != null && !memberSinceStr.trim().isEmpty()) {
             try {
