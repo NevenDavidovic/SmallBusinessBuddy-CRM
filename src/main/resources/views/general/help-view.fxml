@@ -4,13 +4,13 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="smallbusinessbuddycrm.controllers.organization.HelpViewController">
 
     <top>
         <VBox style="-fx-background-color: #4F46E5; -fx-padding: 30;">
-            <Label text="SmallBusinessBuddy - Help Center"
+            <Label fx:id="mainTitleLabel"
                    style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: white;" />
-            <Label text="Dokumentacija i pomoć"
+            <Label fx:id="subtitleLabel"
                    style="-fx-font-size: 14px; -fx-text-fill: #C7D2FE; -fx-padding: 5 0 0 0;" />
         </VBox>
     </top>
@@ -21,26 +21,52 @@
 
                 <!-- Welcome Section -->
                 <VBox spacing="15" style="-fx-background-color: white; -fx-background-radius: 10; -fx-padding: 25; -fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-border-width: 1;">
-                    <Label text="Dobrodošli u SmallBusinessBuddy!"
+                    <Label fx:id="welcomeTitleLabel"
                            style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1E293B;"/>
-                    <Label text="Vaš pouzdani partner za upravljanje poslovanjem"
+                    <Label fx:id="welcomeDescriptionLabel"
                            style="-fx-font-size: 14px; -fx-text-fill: #64748B;" wrapText="true"/>
+                </VBox>
+
+                <!-- Manual Downloads Section -->
+                <VBox spacing="0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-border-width: 1;">
+                    <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #059669; -fx-background-radius: 10 10 0 0; -fx-padding: 20;">
+                        <Label fx:id="manualDownloadTitleLabel"
+                               style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"/>
+                    </HBox>
+                    <VBox spacing="20" style="-fx-padding: 20;">
+                        <Label fx:id="manualDownloadDescriptionLabel" wrapText="true"
+                               style="-fx-font-size: 14px; -fx-text-fill: #475569;" />
+
+                        <HBox spacing="15" alignment="CENTER">
+                            <Button fx:id="downloadManualHrButton"
+                                    onAction="#downloadManualHr"
+                                    style="-fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 24; -fx-font-size: 13px;"
+                                    prefWidth="150"/>
+                            <Button fx:id="downloadManualEnButton"
+                                    onAction="#downloadManualEn"
+                                    style="-fx-background-color: #3B82F6; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8; -fx-padding: 12 24; -fx-font-size: 13px;"
+                                    prefWidth="150"/>
+                        </HBox>
+
+                        <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #DBEAFE; -fx-background-radius: 8; -fx-padding: 12;">
+                            <Label fx:id="manualNoteLabel" wrapText="true"
+                                   style="-fx-font-size: 12px; -fx-text-fill: #1E40AF;" />
+                        </HBox>
+                    </VBox>
                 </VBox>
 
                 <!-- Payment Templates -->
                 <VBox spacing="0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-border-width: 1;">
                     <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #EF4444; -fx-background-radius: 10 10 0 0; -fx-padding: 20;">
-                        <Label text="Napomena o predlošcima plaćanja"
+                        <Label fx:id="paymentTemplatesTitleLabel"
                                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"/>
                     </HBox>
                     <VBox spacing="12" style="-fx-padding: 20;">
-                        <Label wrapText="true"
-                               style="-fx-font-size: 14px; -fx-text-fill: #475569;"
-                               text="Ako koristite predložak plaćanja, uplatnica će biti generirana na temelju tog predloška. Obavezno provjerite podatke poput poziva na broj i iznosa prije generiranja." />
+                        <Label fx:id="paymentTemplatesDescriptionLabel" wrapText="true"
+                               style="-fx-font-size: 14px; -fx-text-fill: #475569;" />
                         <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #FEF3C7; -fx-background-radius: 8; -fx-padding: 12;">
-                            <Label wrapText="true"
-                                   style="-fx-font-size: 13px; -fx-text-fill: #92400E; -fx-font-weight: bold;"
-                                   text="Za djecu: aplikacija će generirati barkod za svako dijete označeno kao član." />
+                            <Label fx:id="childrenPaymentNoteLabel" wrapText="true"
+                                   style="-fx-font-size: 13px; -fx-text-fill: #92400E; -fx-font-weight: bold;" />
                         </HBox>
                     </VBox>
                 </VBox>
@@ -48,21 +74,20 @@
                 <!-- App Purpose -->
                 <VBox spacing="0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-border-width: 1;">
                     <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #10B981; -fx-background-radius: 10 10 0 0; -fx-padding: 20;">
-                        <Label text="Cilj aplikacije"
+                        <Label fx:id="appPurposeTitleLabel"
                                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"/>
                     </HBox>
                     <VBox spacing="15" style="-fx-padding: 20;">
-                        <Label wrapText="true"
-                               style="-fx-font-size: 14px; -fx-text-fill: #475569;"
-                               text="SmallBusinessBuddy je CRM aplikacija prilagođena malim poduzećima, udrugama i fizičkim osobama koje nude usluge." />
+                        <Label fx:id="appPurposeDescriptionLabel" wrapText="true"
+                               style="-fx-font-size: 14px; -fx-text-fill: #475569;" />
                         <HBox spacing="15">
                             <VBox spacing="8" style="-fx-background-color: #DBEAFE; -fx-background-radius: 8; -fx-padding: 15;" HBox.hgrow="ALWAYS">
-                                <Label text="Za poduzeća" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1E40AF;"/>
-                                <Label text="Upravljanje klijentima i uslugama" style="-fx-font-size: 12px; -fx-text-fill: #3730A3;" wrapText="true"/>
+                                <Label fx:id="forBusinessesLabel" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1E40AF;"/>
+                                <Label fx:id="forBusinessesDescriptionLabel" style="-fx-font-size: 12px; -fx-text-fill: #3730A3;" wrapText="true"/>
                             </VBox>
                             <VBox spacing="8" style="-fx-background-color: #DCFCE7; -fx-background-radius: 8; -fx-padding: 15;" HBox.hgrow="ALWAYS">
-                                <Label text="Za udruge" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #166534;"/>
-                                <Label text="Praćenje članova i aktivnosti" style="-fx-font-size: 12px; -fx-text-fill: #14532D;" wrapText="true"/>
+                                <Label fx:id="forAssociationsLabel" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #166534;"/>
+                                <Label fx:id="forAssociationsDescriptionLabel" style="-fx-font-size: 12px; -fx-text-fill: #14532D;" wrapText="true"/>
                             </VBox>
                         </HBox>
                     </VBox>
@@ -71,29 +96,29 @@
                 <!-- Features -->
                 <VBox spacing="0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-border-width: 1;">
                     <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #F59E0B; -fx-background-radius: 10 10 0 0; -fx-padding: 20;">
-                        <Label text="Ključne funkcionalnosti"
+                        <Label fx:id="keyFeaturesTitleLabel"
                                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"/>
                     </HBox>
                     <VBox spacing="12" style="-fx-padding: 20;">
                         <VBox spacing="10">
                             <HBox spacing="15">
                                 <VBox spacing="8" style="-fx-background-color: #F0F9FF; -fx-background-radius: 8; -fx-padding: 12;" HBox.hgrow="ALWAYS">
-                                    <Label text="Kontakti" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #0369A1;"/>
-                                    <Label text="Upravljanje klijentima i članovima" style="-fx-font-size: 12px; -fx-text-fill: #0284C7;" wrapText="true"/>
+                                    <Label fx:id="contactsFeatureLabel" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #0369A1;"/>
+                                    <Label fx:id="contactsFeatureDescriptionLabel" style="-fx-font-size: 12px; -fx-text-fill: #0284C7;" wrapText="true"/>
                                 </VBox>
                                 <VBox spacing="8" style="-fx-background-color: #FEF3C7; -fx-background-radius: 8; -fx-padding: 12;" HBox.hgrow="ALWAYS">
-                                    <Label text="Uplatnice" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #D97706;"/>
-                                    <Label text="HUB-3 generiranje i praćenje" style="-fx-font-size: 12px; -fx-text-fill: #EA580C;" wrapText="true"/>
+                                    <Label fx:id="paymentsFeatureLabel" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #D97706;"/>
+                                    <Label fx:id="paymentsFeatureDescriptionLabel" style="-fx-font-size: 12px; -fx-text-fill: #EA580C;" wrapText="true"/>
                                 </VBox>
                             </HBox>
                             <HBox spacing="15">
                                 <VBox spacing="8" style="-fx-background-color: #F3E8FF; -fx-background-radius: 8; -fx-padding: 12;" HBox.hgrow="ALWAYS">
-                                    <Label text="Email" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #7C3AED;"/>
-                                    <Label text="Newsletteri i podsjetnici" style="-fx-font-size: 12px; -fx-text-fill: #8B5CF6;" wrapText="true"/>
+                                    <Label fx:id="emailFeatureLabel" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #7C3AED;"/>
+                                    <Label fx:id="emailFeatureDescriptionLabel" style="-fx-font-size: 12px; -fx-text-fill: #8B5CF6;" wrapText="true"/>
                                 </VBox>
                                 <VBox spacing="8" style="-fx-background-color: #ECFDF5; -fx-background-radius: 8; -fx-padding: 12;" HBox.hgrow="ALWAYS">
-                                    <Label text="Radionice" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #059669;"/>
-                                    <Label text="Upravljanje i instruktori" style="-fx-font-size: 12px; -fx-text-fill: #10B981;" wrapText="true"/>
+                                    <Label fx:id="workshopsFeatureLabel" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #059669;"/>
+                                    <Label fx:id="workshopsFeatureDescriptionLabel" style="-fx-font-size: 12px; -fx-text-fill: #10B981;" wrapText="true"/>
                                 </VBox>
                             </HBox>
                         </VBox>
@@ -103,35 +128,29 @@
                 <!-- FAQ -->
                 <VBox spacing="0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-border-width: 1;">
                     <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #8B5CF6; -fx-background-radius: 10 10 0 0; -fx-padding: 20;">
-                        <Label text="Često postavljana pitanja"
+                        <Label fx:id="faqTitleLabel"
                                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"/>
                     </HBox>
                     <VBox spacing="15" style="-fx-padding: 20;">
 
                         <VBox spacing="8" style="-fx-background-color: #F8FAFC; -fx-background-radius: 8; -fx-padding: 15;">
-                            <Label text="Što ako predložak plaćanja nema postavljen poziv na broj?"
-                                   wrapText="true"
+                            <Label fx:id="faqQuestion1Label" wrapText="true"
                                    style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1E293B;"/>
-                            <Label text="Aplikacija će automatski generirati poziv na broj na temelju ID-a kontakta."
-                                   wrapText="true"
+                            <Label fx:id="faqAnswer1Label" wrapText="true"
                                    style="-fx-font-size: 13px; -fx-text-fill: #059669;"/>
                         </VBox>
 
                         <VBox spacing="8" style="-fx-background-color: #F8FAFC; -fx-background-radius: 8; -fx-padding: 15;">
-                            <Label text="Mogu li koristiti aplikaciju bez interneta?"
-                                   wrapText="true"
+                            <Label fx:id="faqQuestion2Label" wrapText="true"
                                    style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1E293B;"/>
-                            <Label text="Da, sve osim email funkcionalnosti radi potpuno offline."
-                                   wrapText="true"
+                            <Label fx:id="faqAnswer2Label" wrapText="true"
                                    style="-fx-font-size: 13px; -fx-text-fill: #059669;"/>
                         </VBox>
 
                         <VBox spacing="8" style="-fx-background-color: #F8FAFC; -fx-background-radius: 8; -fx-padding: 15;">
-                            <Label text="Kako se razlikuje od postojećih CRM rješenja?"
-                                   wrapText="true"
+                            <Label fx:id="faqQuestion3Label" wrapText="true"
                                    style="-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1E293B;"/>
-                            <Label text="Prilagođen hrvatskom tržištu, podržava HUB-3 uplatnice i radi offline."
-                                   wrapText="true"
+                            <Label fx:id="faqAnswer3Label" wrapText="true"
                                    style="-fx-font-size: 13px; -fx-text-fill: #059669;"/>
                         </VBox>
                     </VBox>
@@ -140,25 +159,24 @@
                 <!-- Contact -->
                 <VBox spacing="0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-border-width: 1;">
                     <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #4F46E5; -fx-background-radius: 10 10 0 0; -fx-padding: 20;">
-                        <Label text="Dodatne informacije i podrška"
+                        <Label fx:id="supportTitleLabel"
                                style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;"/>
                     </HBox>
                     <VBox spacing="20" style="-fx-padding: 20;">
-                        <Label wrapText="true"
-                               style="-fx-font-size: 14px; -fx-text-fill: #475569;"
-                               text="Više informacija možete pronaći u korisničkom priručniku ili nas kontaktirajte direktno putem email podrške." />
+                        <Label fx:id="supportDescriptionLabel" wrapText="true"
+                               style="-fx-font-size: 14px; -fx-text-fill: #475569;" />
 
                         <VBox spacing="15" style="-fx-background-color: #4F46E5; -fx-background-radius: 10; -fx-padding: 20;">
-                            <Label text="Kontakt informacije"
+                            <Label fx:id="contactInfoTitleLabel"
                                    style="-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: white;"/>
                             <HBox spacing="20">
                                 <VBox spacing="8" HBox.hgrow="ALWAYS">
-                                    <Label text="Email podrška:" style="-fx-font-size: 12px; -fx-text-fill: #C7D2FE;"/>
+                                    <Label fx:id="emailSupportLabel" style="-fx-font-size: 12px; -fx-text-fill: #C7D2FE;"/>
                                     <Label text="support@smallbusinessbuddy.hr"
                                            style="-fx-font-size: 13px; -fx-text-fill: white; -fx-font-weight: bold;"/>
                                 </VBox>
                                 <VBox spacing="8" HBox.hgrow="ALWAYS">
-                                    <Label text="Verzija:" style="-fx-font-size: 12px; -fx-text-fill: #C7D2FE;"/>
+                                    <Label fx:id="versionLabel" style="-fx-font-size: 12px; -fx-text-fill: #C7D2FE;"/>
                                     <Label text="v1.0.0 (Build 2024.1)"
                                            style="-fx-font-size: 13px; -fx-text-fill: white; -fx-font-weight: bold;"/>
                                 </VBox>
@@ -166,10 +184,10 @@
                         </VBox>
 
                         <VBox spacing="10" style="-fx-background-color: #F8FAFC; -fx-background-radius: 8; -fx-padding: 15;">
-                            <Label text="Brzi savjeti" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1E293B;"/>
-                            <Label text="• Redovito ažurirajte predloške plaćanja" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
-                            <Label text="• Koristite backup funkciju za sigurnost podataka" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
-                            <Label text="• Provjerite email postavke za slanje obavještenja" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
+                            <Label fx:id="quickTipsLabel" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1E293B;"/>
+                            <Label fx:id="tip1Label" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
+                            <Label fx:id="tip2Label" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
+                            <Label fx:id="tip3Label" style="-fx-font-size: 12px; -fx-text-fill: #475569;"/>
                         </VBox>
                     </VBox>
                 </VBox>
