@@ -171,7 +171,7 @@
     <center>
         <StackPane fx:id="contentArea" styleClass="content-area">
             <!-- Welcome Image -->
-            <ImageView fx:id="welcomeImage" fitHeight="400.0" fitWidth="600.0" preserveRatio="true">
+            <ImageView fx:id="welcomeImage" fitHeight="600.0" fitWidth="800.0" preserveRatio="true">
                 <Image url="@../images/welcome-page.png" />
             </ImageView>
         </StackPane>

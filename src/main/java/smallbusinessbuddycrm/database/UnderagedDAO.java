@@ -113,11 +113,13 @@ public class UnderagedDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, contactId);
-            ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                UnderagedMember underagedMember = createUnderagedMemberFromResultSet(rs);
-                underagedMembers.add(underagedMember);
+            // ✅ FIXED: Include ResultSet in try-with-resources
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    UnderagedMember underagedMember = createUnderagedMemberFromResultSet(rs);
+                    underagedMembers.add(underagedMember);
+                }
             }
 
             System.out.println("Loaded " + underagedMembers.size() + " underaged members for contact ID: " + contactId);
@@ -312,10 +314,12 @@ public class UnderagedDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
 
-            if (rs.next()) {
-                return createUnderagedMemberFromResultSet(rs);
+            // ✅ FIXED: Include ResultSet in try-with-resources
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return createUnderagedMemberFromResultSet(rs);
+                }
             }
 
         } catch (SQLException e) {

@@ -14,6 +14,7 @@ import javafx.scene.paint.Color;
 import smallbusinessbuddycrm.database.*;
 import smallbusinessbuddycrm.model.*;
 import smallbusinessbuddycrm.utilities.LanguageManager;
+import smallbusinessbuddycrm.utilities.LoadingManager;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -31,7 +32,7 @@ public class MainController {
     @FXML private MenuButton userProfileButton;
     @FXML private Circle userAvatar;
 
-    // 🔔 NOTIFICATION SYSTEM COMPONENTS
+
     @FXML private MenuButton notificationMenuButton;
     @FXML private StackPane notificationIconContainer;
 
@@ -97,10 +98,7 @@ public class MainController {
     private LanguageManager languageManager;
     private Runnable languageChangeListener;
 
-    // 🔔 FIXED NOTIFICATION SYSTEM - SEQUENTIAL ACCESS
-    private ContactDAO contactDAO;
-    private UnderagedDAO underagedDAO;
-    private WorkshopDAO workshopDAO;
+    // 🔔 NOTIFICATION SYSTEM COMPONENTS - Now works with fixed DAOs
     private Circle notificationBadge;
     private Label badgeLabel;
 
@@ -115,6 +113,10 @@ public class MainController {
     public void initialize() {
         languageManager = LanguageManager.getInstance();
 
+
+        LoadingManager.getInstance().initialize(contentArea);
+        System.out.println("✅ LoadingManager initialized in MainController");
+
         // Create and register language change listener
         languageChangeListener = this::updateAllTexts;
         languageManager.addLanguageChangeListener(languageChangeListener);
@@ -124,32 +126,27 @@ public class MainController {
         updateAllTexts();
         loadInitialContent();
 
-        // Initialize fixed notification system
-        initializeOptimizedNotificationSystem();
+
+        initializeNotificationSystem();
     }
 
-    // 🔔 FIXED NOTIFICATION SYSTEM INITIALIZATION
-    public void initializeOptimizedNotificationSystem() {
-        try {
-            System.out.println("🔄 Initializing fixed notification system...");
 
-            // Initialize DAOs - using single instances
-            contactDAO = new ContactDAO();
-            underagedDAO = new UnderagedDAO();
-            workshopDAO = new WorkshopDAO();
+    public void initializeNotificationSystem() {
+        try {
+            System.out.println("🔄 Initializing notification system with fixed DAOs...");
 
             // Setup notification badge
             setupNotificationBadge();
 
-            // Update badge immediately using safe fallback method
-            updateNotificationBadgeFromSafeSystem();
+            // Update badge immediately
+            updateNotificationBadgeFromSystem();
 
             // Pre-load cache immediately in background
             refreshNotificationCacheSafely();
 
             // Setup automatic cache refresh every 30 seconds
             cacheRefreshExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
-                Thread t = new Thread(r, "SQLite-NotificationCache");
+                Thread t = new Thread(r, "NotificationCache");
                 t.setDaemon(true);
                 t.setPriority(Thread.MIN_PRIORITY);
                 return t;
@@ -160,21 +157,21 @@ public class MainController {
                     30, 30, TimeUnit.SECONDS
             );
 
-            System.out.println("✅ Fixed notification system initialized");
+            System.out.println("✅ Notification system initialized successfully");
         } catch (Exception e) {
             System.err.println("❌ Error initializing notification system: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    // 🔴 SAFE FALLBACK: Use old synchronous system for immediate badge update
-    private void updateNotificationBadgeFromSafeSystem() {
+
+    private void updateNotificationBadgeFromSystem() {
         Platform.runLater(() -> {
             try {
                 List<NotificationItem> notifications = getNotificationsSafely(8);
                 int count = notifications.size();
 
-                System.out.println("🔴 Initial badge update: " + count + " notifications found");
+                System.out.println("🔔 Initial badge update: " + count + " notifications found");
 
                 if (count > 0) {
                     notificationBadge.setVisible(true);
@@ -193,7 +190,7 @@ public class MainController {
         });
     }
 
-    // 🔴 SAFE NOTIFICATION GENERATION (synchronous, no concurrency issues)
+
     private List<NotificationItem> getNotificationsSafely(int limit) {
         List<NotificationItem> notifications = new ArrayList<>();
 
@@ -216,14 +213,15 @@ public class MainController {
         }
     }
 
-    // 🔴 SAFE NOTIFICATION GENERATION (sequential database access)
+
     private void generateNotificationsSafely(List<NotificationItem> notifications) {
         LocalDate today = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd");
 
-        // Sequential database calls with individual error handling
+        // Sequential database calls with individual error handling using fresh DAO instances
         try {
-            // 1. Contact birthdays
+            // 1. Contact birthdays - using fresh DAO instance
+            ContactDAO contactDAO = new ContactDAO();
             List<Contact> contactsWithBirthdays = contactDAO.getContactsWithUpcomingBirthdays(3);
             for (Contact contact : contactsWithBirthdays) {
                 if (contact.getBirthday() != null) {
@@ -240,7 +238,8 @@ public class MainController {
         }
 
         try {
-            // 2. Underaged member birthdays
+            // 2. Underaged member birthdays - using fresh DAO instance
+            UnderagedDAO underagedDAO = new UnderagedDAO();
             List<UnderagedMember> allUnderagedMembers = underagedDAO.getAllUnderagedMembers();
             for (UnderagedMember underaged : allUnderagedMembers) {
                 if (underaged.getBirthDate() != null) {
@@ -257,7 +256,8 @@ public class MainController {
         }
 
         try {
-            // 3. Upcoming workshops
+            // 3. Upcoming workshops - using fresh DAO instance
+            WorkshopDAO workshopDAO = new WorkshopDAO();
             List<Workshop> upcomingWorkshops = workshopDAO.getUpcomingWorkshops(3);
             for (Workshop workshop : upcomingWorkshops) {
                 if (workshop.getFromDate() != null) {
@@ -273,7 +273,8 @@ public class MainController {
         }
 
         try {
-            // 4. Active workshops ending today
+            // 4. Active workshops ending today - using fresh DAO instance
+            WorkshopDAO workshopDAO = new WorkshopDAO();
             List<Workshop> activeWorkshops = workshopDAO.getActiveWorkshops();
             for (Workshop workshop : activeWorkshops) {
                 if (workshop.getToDate() != null && workshop.getToDate().equals(today)) {
@@ -324,7 +325,7 @@ public class MainController {
         }
     }
 
-    // 🔔 SAFE DROPDOWN LOADING (no concurrency issues)
+    // 🔔 SAFE DROPDOWN LOADING - Works with fixed DAOs
     private void loadNotificationDropdownSafely() {
         synchronized (cacheLock) {
             if (isCacheFresh() && !notificationCache.isEmpty()) {
@@ -339,7 +340,7 @@ public class MainController {
 
         // Load fresh data safely with timeout protection
         CompletableFuture.supplyAsync(this::loadNotificationsSequentially)
-                .orTimeout(5, TimeUnit.SECONDS) // Increased timeout for safety
+                .orTimeout(5, TimeUnit.SECONDS)
                 .thenAccept(notifications -> {
                     synchronized (cacheLock) {
                         notificationCache = notifications;
@@ -371,12 +372,12 @@ public class MainController {
                 });
     }
 
-    // 🔔 SEQUENTIAL SQLITE DATA LOADING (FIXED VERSION)
+
     private List<NotificationItem> loadNotificationsSequentially() {
         long startTime = System.currentTimeMillis();
 
         try {
-            // Use the safe sequential method instead of concurrent access
+            // Use the safe sequential method with fixed DAOs
             List<NotificationItem> notifications = getNotificationsSafely(8);
 
             long duration = System.currentTimeMillis() - startTime;
@@ -449,7 +450,7 @@ public class MainController {
         }
     }
 
-    // SAFE Background cache refresh
+
     private void refreshNotificationCacheSafely() {
         CompletableFuture.supplyAsync(() -> {
             System.out.println("🔄 Refreshing notification cache safely...");
@@ -483,7 +484,7 @@ public class MainController {
                 java.time.Duration.between(lastCacheUpdate, LocalDateTime.now()).compareTo(CACHE_DURATION) < 0;
     }
 
-    // 🔔 GET UNREAD COUNT FROM CACHE (FAST!)
+    // 🔔 GET UNREAD COUNT FROM CACHE
     private int getUnreadCount() {
         synchronized (cacheLock) {
             return notificationCache.size();
@@ -506,7 +507,7 @@ public class MainController {
         }
     }
 
-    // 🔔 CREATE NOTIFICATION ITEM
+
     private NotificationItem createNotificationItem(String title, String message, String type, int relatedId) {
         NotificationItem notification = new NotificationItem();
         notification.id = 0;
@@ -583,7 +584,7 @@ public class MainController {
         notificationMenuButton.getItems().add(errorItem);
     }
 
-    // 🔔 UPDATE NOTIFICATION BADGE - ENHANCED VERSION
+
     private void updateNotificationBadge() {
         Platform.runLater(() -> {
             int unreadCount = getUnreadCount();
@@ -601,7 +602,7 @@ public class MainController {
         });
     }
 
-    // 🔔 NOTIFICATION ITEM CLASS
+
     private static class NotificationItem {
         int id;
         String title;
@@ -612,7 +613,7 @@ public class MainController {
         LocalDateTime createdAt;
     }
 
-    // 🔔 ENHANCED TRANSLATION HELPER METHOD
+
     private String getTranslation(String key) {
         try {
             // First try to get from language manager
@@ -632,7 +633,7 @@ public class MainController {
         }
     }
 
-    // 🔔 ENGLISH FALLBACKS FOR NOTIFICATIONS
+
     private String getEnglishFallback(String key) {
         return switch (key) {
             case "notification.birthday.today" -> "Birthday Today!";
@@ -662,7 +663,7 @@ public class MainController {
         };
     }
 
-    // 🔔 CROATIAN FALLBACKS FOR NOTIFICATIONS
+
     private String getCroatianFallback(String key) {
         return switch (key) {
             case "notification.birthday.today" -> "Rođendan Danas!";
@@ -692,9 +693,6 @@ public class MainController {
         };
     }
 
-    // ================================
-    // EXISTING METHODS (unchanged)
-    // ================================
 
     private void loadInitialContent() {
         try {
@@ -853,21 +851,44 @@ public class MainController {
         }
     }
 
+
     public void navigateTo(String fxmlPath) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            Node view = loader.load();
+        LoadingManager.getInstance().showLoading("Loading view...");
 
-            contentArea.getChildren().clear();
-            contentArea.getChildren().add(view);
+        CompletableFuture.runAsync(() -> {
+            // Brief delay for smooth UI transition
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).thenRun(() -> {
+            Platform.runLater(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+                    Node view = loader.load();
 
-            System.out.println("Successfully navigated to: " + fxmlPath);
+                    contentArea.getChildren().clear();
+                    contentArea.getChildren().add(view);
 
-        } catch (IOException e) {
-            System.err.println("Could not load view: " + fxmlPath);
-            e.printStackTrace();
-            showErrorMessage("Could not load: " + fxmlPath);
-        }
+                    LoadingManager.getInstance().hideLoading();
+                    System.out.println("Successfully navigated to: " + fxmlPath);
+
+                } catch (IOException e) {
+                    LoadingManager.getInstance().hideLoading();
+                    System.err.println("Could not load view: " + fxmlPath);
+                    e.printStackTrace();
+                    showErrorMessage("Could not load: " + fxmlPath);
+                }
+            });
+        }).exceptionally(throwable -> {
+            Platform.runLater(() -> {
+                LoadingManager.getInstance().hideLoading();
+                System.err.println("Error in navigation: " + throwable.getMessage());
+                showErrorMessage("Navigation failed: " + throwable.getMessage());
+            });
+            return null;
+        });
     }
 
     private void showErrorMessage(String message) {
@@ -900,51 +921,138 @@ public class MainController {
         updateNotificationBadge();
     }
 
-    // Navigation action methods
-    @FXML private void handleContactsAction() { navigateTo("/views/crm/contacts-view.fxml"); }
-    @FXML private void handleOrganizationAction() { navigateTo("/views/general/organization-view.fxml"); }
-    @FXML private void handleListsAction() { navigateTo("/views/crm/lists-view.fxml"); }
-    @FXML private void handleWorkshopsAction() { navigateTo("/views/crm/workshops-view.fxml"); }
-    @FXML private void handleEmailAction() { navigateTo("/views/marketing/email-builder.fxml"); }
-    @FXML private void handleBarcodeAppAction() { navigateTo("/views/commerce/barcode-generator-view.fxml"); }
-    @FXML private void handlePaymentSlipsAction() { navigateTo("/views/commerce/payment-slips-view.fxml"); }
-    @FXML private void handlePaymentHistoryAction() { navigateTo("/views/commerce/payment-history-view.fxml"); }
-    @FXML private void handleTeachersAction() { navigateTo("/views/crm/teacher-view.fxml"); }
-    @FXML private void handleEmailTemplateAction() { navigateTo("/views/marketing/email-builder.fxml"); }
-    @FXML private void handlePaymentTemplateAction() { navigateTo("/views/commerce/payment-template-view.fxml"); }
-    @FXML private void handleHelpTemplateAction() { navigateTo("/views/general/help-view.fxml"); }
-    @FXML private void handleBulkGenerationAction() { navigateTo("/views/commerce/bulk-generation.fxml"); }
-    @FXML private void handlePaymentAttachmentAction() { navigateTo("/views/commerce/payment-attachment-view.fxml"); }
-    @FXML private void handleSettingsAction() { navigateTo("/views/settings-view.fxml"); }
-    @FXML private void handleHomeReportingScreen() { navigateTo("/views/reporting/reporting-nav-dashboard-view.fxml"); }
-    @FXML private void handleContactReportingScreen() { navigateTo("/views/reporting/contacts-report.fxml"); }
-    @FXML private void handleUnderagedReportingScreen() { navigateTo("/views/reporting/underaged-report.fxml"); }
-    @FXML private void handleWorkshopReportingScreen() { navigateTo("/views/reporting/workshops-report.fxml"); }
+    // 🔄 ENHANCED NAVIGATION ACTION METHODS WITH LOADING
+    @FXML private void handleContactsAction() {
+        LoadingManager.getInstance().showLoading("Loading contacts...");
+        navigateTo("/views/crm/contacts-view.fxml");
+    }
 
+    @FXML private void handleOrganizationAction() {
+        LoadingManager.getInstance().showLoading("Loading organization settings...");
+        navigateTo("/views/general/organization-view.fxml");
+    }
+
+    @FXML private void handleListsAction() {
+        LoadingManager.getInstance().showLoading("Loading lists...");
+        navigateTo("/views/crm/lists-view.fxml");
+    }
+
+    @FXML private void handleWorkshopsAction() {
+        LoadingManager.getInstance().showLoading("Loading workshops...");
+        navigateTo("/views/crm/workshops-view.fxml");
+    }
+
+    @FXML private void handleEmailAction() {
+        LoadingManager.getInstance().showLoading("Loading email builder...");
+        navigateTo("/views/marketing/email-builder.fxml");
+    }
+
+    @FXML private void handleBarcodeAppAction() {
+        LoadingManager.getInstance().showLoading("Loading barcode generator...");
+        navigateTo("/views/commerce/barcode-generator-view.fxml");
+    }
+
+    @FXML private void handlePaymentSlipsAction() {
+        LoadingManager.getInstance().showLoading("Loading payment slips...");
+        navigateTo("/views/commerce/payment-slips-view.fxml");
+    }
+
+    @FXML private void handlePaymentHistoryAction() {
+        LoadingManager.getInstance().showLoading("Loading payment history...");
+        navigateTo("/views/commerce/payment-history-view.fxml");
+    }
+
+    @FXML private void handleTeachersAction() {
+        LoadingManager.getInstance().showLoading("Loading teachers...");
+        navigateTo("/views/crm/teacher-view.fxml");
+    }
+
+    @FXML private void handleEmailTemplateAction() {
+        LoadingManager.getInstance().showLoading("Loading email templates...");
+        navigateTo("/views/marketing/email-builder.fxml");
+    }
+
+    @FXML private void handlePaymentTemplateAction() {
+        LoadingManager.getInstance().showLoading("Loading payment templates...");
+        navigateTo("/views/commerce/payment-template-view.fxml");
+    }
+
+    @FXML private void handleHelpTemplateAction() {
+        LoadingManager.getInstance().showLoading("Loading help...");
+        navigateTo("/views/general/help-view.fxml");
+    }
+
+    @FXML private void handleBulkGenerationAction() {
+        LoadingManager.getInstance().showLoading("Loading bulk generation...");
+        navigateTo("/views/commerce/bulk-generation.fxml");
+    }
+
+    @FXML private void handlePaymentAttachmentAction() {
+        LoadingManager.getInstance().showLoading("Loading payment attachments...");
+        navigateTo("/views/commerce/payment-attachment-view.fxml");
+    }
+
+    @FXML private void handleSettingsAction() {
+        LoadingManager.getInstance().showLoading("Loading settings...");
+        navigateTo("/views/settings-view.fxml");
+    }
+
+    @FXML private void handleHomeReportingScreen() {
+        LoadingManager.getInstance().showLoading("Loading reporting dashboard...");
+        navigateTo("/views/reporting/reporting-nav-dashboard-view.fxml");
+    }
+
+    @FXML private void handleContactReportingScreen() {
+        LoadingManager.getInstance().showLoading("Loading contact reports...");
+        navigateTo("/views/reporting/contacts-report.fxml");
+    }
+
+    @FXML private void handleUnderagedReportingScreen() {
+        LoadingManager.getInstance().showLoading("Loading underaged reports...");
+        navigateTo("/views/reporting/underaged-report.fxml");
+    }
+
+    @FXML private void handleWorkshopReportingScreen() {
+        LoadingManager.getInstance().showLoading("Loading workshop reports...");
+        navigateTo("/views/reporting/workshops-report.fxml");
+    }
+
+    // 🔄 ENHANCED ORGANIZATION LOADING WITH LOADING MANAGER
     private void loadOrganizationName() {
-        try {
-            Optional<Organization> organization = organizationDAO.getFirst();
-            if (organization.isPresent()) {
-                Organization org = organization.get();
-                String orgName = org.getName();
-                System.out.println("Organization found: " + orgName);
-                if (userProfileButton != null) {
-                    userProfileButton.setText(orgName);
+        LoadingManager.getInstance().showLoading("Loading organization...");
+
+        CompletableFuture.supplyAsync(() -> {
+            return organizationDAO.getFirst();
+        }).thenAccept(organization -> {
+            Platform.runLater(() -> {
+                LoadingManager.getInstance().hideLoading();
+
+                if (organization.isPresent()) {
+                    Organization org = organization.get();
+                    String orgName = org.getName();
+                    System.out.println("Organization found: " + orgName);
+                    if (userProfileButton != null) {
+                        userProfileButton.setText(orgName);
+                    }
+                    loadOrganizationImage(org);
+                } else {
+                    if (userProfileButton != null) {
+                        userProfileButton.setText("No Organization");
+                    }
+                    setDefaultAvatar();
                 }
-                loadOrganizationImage(org);
-            } else {
+            });
+        }).exceptionally(throwable -> {
+            Platform.runLater(() -> {
+                LoadingManager.getInstance().hideLoading();
+                System.err.println("Error loading organization data: " + throwable.getMessage());
                 if (userProfileButton != null) {
-                    userProfileButton.setText("No Organization");
+                    userProfileButton.setText("Error Loading");
                 }
                 setDefaultAvatar();
-            }
-        } catch (Exception e) {
-            System.err.println("Error loading organization data: " + e.getMessage());
-            if (userProfileButton != null) {
-                userProfileButton.setText("Error Loading");
-            }
-            setDefaultAvatar();
-        }
+            });
+            return null;
+        });
     }
 
     private void loadOrganizationImage(Organization organization) {
