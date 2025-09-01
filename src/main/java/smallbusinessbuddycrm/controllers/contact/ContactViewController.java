@@ -31,6 +31,8 @@ import java.util.*;
 import java.util.List;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
+import smallbusinessbuddycrm.utilities.LoadingManager;
+import java.util.concurrent.CompletableFuture;
 
 public class ContactViewController {
 
@@ -57,6 +59,7 @@ public class ContactViewController {
     @FXML private TableColumn<Contact, String> updatedAtColumn;
     @FXML private TableColumn<Contact, Void> barcodeColumn;
 
+
     // UI Controls
     @FXML private Button createContactButton;
     @FXML private Button deleteSelectedButton;
@@ -76,23 +79,23 @@ public class ContactViewController {
     private ObservableList<Contact> allContactsList = FXCollections.observableArrayList();
     private FilteredList<Contact> filteredContactsList;
 
-    // ⭐ NEW: Column visibility management integrated with settings
+
     private Map<String, TableColumn<Contact, String>> columnMap = new HashMap<>();
     private Map<String, Boolean> columnVisibility = new HashMap<>();
     private static final String COLUMN_PREFS_KEY = "contacts_column_visibility";
 
-    // ⭐ NEW: Language management
+
     private LanguageManager languageManager;
     private Runnable languageChangeListener;
 
     @FXML
     public void initialize() {
-        // ⭐ NEW: Initialize language manager
+
         languageManager = LanguageManager.getInstance();
         languageChangeListener = this::updateTexts;
         languageManager.addLanguageChangeListener(languageChangeListener);
 
-        // ⭐ NEW: Load column visibility settings from shared preferences
+
         loadColumnVisibilitySettings();
 
         initializeColumnMapping();
@@ -101,13 +104,13 @@ public class ContactViewController {
         loadContacts();
         setupEventHandlers();
 
-        // ⭐ UPDATED: Apply settings-based column visibility instead of defaults
+
         applyColumnVisibilityFromSettings();
 
         updateTexts();
     }
 
-    // ⭐ NEW: Load column visibility settings from shared preferences (same as GoogleOAuthController)
+
     private void loadColumnVisibilitySettings() {
         try {
             Preferences prefs = Preferences.userNodeForPackage(GoogleOAuthController.class);
@@ -144,7 +147,7 @@ public class ContactViewController {
         }
     }
 
-    // ⭐ NEW: Initialize default column visibility
+
     private void initializeDefaultColumnVisibility() {
         String[] columns = {
                 "First Name", "Last Name", "Birthday", "Age", "PIN",
@@ -164,7 +167,7 @@ public class ContactViewController {
         }
     }
 
-    // ⭐ UPDATED: Apply column visibility from settings instead of defaults
+
     private void applyColumnVisibilityFromSettings() {
         System.out.println("ContactViewController: Applying column visibility from settings...");
 
@@ -182,7 +185,7 @@ public class ContactViewController {
         }
     }
 
-    // ⭐ UPDATED: Enhanced handleEditColumns method that updates settings
+
     private void handleEditColumns() {
         System.out.println("ContactViewController: handleEditColumns() called");
 
@@ -203,15 +206,15 @@ public class ContactViewController {
                 // Update our internal map
                 columnVisibility.putAll(newVisibility);
 
-                // ⭐ NEW: Save settings to shared preferences
+
                 saveColumnVisibilitySettings();
 
-                // Apply the new visibility
+
                 applyColumnVisibilityFromSettings();
 
                 System.out.println("ContactViewController: Columns updated successfully");
 
-                // Show success message
+
                 Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
                 successAlert.setTitle(languageManager.getText("contacts.edit.columns.success.title"));
                 successAlert.setHeaderText(languageManager.getText("contacts.edit.columns.success.header"));
@@ -233,7 +236,7 @@ public class ContactViewController {
         }
     }
 
-    // ⭐ NEW: Save column visibility settings to shared preferences
+
     private void saveColumnVisibilitySettings() {
         try {
             Preferences prefs = Preferences.userNodeForPackage(GoogleOAuthController.class);
@@ -250,14 +253,14 @@ public class ContactViewController {
         }
     }
 
-    // ⭐ NEW: Method to refresh column visibility from settings (called externally)
+
     public void refreshColumnVisibilityFromSettings() {
         loadColumnVisibilitySettings();
         applyColumnVisibilityFromSettings();
         System.out.println("ContactViewController: Column visibility refreshed from settings");
     }
 
-    // ⭐ NEW: Cleanup method to prevent memory leaks
+
     public void cleanup() {
         if (languageManager != null && languageChangeListener != null) {
             languageManager.removeLanguageChangeListener(languageChangeListener);
@@ -265,7 +268,7 @@ public class ContactViewController {
         }
     }
 
-    // ⭐ UPDATED: Enhanced updateTexts method
+
     private void updateTexts() {
         try {
             System.out.println("ContactViewController: Updating texts for language: " +
@@ -333,43 +336,84 @@ public class ContactViewController {
             return;
         }
 
-        try {
+        LoadingManager.getInstance().showLoading("Loading payment templates...");
+
+        CompletableFuture.supplyAsync(() -> {
             System.out.println("🔧 First selecting payment template...");
+            return showPaymentTemplateSelectionDialog();
+        }).thenAccept(selectedTemplate -> {
+            Platform.runLater(() -> {
+                if (selectedTemplate == null) {
+                    LoadingManager.getInstance().hideLoading();
+                    System.out.println("🔧 No payment template selected, cancelling barcode generation");
+                    return; // User cancelled template selection
+                }
 
-            // Step 1: Load and show payment template selection
-            PaymentTemplate selectedTemplate = showPaymentTemplateSelectionDialog();
-            if (selectedTemplate == null) {
-                System.out.println("🔧 No payment template selected, cancelling barcode generation");
-                return; // User cancelled template selection
-            }
+                System.out.println("🔧 Selected payment template: " + selectedTemplate.getName());
 
-            System.out.println("🔧 Selected payment template: " + selectedTemplate.getName());
-            System.out.println("🔧 Opening MultipleGenerationBarcodeDialog with " + selectedContacts.size() + " selected contacts");
+                // Update loading message for next step
+                LoadingManager.getInstance().showLoading("Opening barcode generator...");
 
-            // Step 2: Open the main barcode generation dialog with template and contacts
-            Stage currentStage = (Stage) generateBarcodeButton.getScene().getWindow();
-            MultipleGenerationBarcodeDialog dialog = new MultipleGenerationBarcodeDialog(currentStage, selectedContacts, selectedTemplate);
-            dialog.showAndWait();
+                CompletableFuture.runAsync(() -> {
+                    // Brief delay for UI responsiveness
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }).thenRun(() -> {
+                    Platform.runLater(() -> {
+                        LoadingManager.getInstance().hideLoading();
 
-            System.out.println("🔧 MultipleGenerationBarcodeDialog closed");
+                        try {
+                            System.out.println("🔧 Opening MultipleGenerationBarcodeDialog with " + selectedContacts.size() + " selected contacts");
 
-        } catch (Exception e) {
-            System.err.println("Error opening barcode generation dialog: " + e.getMessage());
-            e.printStackTrace();
+                            // Step 2: Open the main barcode generation dialog with template and contacts
+                            Stage currentStage = (Stage) generateBarcodeButton.getScene().getWindow();
+                            MultipleGenerationBarcodeDialog dialog = new MultipleGenerationBarcodeDialog(currentStage, selectedContacts, selectedTemplate);
+                            dialog.showAndWait();
 
-            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-            errorAlert.setTitle("Error");
-            errorAlert.setHeaderText("Barcode Generation Failed");
-            errorAlert.setContentText("An error occurred while opening the barcode generator: " + e.getMessage());
-            errorAlert.showAndWait();
-        }
+                            System.out.println("🔧 MultipleGenerationBarcodeDialog closed");
+
+                        } catch (Exception e) {
+                            System.err.println("Error opening barcode generation dialog: " + e.getMessage());
+                            e.printStackTrace();
+
+                            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                            errorAlert.setTitle("Error");
+                            errorAlert.setHeaderText("Barcode Generation Failed");
+                            errorAlert.setContentText("An error occurred while opening the barcode generator: " + e.getMessage());
+                            errorAlert.showAndWait();
+                        }
+                    });
+                });
+            });
+        }).exceptionally(throwable -> {
+            Platform.runLater(() -> {
+                LoadingManager.getInstance().hideLoading();
+
+                System.err.println("Error in barcode generation process: " + throwable.getMessage());
+                throwable.printStackTrace();
+
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Error");
+                errorAlert.setHeaderText("Barcode Generation Failed");
+                errorAlert.setContentText("An error occurred during barcode generation: " + throwable.getMessage());
+                errorAlert.showAndWait();
+            });
+            return null;
+        });
     }
 
     private PaymentTemplate showPaymentTemplateSelectionDialog() {
+        LoadingManager.getInstance().showLoading("Loading payment templates...");
+
         try {
             System.out.println("🔧 Loading payment templates...");
             PaymentTemplateDAO dao = new PaymentTemplateDAO();
             List<PaymentTemplate> templates = dao.getActivePaymentTemplates();
+
+            Platform.runLater(() -> LoadingManager.getInstance().hideLoading());
 
             System.out.println("🔧 Found " + templates.size() + " active payment templates");
 
@@ -437,6 +481,8 @@ public class ContactViewController {
             }
 
         } catch (Exception e) {
+            Platform.runLater(() -> LoadingManager.getInstance().hideLoading());
+
             System.err.println("Error loading payment templates: " + e.getMessage());
             e.printStackTrace();
 
@@ -484,43 +530,58 @@ public class ContactViewController {
     }
 
     private void handleImportContacts() {
-        try {
-            Stage currentStage = (Stage) importButton.getScene().getWindow();
-            ImportContactsDialog dialog = new ImportContactsDialog(currentStage);
+        LoadingManager.getInstance().showLoading("Opening import dialog...");
 
-            if (dialog.showAndWait()) {
-                List<Contact> importedContacts = dialog.getImportedContacts();
-
-                if (!importedContacts.isEmpty()) {
-                    // Add imported contacts to the list
-                    allContactsList.addAll(importedContacts);
-                    updateRecordCount();
-
-                    // Show success message
-                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                    successAlert.setTitle("Import Successful");
-                    successAlert.setHeaderText("Contacts Imported");
-                    successAlert.setContentText("Successfully imported " + importedContacts.size() +
-                            " contact" + (importedContacts.size() != 1 ? "s" : "") +
-                            " from CSV file.");
-                    successAlert.showAndWait();
-
-                    // Refresh the table to show new data
-                    contactsTable.refresh();
-                    System.out.println("Imported " + importedContacts.size() + " contacts successfully");
-                }
+        CompletableFuture.runAsync(() -> {
+            // Brief delay for UI responsiveness
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
+        }).thenRun(() -> {
+            Platform.runLater(() -> {
+                LoadingManager.getInstance().hideLoading();
 
-        } catch (Exception e) {
-            System.err.println("Error in handleImportContacts: " + e.getMessage());
-            e.printStackTrace();
+                try {
+                    Stage currentStage = (Stage) importButton.getScene().getWindow();
+                    ImportContactsDialog dialog = new ImportContactsDialog(currentStage);
 
-            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-            errorAlert.setTitle("Import Error");
-            errorAlert.setHeaderText("Import Failed");
-            errorAlert.setContentText("An error occurred while importing contacts: " + e.getMessage());
-            errorAlert.showAndWait();
-        }
+                    if (dialog.showAndWait()) {
+                        List<Contact> importedContacts = dialog.getImportedContacts();
+
+                        if (!importedContacts.isEmpty()) {
+                            // Add imported contacts to the list
+                            allContactsList.addAll(importedContacts);
+                            updateRecordCount();
+
+                            // Show success message
+                            Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                            successAlert.setTitle("Import Successful");
+                            successAlert.setHeaderText("Contacts Imported");
+                            successAlert.setContentText("Successfully imported " + importedContacts.size() +
+                                    " contact" + (importedContacts.size() != 1 ? "s" : "") +
+                                    " from CSV file.");
+                            successAlert.showAndWait();
+
+                            // Refresh the table to show new data
+                            contactsTable.refresh();
+                            System.out.println("Imported " + importedContacts.size() + " contacts successfully");
+                        }
+                    }
+
+                } catch (Exception e) {
+                    System.err.println("Error in handleImportContacts: " + e.getMessage());
+                    e.printStackTrace();
+
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Import Error");
+                    errorAlert.setHeaderText("Import Failed");
+                    errorAlert.setContentText("An error occurred while importing contacts: " + e.getMessage());
+                    errorAlert.showAndWait();
+                }
+            });
+        });
     }
 
     private void initializeColumnMapping() {
@@ -764,19 +825,34 @@ public class ContactViewController {
     }
 
     private void loadContacts() {
-        try {
+        LoadingManager.getInstance().showLoading("Loading contacts...");
+
+        CompletableFuture.supplyAsync(() -> {
             ContactDAO dao = new ContactDAO();
-            List<Contact> contacts = dao.getAllContacts();
+            return dao.getAllContacts();
+        }).thenAccept(contacts -> {
+            Platform.runLater(() -> {
+                LoadingManager.getInstance().hideLoading();
 
-            System.out.println("DAO returned " + contacts.size() + " contacts");
+                System.out.println("DAO returned " + contacts.size() + " contacts");
+                allContactsList.setAll(contacts);
+                updateRecordCount();
+            });
+        }).exceptionally(throwable -> {
+            Platform.runLater(() -> {
+                LoadingManager.getInstance().hideLoading();
 
-            allContactsList.setAll(contacts);
-            updateRecordCount();
+                System.err.println("Error loading contacts: " + throwable.getMessage());
+                throwable.printStackTrace();
 
-        } catch (Exception e) {
-            System.err.println("Error loading contacts: " + e.getMessage());
-            e.printStackTrace();
-        }
+                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("Error");
+                errorAlert.setHeaderText("Failed to load contacts");
+                errorAlert.setContentText("An error occurred while loading contacts: " + throwable.getMessage());
+                errorAlert.showAndWait();
+            });
+            return null;
+        });
     }
 
     private void updateRecordCount() {
@@ -934,24 +1010,39 @@ public class ContactViewController {
     }
 
     private void handleCreateContact() {
-        try {
-            Stage currentStage = (Stage) createContactButton.getScene().getWindow();
-            CreateContactDialog dialog = new CreateContactDialog(currentStage);
+        LoadingManager.getInstance().showLoading("Opening contact creation...");
 
-            if (dialog.showAndWait()) {
-                Contact newContact = dialog.getResult();
-                if (newContact != null) {
-                    allContactsList.add(newContact);
-                    updateRecordCount();
-                    contactsTable.getSelectionModel().select(newContact);
-                    contactsTable.scrollTo(newContact);
-                    System.out.println("New contact added: " + newContact.getFirstName() + " " + newContact.getLastName());
-                }
+        CompletableFuture.runAsync(() -> {
+            // Simulate any preparation work if needed
+            try {
+                Thread.sleep(100); // Brief delay for UI responsiveness
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
-        } catch (Exception e) {
-            System.err.println("Error opening create contact dialog: " + e.getMessage());
-            e.printStackTrace();
-        }
+        }).thenRun(() -> {
+            Platform.runLater(() -> {
+                LoadingManager.getInstance().hideLoading();
+
+                try {
+                    Stage currentStage = (Stage) createContactButton.getScene().getWindow();
+                    CreateContactDialog dialog = new CreateContactDialog(currentStage);
+
+                    if (dialog.showAndWait()) {
+                        Contact newContact = dialog.getResult();
+                        if (newContact != null) {
+                            allContactsList.add(newContact);
+                            updateRecordCount();
+                            contactsTable.getSelectionModel().select(newContact);
+                            contactsTable.scrollTo(newContact);
+                            System.out.println("New contact added: " + newContact.getFirstName() + " " + newContact.getLastName());
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error opening create contact dialog: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            });
+        });
     }
 
     private void handleDeleteSelected() {
@@ -984,49 +1075,59 @@ public class ContactViewController {
         confirmAlert.setContentText(contentText);
 
         if (confirmAlert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            try {
+            LoadingManager.getInstance().showLoading("Deleting contacts...");
+
+            CompletableFuture.supplyAsync(() -> {
                 ContactDAO dao = new ContactDAO();
                 List<Integer> contactIds = selectedContacts.stream()
                         .map(Contact::getId)
                         .collect(Collectors.toList());
 
-                boolean success = dao.deleteContacts(contactIds);
+                return dao.deleteContacts(contactIds);
+            }).thenAccept(success -> {
+                Platform.runLater(() -> {
+                    LoadingManager.getInstance().hideLoading();
 
-                if (success) {
-                    // Remove from the original list (filtered list will update automatically)
-                    allContactsList.removeAll(selectedContacts);
-                    updateRecordCount();
+                    if (success) {
+                        // Remove from the original list (filtered list will update automatically)
+                        allContactsList.removeAll(selectedContacts);
+                        updateRecordCount();
 
-                    Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
-                    successAlert.setTitle(languageManager.getText("contacts.delete.success.title"));
-                    successAlert.setHeaderText(languageManager.getText("contacts.delete.success.header"));
+                        Alert successAlert = new Alert(Alert.AlertType.INFORMATION);
+                        successAlert.setTitle(languageManager.getText("contacts.delete.success.title"));
+                        successAlert.setHeaderText(languageManager.getText("contacts.delete.success.header"));
 
-                    String successContent = languageManager.getText("contacts.delete.success.content.part1") + " " +
-                            selectedContacts.size() + " " +
-                            (selectedContacts.size() > 1 ?
-                                    languageManager.getText("contacts.delete.success.content.contacts") :
-                                    languageManager.getText("contacts.delete.success.content.contact")) + ".";
+                        String successContent = languageManager.getText("contacts.delete.success.content.part1") + " " +
+                                selectedContacts.size() + " " +
+                                (selectedContacts.size() > 1 ?
+                                        languageManager.getText("contacts.delete.success.content.contacts") :
+                                        languageManager.getText("contacts.delete.success.content.contact")) + ".";
 
-                    successAlert.setContentText(successContent);
-                    successAlert.showAndWait();
-                } else {
+                        successAlert.setContentText(successContent);
+                        successAlert.showAndWait();
+                    } else {
+                        Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                        errorAlert.setTitle(languageManager.getText("contacts.delete.error.title"));
+                        errorAlert.setHeaderText(languageManager.getText("contacts.delete.error.header"));
+                        errorAlert.setContentText(languageManager.getText("contacts.delete.error.content"));
+                        errorAlert.showAndWait();
+                    }
+                });
+            }).exceptionally(throwable -> {
+                Platform.runLater(() -> {
+                    LoadingManager.getInstance().hideLoading();
+
+                    System.err.println("Error deleting contacts: " + throwable.getMessage());
+                    throwable.printStackTrace();
+
                     Alert errorAlert = new Alert(Alert.AlertType.ERROR);
                     errorAlert.setTitle(languageManager.getText("contacts.delete.error.title"));
                     errorAlert.setHeaderText(languageManager.getText("contacts.delete.error.header"));
                     errorAlert.setContentText(languageManager.getText("contacts.delete.error.content"));
                     errorAlert.showAndWait();
-                }
-
-            } catch (Exception e) {
-                System.err.println("Error deleting contacts: " + e.getMessage());
-                e.printStackTrace();
-
-                Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                errorAlert.setTitle(languageManager.getText("contacts.delete.error.title"));
-                errorAlert.setHeaderText(languageManager.getText("contacts.delete.error.header"));
-                errorAlert.setContentText(languageManager.getText("contacts.delete.error.content"));
-                errorAlert.showAndWait();
-            }
+                });
+                return null;
+            });
         }
     }
 

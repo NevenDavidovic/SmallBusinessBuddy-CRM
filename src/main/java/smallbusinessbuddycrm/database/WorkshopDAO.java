@@ -275,10 +275,12 @@ public class WorkshopDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, workshopId);
-            ResultSet rs = stmt.executeQuery();
 
-            if (rs.next()) {
-                return createWorkshopFromResultSet(rs);
+            // ✅ FIXED: Include ResultSet in try-with-resources
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return createWorkshopFromResultSet(rs);
+                }
             }
 
         } catch (SQLException e) {
@@ -311,11 +313,12 @@ public class WorkshopDAO {
             stmt.setString(1, today);
             stmt.setString(2, today);
 
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                Workshop workshop = createWorkshopFromResultSet(rs);
-                workshops.add(workshop);
+            // ✅ FIXED: Include ResultSet in try-with-resources
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Workshop workshop = createWorkshopFromResultSet(rs);
+                    workshops.add(workshop);
+                }
             }
 
             System.out.println("Found " + workshops.size() + " active workshops");
@@ -352,11 +355,12 @@ public class WorkshopDAO {
             stmt.setString(1, today);
             stmt.setString(2, futureDate);
 
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                Workshop workshop = createWorkshopFromResultSet(rs);
-                workshops.add(workshop);
+            // ✅ FIXED: Include ResultSet in try-with-resources
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Workshop workshop = createWorkshopFromResultSet(rs);
+                    workshops.add(workshop);
+                }
             }
 
             System.out.println("Found " + workshops.size() + " upcoming workshops in the next " + daysAhead + " days");
@@ -389,11 +393,12 @@ public class WorkshopDAO {
             String searchPattern = "%" + searchTerm + "%";
             stmt.setString(1, searchPattern);
 
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                Workshop workshop = createWorkshopFromResultSet(rs);
-                workshops.add(workshop);
+            // ✅ FIXED: Include ResultSet in try-with-resources
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Workshop workshop = createWorkshopFromResultSet(rs);
+                    workshops.add(workshop);
+                }
             }
 
             System.out.println("Found " + workshops.size() + " workshops matching: " + searchTerm);
@@ -424,11 +429,13 @@ public class WorkshopDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, teacherId);
-            ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                Workshop workshop = createWorkshopFromResultSet(rs);
-                workshops.add(workshop);
+            // ✅ FIXED: Include ResultSet in try-with-resources
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Workshop workshop = createWorkshopFromResultSet(rs);
+                    workshops.add(workshop);
+                }
             }
 
             System.out.println("Found " + workshops.size() + " workshops for teacher ID: " + teacherId);
@@ -520,9 +527,10 @@ public class WorkshopDAO {
         ORDER BY w.from_date DESC, w.name
         """;
 
+        // ✅ FIXED: Use PreparedStatement instead of Statement for consistency and include ResultSet in try-with-resources
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 Workshop workshop = createWorkshopFromResultSet(rs);

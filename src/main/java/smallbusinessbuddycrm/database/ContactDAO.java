@@ -115,11 +115,13 @@ public class ContactDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, listId);
-            ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                Contact contact = createContactFromResultSet(rs);
-                contacts.add(contact);
+            // ✅ FIXED: Include ResultSet in try-with-resources
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Contact contact = createContactFromResultSet(rs);
+                    contacts.add(contact);
+                }
             }
 
             System.out.println("Loaded " + contacts.size() + " contacts for list ID: " + listId);
@@ -312,14 +314,18 @@ public class ContactDAO {
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, contactId);
-            ResultSet rs = stmt.executeQuery();
 
-            if (rs.next()) {
-                Contact contact = createContactFromResultSet(rs);
-                System.out.println("Loaded contact with ID: " + contactId);
-                return contact;
+            stmt.setInt(1, contactId);
+
+            // ✅ FIXED: Include ResultSet in try-with-resources
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Contact contact = createContactFromResultSet(rs);
+                    System.out.println("Loaded contact with ID: " + contactId);
+                    return contact;
+                }
             }
+
         } catch (SQLException e) {
             System.err.println("Error getting contact by ID: " + e.getMessage());
             e.printStackTrace();
@@ -341,6 +347,7 @@ public class ContactDAO {
         List<Contact> contacts = new ArrayList<>();
         String query = "SELECT * FROM contacts WHERE birthday IS NOT NULL ORDER BY first_name, last_name";
 
+        // ✅ FIXED: Process ResultSet INSIDE the try-with-resources block
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -349,22 +356,28 @@ public class ContactDAO {
             LocalDate futureDate = today.plusDays(daysAhead);
 
             while (rs.next()) {
-                Contact contact = createContactFromResultSet(rs);
+                try {
+                    Contact contact = createContactFromResultSet(rs);
 
-                if (contact.getBirthday() != null) {
-                    LocalDate thisYearBirthday = contact.getBirthday().withYear(today.getYear());
+                    if (contact.getBirthday() != null) {
+                        LocalDate thisYearBirthday = contact.getBirthday().withYear(today.getYear());
 
-                    if (thisYearBirthday.isBefore(today)) {
-                        thisYearBirthday = thisYearBirthday.plusYears(1);
+                        if (thisYearBirthday.isBefore(today)) {
+                            thisYearBirthday = thisYearBirthday.plusYears(1);
+                        }
+
+                        if (!thisYearBirthday.isBefore(today) && !thisYearBirthday.isAfter(futureDate)) {
+                            contacts.add(contact);
+                        }
                     }
-
-                    if (!thisYearBirthday.isBefore(today) && !thisYearBirthday.isAfter(futureDate)) {
-                        contacts.add(contact);
-                    }
+                } catch (SQLException e) {
+                    System.err.println("Error processing contact row: " + e.getMessage());
+                    // Continue processing other rows
                 }
             }
 
             System.out.println("Found " + contacts.size() + " contacts with birthdays in the next " + daysAhead + " days");
+
         } catch (SQLException e) {
             System.err.println("Error getting contacts with upcoming birthdays: " + e.getMessage());
             e.printStackTrace();
@@ -385,22 +398,29 @@ public class ContactDAO {
         List<Contact> contacts = new ArrayList<>();
         String query = "SELECT * FROM contacts WHERE birthday IS NOT NULL ORDER BY first_name, last_name";
 
+        // ✅ FIXED: Process ResultSet INSIDE the try-with-resources block
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
-                Contact contact = createContactFromResultSet(rs);
+                try {
+                    Contact contact = createContactFromResultSet(rs);
 
-                if (contact.getBirthday() != null) {
-                    int age = contact.getAge();
-                    if (age >= minAge && age <= maxAge) {
-                        contacts.add(contact);
+                    if (contact.getBirthday() != null) {
+                        int age = contact.getAge();
+                        if (age >= minAge && age <= maxAge) {
+                            contacts.add(contact);
+                        }
                     }
+                } catch (SQLException e) {
+                    System.err.println("Error processing contact row: " + e.getMessage());
+                    // Continue processing other rows
                 }
             }
 
             System.out.println("Found " + contacts.size() + " contacts in age range " + minAge + "-" + maxAge);
+
         } catch (SQLException e) {
             System.err.println("Error getting contacts by age range: " + e.getMessage());
             e.printStackTrace();
