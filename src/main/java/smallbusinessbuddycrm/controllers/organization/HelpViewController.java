@@ -16,6 +16,12 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.awt.Desktop;
 
+/**
+ * Controller for the Help View interface providing comprehensive user assistance and documentation.
+ * Features downloadable user manuals in multiple languages, FAQ section, application feature descriptions,
+ * quick tips, and support contact information. Supports full localization with dynamic language switching
+ * and integrates with system file operations for manual downloads.
+ */
 public class HelpViewController implements Initializable {
 
     // Main header
@@ -79,6 +85,14 @@ public class HelpViewController implements Initializable {
     @FXML private Label tip2Label;
     @FXML private Label tip3Label;
 
+    /**
+     * Initializes the HelpViewController after FXML loading.
+     * Registers for language change notifications to support dynamic language switching
+     * and performs initial text updates to display content in current language.
+     *
+     * @param location The location used to resolve relative paths for the root object
+     * @param resources The resources used to localize the root object
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Register for language change notifications
@@ -88,16 +102,35 @@ public class HelpViewController implements Initializable {
         updateTexts();
     }
 
+    /**
+     * Handles Croatian manual download action.
+     * Initiates download of the Croatian language manual with appropriate
+     * resource path and default filename for user convenience.
+     */
     @FXML
     private void downloadManualHr() {
         downloadManual("manual_hr.pdf", "SmallBusinessBuddy_Priručnik_HR.pdf");
     }
 
+    /**
+     * Handles English manual download action.
+     * Initiates download of the English language manual with appropriate
+     * resource path and default filename for user convenience.
+     */
     @FXML
     private void downloadManualEn() {
         downloadManual("manual_en.pdf", "SmallBusinessBuddy_Manual_EN.pdf");
     }
 
+    /**
+     * Downloads manual PDF from application resources to user-selected location.
+     * Extracts manual from JAR resources, shows file chooser dialog for save location,
+     * copies file to selected destination, displays success message, and optionally
+     * opens the downloaded file using system default PDF viewer.
+     *
+     * @param resourcePath The path to the manual resource within the JAR (e.g., "manual_hr.pdf")
+     * @param defaultFileName The suggested filename for saving (e.g., "SmallBusinessBuddy_Manual_HR.pdf")
+     */
     private void downloadManual(String resourcePath, String defaultFileName) {
         try {
             // Get the resource as stream
@@ -148,6 +181,14 @@ public class HelpViewController implements Initializable {
         }
     }
 
+    /**
+     * Displays localized error alert dialog with specified title and message.
+     * Shows error-type alert with localized title from language manager and
+     * provided error message content for user notification.
+     *
+     * @param titleKey The language key for the localized alert title
+     * @param message The error message content to display to the user
+     */
     private void showErrorAlert(String titleKey, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(LanguageManager.getInstance().getText(titleKey));
@@ -156,6 +197,14 @@ public class HelpViewController implements Initializable {
         alert.showAndWait();
     }
 
+    /**
+     * Displays localized information alert dialog with specified title and message.
+     * Shows information-type alert with both title and message content retrieved
+     * from language manager for complete localization support.
+     *
+     * @param titleKey The language key for the localized alert title
+     * @param messageKey The language key for the localized alert message content
+     */
     private void showInfoAlert(String titleKey, String messageKey) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(LanguageManager.getInstance().getText(titleKey));
@@ -164,6 +213,14 @@ public class HelpViewController implements Initializable {
         alert.showAndWait();
     }
 
+    /**
+     * Updates all UI text elements based on current language settings.
+     * Refreshes all labels, buttons, and text content throughout the help interface
+     * when language changes between English and Croatian. Handles extensive
+     * localization including main header, welcome section, manual download section,
+     * payment templates information, app purpose description, key features list,
+     * FAQ section, support information, and quick tips.
+     */
     private void updateTexts() {
         LanguageManager languageManager = LanguageManager.getInstance();
 

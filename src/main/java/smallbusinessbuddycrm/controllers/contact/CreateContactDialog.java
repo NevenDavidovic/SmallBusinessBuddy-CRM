@@ -95,12 +95,23 @@ public class CreateContactDialog {
     private Button cancelButton;
     private Button saveButton;
 
+    /**
+     * Creates a new CreateContactDialog for adding contacts and their underaged members.
+     * Initializes the dialog stage, sets up UI components, and applies initial translations.
+     *
+     * @param parentStage The parent stage that owns this modal dialog
+     */
     public CreateContactDialog(Stage parentStage) {
         createDialogStage();
         dialogStage.initOwner(parentStage);
         updateTexts(); // Initial translation
     }
 
+    /**
+     * Creates and configures the main dialog stage with all UI components.
+     * Sets up modal behavior, scroll pane, layout sections, and scene configuration.
+     * Initializes a resizable dialog with 700x850 dimensions.
+     */
     private void createDialogStage() {
         dialogStage = new Stage();
         dialogStage.initModality(Modality.WINDOW_MODAL);
@@ -135,6 +146,12 @@ public class CreateContactDialog {
         dialogStage.setScene(scene);
     }
 
+    /**
+     * Creates the contact information section containing personal and address fields.
+     * Includes contact form grid with all required and optional contact fields.
+     *
+     * @return VBox containing the complete contact information section
+     */
     private VBox createContactSection() {
         VBox section = new VBox(10);
 
@@ -149,6 +166,13 @@ public class CreateContactDialog {
         return section;
     }
 
+    /**
+     * Creates the main contact form grid with all input fields and labels.
+     * Sets up form fields for personal info, address, and membership details.
+     * Configures field bindings and member checkbox behavior for date pickers.
+     *
+     * @return GridPane containing all contact form fields with proper layout
+     */
     private GridPane createContactFormGrid() {
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -253,6 +277,12 @@ public class CreateContactDialog {
         return grid;
     }
 
+    /**
+     * Creates the underaged members section with table and add form.
+     * Includes section title, data table for existing children, and form for adding new ones.
+     *
+     * @return VBox containing the complete underaged members management section
+     */
     private VBox createUnderagedMembersSection() {
         VBox section = new VBox(10);
 
@@ -274,6 +304,13 @@ public class CreateContactDialog {
         return section;
     }
 
+    /**
+     * Creates and configures the table for displaying underaged members.
+     * Sets up columns for name, age, PIN, gender, member status, and actions.
+     * Includes delete functionality and language-aware member status display.
+     *
+     * @return TableView configured for displaying and managing underaged members
+     */
     private TableView<UnderagedMember> createUnderagedMembersTable() {
         TableView<UnderagedMember> table = new TableView<>();
         table.setPrefHeight(150);
@@ -349,6 +386,13 @@ public class CreateContactDialog {
         return table;
     }
 
+    /**
+     * Creates the form for adding new underaged members.
+     * Includes input fields for personal info, membership details, and notes.
+     * Sets up auto-calculation of age and member date picker behavior.
+     *
+     * @return VBox containing the complete child addition form with action buttons
+     */
     private VBox createAddChildForm() {
         VBox formSection = new VBox(10);
 
@@ -468,6 +512,12 @@ public class CreateContactDialog {
         return formSection;
     }
 
+    /**
+     * Creates the dialog button box with Cancel and Save actions.
+     * Configures button styling, sizing, and event handlers for dialog actions.
+     *
+     * @return HBox containing Cancel and Save buttons with proper styling
+     */
     private HBox createButtonBox() {
         HBox buttonBox = new HBox(10);
         buttonBox.setStyle("-fx-alignment: center-right;");
@@ -485,6 +535,11 @@ public class CreateContactDialog {
         return buttonBox;
     }
 
+    /**
+     * Updates all UI text elements based on current language settings.
+     * Refreshes dialog title, labels, placeholders, table headers, button text,
+     * and combo box options when language changes between English and Croatian.
+     */
     private void updateTexts() {
         LanguageManager lm = LanguageManager.getInstance();
 
@@ -573,6 +628,11 @@ public class CreateContactDialog {
         }
     }
 
+    /**
+     * Handles adding a new underaged member to the contact.
+     * Validates child input, creates UnderagedMember object, adds to table,
+     * clears form, and shows success confirmation dialog.
+     */
     private void handleAddChild() {
         if (validateChildInput()) {
             UnderagedMember child = createUnderagedMemberFromInput();
@@ -589,6 +649,13 @@ public class CreateContactDialog {
         }
     }
 
+    /**
+     * Validates child form input before adding to underaged members list.
+     * Checks required fields (first name, last name, birth date) and shows
+     * validation error dialog with specific field requirements if validation fails.
+     *
+     * @return true if all required child fields are valid, false otherwise
+     */
     private boolean validateChildInput() {
         StringBuilder errors = new StringBuilder();
         LanguageManager lm = LanguageManager.getInstance();
@@ -617,6 +684,13 @@ public class CreateContactDialog {
         return true;
     }
 
+    /**
+     * Creates UnderagedMember object from current child form input fields.
+     * Populates all fields including calculated age, membership details, and timestamps.
+     * Handles number parsing errors gracefully by defaulting age to 0.
+     *
+     * @return UnderagedMember object populated with current form data
+     */
     private UnderagedMember createUnderagedMemberFromInput() {
         UnderagedMember child = new UnderagedMember();
 
@@ -644,6 +718,14 @@ public class CreateContactDialog {
         return child;
     }
 
+
+    /**
+     * Creates Contact object from current main form input fields.
+     * Populates all contact fields including address, membership details, and timestamps.
+     * Sets membership dates only when member checkbox is selected.
+     *
+     * @return Contact object populated with current form data
+     */
     private void clearChildForm() {
         childFirstNameField.clear();
         childLastNameField.clear();
@@ -661,6 +743,11 @@ public class CreateContactDialog {
         childMemberUntilPicker.setDisable(true);
     }
 
+    /**
+     * Handles saving the complete contact with all underaged members.
+     * Validates input, creates contact in database, saves associated children,
+     * and closes dialog on success or shows error message on failure.
+     */
     private void handleSave() {
         if (validateInput()) {
             try {
@@ -698,6 +785,13 @@ public class CreateContactDialog {
         }
     }
 
+    /**
+     * Validates main contact form input before saving to database.
+     * Checks required fields (first name, last name, email) and email format.
+     * Shows validation error dialog with specific field requirements if validation fails.
+     *
+     * @return true if all required contact fields are valid, false otherwise
+     */
     private boolean validateInput() {
         StringBuilder errors = new StringBuilder();
         LanguageManager lm = LanguageManager.getInstance();
@@ -728,10 +822,24 @@ public class CreateContactDialog {
         return true;
     }
 
+    /**
+     * Performs basic email validation using simple pattern matching.
+     * Checks for presence of @ symbol and at least one dot for domain validation.
+     *
+     * @param email The email address to validate
+     * @return true if email contains @ and . characters, false otherwise
+     */
     private boolean isValidEmail(String email) {
         return email.contains("@") && email.contains(".");
     }
 
+    /**
+     * Creates Contact object from current main form input fields.
+     * Populates all contact fields including address, membership details, and timestamps.
+     * Sets membership dates only when member checkbox is selected.
+     *
+     * @return Contact object populated with current form data
+     */
     private Contact createContactFromInput() {
         Contact contact = new Contact();
 
@@ -760,6 +868,12 @@ public class CreateContactDialog {
         return contact;
     }
 
+    /**
+     * Displays error alert dialog with specified message.
+     * Shows modal error dialog with standard title and header for operation failures.
+     *
+     * @param message The error message to display to the user
+     */
     private void showErrorAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
@@ -768,12 +882,24 @@ public class CreateContactDialog {
         alert.showAndWait();
     }
 
+    /**
+     * Shows the dialog and waits for user interaction.
+     * Updates translations before display and returns whether user clicked OK/Save.
+     *
+     * @return true if user saved the contact, false if cancelled
+     */
     public boolean showAndWait() {
         updateTexts(); // Update translations before showing
         dialogStage.showAndWait();
         return okClicked;
     }
 
+    /**
+     * Gets the created contact result after successful dialog completion.
+     * Returns the Contact object that was created and saved to database.
+     *
+     * @return The created Contact object, or null if dialog was cancelled
+     */
     public Contact getResult() {
         return result;
     }

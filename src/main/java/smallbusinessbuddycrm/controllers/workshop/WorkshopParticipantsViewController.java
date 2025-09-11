@@ -987,9 +987,11 @@ public class WorkshopParticipantsViewController implements Initializable {
                 paymentCombo.setValue(PaymentStatus.PENDING);
             }
 
-            // Notes
+            // Notes - FIX: Handle null notes safely
             Label notesLabel = new Label(languageManager.getText("workshop.participants.edit.notes.label"));
-            TextArea notesArea = new TextArea((String) participant.get("notes"));
+            String existingNotes = (String) participant.get("notes");
+            // Ensure we never pass null to TextArea constructor
+            TextArea notesArea = new TextArea(existingNotes != null ? existingNotes : "");
             notesArea.setPrefRowCount(3);
             notesArea.setWrapText(true);
 
@@ -1004,7 +1006,10 @@ public class WorkshopParticipantsViewController implements Initializable {
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 // Update the participant
                 PaymentStatus newPaymentStatus = paymentCombo.getValue();
-                String newNotes = notesArea.getText().trim();
+
+                // FIX: Safe handling of TextArea.getText()
+                String rawNotes = notesArea.getText();
+                String newNotes = (rawNotes != null) ? rawNotes.trim() : "";
 
                 try {
                     // Get participant ID and type

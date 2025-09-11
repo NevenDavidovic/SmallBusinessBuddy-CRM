@@ -12,6 +12,11 @@ import smallbusinessbuddycrm.utilities.LanguageManager;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Dialog for editing column visibility settings in the contacts table.
+ * Allows users to show/hide specific columns, provides utility buttons for bulk operations,
+ * and supports language switching with proper cleanup of listeners.
+ */
 public class EditColumnsDialog {
 
     private Stage dialogStage;
@@ -30,15 +35,20 @@ public class EditColumnsDialog {
     private Button resetButton;
     private Button cancelButton;
     private Button applyButton;
-
-    // ⭐ NEW: Language change listener for automatic updates
     private Runnable languageChangeListener;
     private LanguageManager languageManager;
 
+    /**
+     * Creates a new EditColumnsDialog for managing table column visibility.
+     * Initializes the dialog with current column visibility settings and sets up
+     * language management with change listeners for dynamic text updates.
+     *
+     * @param parentStage The parent stage that owns this modal dialog
+     * @param currentVisibility Map of column names to their current visibility states
+     */
     public EditColumnsDialog(Stage parentStage, Map<String, Boolean> currentVisibility) {
         System.out.println("EditColumnsDialog created with visibility: " + currentVisibility);
 
-        // ⭐ NEW: Initialize language manager and listener
         this.languageManager = LanguageManager.getInstance();
         this.languageChangeListener = this::updateTexts;
 
@@ -48,18 +58,21 @@ public class EditColumnsDialog {
         createDialogStage();
         dialogStage.initOwner(parentStage);
 
-        // ⭐ NEW: Register for language change notifications
         languageManager.addLanguageChangeListener(languageChangeListener);
 
         updateTexts(); // Initial translation
     }
 
+    /**
+     * Creates and configures the main dialog stage with all UI components.
+     * Sets up modal behavior, scroll functionality, keyboard shortcuts,
+     * and proper cleanup handlers for window close events.
+     */
     private void createDialogStage() {
         dialogStage = new Stage();
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.setResizable(true); // Allow resizing for better scroll experience
 
-        // ⭐ NEW: Enhanced close handler - cleanup language listener
         dialogStage.setOnCloseRequest(e -> {
             System.out.println("Dialog closed via X button - applying changes and cleaning up");
             e.consume(); // Prevent default close
@@ -91,7 +104,7 @@ public class EditColumnsDialog {
 
         mainContent.getChildren().addAll(titleLabel, instructionLabel, noteLabel, checkboxContainer, buttonBox);
 
-        // Create scroll pane and wrap the main content
+
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setContent(mainContent);
         scrollPane.setFitToWidth(true);
@@ -99,29 +112,29 @@ public class EditColumnsDialog {
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED); // Vertical scroll as needed
         scrollPane.setPannable(true); // Allow panning with mouse drag
 
-        // Set scroll speed (optional - makes scrolling smoother)
+
         scrollPane.setOnScroll(event -> {
             double deltaY = event.getDeltaY() * 2; // Multiply for faster scrolling
             double scrollSpeed = scrollPane.getVvalue() - (deltaY / scrollPane.getContent().getBoundsInLocal().getHeight());
             scrollPane.setVvalue(scrollSpeed);
         });
 
-        // Create scene with scroll pane as root
+
         Scene scene = new Scene(scrollPane, 400, 500); // Smaller height to demonstrate scrolling
 
-        // Add keyboard shortcuts
+
         scene.setOnKeyPressed(e -> {
             switch (e.getCode()) {
                 case ESCAPE:
                     System.out.println("ESC pressed - cancelling dialog");
                     okClicked = false;
-                    cleanup(); // ⭐ NEW: Clean up on cancel too
+                    cleanup();
                     dialogStage.close();
                     break;
                 case ENTER:
                     System.out.println("ENTER pressed - applying changes");
                     handleApply();
-                    cleanup(); // ⭐ NEW: Clean up on apply
+                    cleanup();
                     break;
             }
         });
@@ -133,6 +146,13 @@ public class EditColumnsDialog {
         dialogStage.setMinHeight(400);
     }
 
+    /**
+     * Creates the checkbox container for column visibility selection.
+     * Generates checkboxes for all available table columns, sets their initial states
+     * based on current visibility, and includes utility buttons for bulk operations.
+     *
+     * @return VBox containing all column checkboxes and utility buttons
+     */
     private VBox createColumnCheckboxes() {
         VBox container = new VBox(10);
         container.setStyle("-fx-border-color: #dfe3eb; -fx-border-radius: 5; -fx-padding: 15;");
@@ -211,6 +231,13 @@ public class EditColumnsDialog {
         return container;
     }
 
+    /**
+     * Creates the dialog button box with Cancel and Apply actions.
+     * Configures button styling, default/cancel button behavior, and event handlers
+     * for dialog completion or cancellation.
+     *
+     * @return HBox containing Cancel and Apply buttons with proper styling and handlers
+     */
     private HBox createButtonBox() {
         HBox buttonBox = new HBox(10);
         buttonBox.setStyle("-fx-alignment: center-right;");
@@ -221,7 +248,7 @@ public class EditColumnsDialog {
         cancelButton.setOnAction(e -> {
             System.out.println("Cancel button clicked - no changes applied");
             okClicked = false;
-            cleanup(); // ⭐ NEW: Clean up on cancel
+            cleanup();
             dialogStage.close();
         });
 
@@ -230,7 +257,7 @@ public class EditColumnsDialog {
         applyButton.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;");
         applyButton.setOnAction(e -> {
             handleApply();
-            cleanup(); // ⭐ NEW: Clean up on apply
+            cleanup();
         });
 
         // Make Apply button default (responds to Enter key)
@@ -242,7 +269,11 @@ public class EditColumnsDialog {
         return buttonBox;
     }
 
-    // ⭐ NEW: Enhanced updateTexts method with better error handling
+    /**
+     * Updates all UI text elements based on current language settings.
+     * Refreshes dialog title, labels, button text, and column checkbox labels
+     * when language changes between English and Croatian.
+     */
     private void updateTexts() {
         try {
             System.out.println("Updating EditColumnsDialog texts for language: " +
@@ -276,6 +307,11 @@ public class EditColumnsDialog {
         }
     }
 
+    /**
+     * Updates checkbox labels with localized column names.
+     * Maps internal column names to translation keys and updates checkbox text
+     * based on current language settings. Provides fallback to original names.
+     */
     private void updateColumnCheckboxTexts() {
         // Map of internal column names to translation keys
         Map<String, String> columnTranslationKeys = new HashMap<>();
@@ -312,6 +348,11 @@ public class EditColumnsDialog {
         }
     }
 
+    /**
+     * Handles the Apply button action and applies column visibility changes.
+     * Collects current checkbox states, updates visibility map, sets success flag,
+     * and closes the dialog with applied changes.
+     */
     private void handleApply() {
         System.out.println("Apply button clicked - updating column visibility");
 
@@ -331,7 +372,11 @@ public class EditColumnsDialog {
         dialogStage.close();
     }
 
-    // ⭐ NEW: Cleanup method to prevent memory leaks
+    /**
+     * Cleans up language change listeners to prevent memory leaks.
+     * Removes the dialog's language change listener from the LanguageManager
+     * when the dialog is closed or disposed.
+     */
     private void cleanup() {
         if (languageManager != null && languageChangeListener != null) {
             languageManager.removeLanguageChangeListener(languageChangeListener);
@@ -339,24 +384,41 @@ public class EditColumnsDialog {
         }
     }
 
+    /**
+     * Shows the dialog and waits for user interaction.
+     * Updates translations before display, shows modal dialog, and handles cleanup
+     * after dialog closes. Returns whether user applied changes or cancelled.
+     *
+     * @return true if user applied changes, false if cancelled
+     */
     public boolean showAndWait() {
         updateTexts(); // Update translations before showing
         System.out.println("Showing dialog...");
         dialogStage.showAndWait();
         System.out.println("Dialog closed, okClicked=" + okClicked);
 
-        // ⭐ NEW: Ensure cleanup happens even if dialog is closed unexpectedly
         cleanup();
 
         return okClicked;
     }
 
+    /**
+     * Gets the updated column visibility settings after dialog completion.
+     * Returns a copy of the visibility map to avoid reference issues and
+     * ensure data integrity in the calling code.
+     *
+     * @return Map of column names to their visibility states (true=visible, false=hidden)
+     */
     public Map<String, Boolean> getColumnVisibility() {
         System.out.println("Returning column visibility: " + columnVisibility);
         return new HashMap<>(columnVisibility); // Return a copy to avoid reference issues
     }
 
-    // ⭐ NEW: Optional manual cleanup method for external use
+    /**
+     * Public cleanup method for explicit resource disposal.
+     * Provides external access to cleanup functionality for proper resource
+     * management when dialog is disposed without normal completion.
+     */
     public void dispose() {
         cleanup();
     }
