@@ -106,6 +106,13 @@ public class EditContactDialog {
     private Button cancelButton;
     private Button saveButton;
 
+    /**
+     * Creates a new EditContactDialog for modifying existing contacts and their underaged members.
+     * Initializes the dialog stage, loads existing data, populates form fields, and applies translations.
+     *
+     * @param parentStage The parent stage that owns this modal dialog
+     * @param contact The existing contact to edit
+     */
     public EditContactDialog(Stage parentStage, Contact contact) {
         this.contact = contact;
         createDialogStage();
@@ -115,6 +122,11 @@ public class EditContactDialog {
         updateTexts();
     }
 
+    /**
+     * Creates and configures the main dialog stage with all UI components.
+     * Sets up modal behavior, scroll pane, layout sections, and scene configuration.
+     * Initializes a resizable dialog with 700x850 dimensions.
+     */
     private void createDialogStage() {
         dialogStage = new Stage();
         dialogStage.initModality(Modality.WINDOW_MODAL);
@@ -149,6 +161,11 @@ public class EditContactDialog {
         dialogStage.setScene(scene);
     }
 
+    /**
+     * Loads existing data for the contact being edited.
+     * Retrieves associated underaged members from database and populates the members list
+     * for display and modification in the dialog.
+     */
     private void loadData() {
         // Load existing underaged members for this contact
         UnderagedDAO underagedDAO = new UnderagedDAO();
@@ -157,6 +174,12 @@ public class EditContactDialog {
         underagedMembersList.addAll(existingChildren);
     }
 
+    /**
+     * Creates the contact information section containing personal and address fields.
+     * Includes contact form grid with all required and optional contact fields pre-populated.
+     *
+     * @return VBox containing the complete contact information section
+     */
     private VBox createContactSection() {
         VBox section = new VBox(10);
 
@@ -171,6 +194,13 @@ public class EditContactDialog {
         return section;
     }
 
+    /**
+     * Creates the main contact form grid with all input fields and labels.
+     * Sets up form fields for personal info, address, and membership details.
+     * Configures field bindings and member checkbox behavior for date pickers.
+     *
+     * @return GridPane containing all contact form fields with proper layout
+     */
     private GridPane createContactFormGrid() {
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -275,6 +305,12 @@ public class EditContactDialog {
         return grid;
     }
 
+    /**
+     * Creates the underaged members section with table and edit form.
+     * Includes section title, data table for existing children, and form for adding/editing.
+     *
+     * @return VBox containing the complete underaged members management section
+     */
     private VBox createUnderagedMembersSection() {
         VBox section = new VBox(10);
 
@@ -294,6 +330,13 @@ public class EditContactDialog {
         return section;
     }
 
+    /**
+     * Creates and configures the table for displaying underaged members.
+     * Sets up columns for name, age, PIN, gender, member status, and edit/delete actions.
+     * Includes edit and delete functionality with confirmation dialogs.
+     *
+     * @return TableView configured for displaying and managing underaged members
+     */
     private TableView<UnderagedMember> createUnderagedMembersTable() {
         TableView<UnderagedMember> table = new TableView<>();
         table.setPrefHeight(150);
@@ -371,6 +414,13 @@ public class EditContactDialog {
         return table;
     }
 
+    /**
+     * Creates the form for adding and editing underaged members.
+     * Includes input fields for personal info, membership details, and notes.
+     * Sets up auto-calculation of age and dynamic button visibility for edit mode.
+     *
+     * @return VBox containing the complete child addition/editing form with action buttons
+     */
     private VBox createChildForm() {
         VBox formSection = new VBox(10);
 
@@ -500,6 +550,11 @@ public class EditContactDialog {
         return formSection;
     }
 
+    /**
+     * Updates all UI text elements based on current language settings.
+     * Refreshes dialog title, labels, placeholders, table headers, button text,
+     * and combo box options when language changes between English and Croatian.
+     */
     private void updateTexts() {
         LanguageManager lm = LanguageManager.getInstance();
 
@@ -583,6 +638,13 @@ public class EditContactDialog {
         if (saveButton != null) saveButton.setText(lm.getText("button.save.changes"));
     }
 
+    /**
+     * Initiates editing mode for an existing underaged member.
+     * Populates child form with selected member's data, enables edit mode,
+     * and toggles button visibility to show Update and Cancel options.
+     *
+     * @param child The underaged member to edit
+     */
     private void editChild(UnderagedMember child) {
         currentEditingChild = child;
         isEditingChild = true;
@@ -608,6 +670,13 @@ public class EditContactDialog {
         toggleChildFormButtons(true);
     }
 
+    /**
+     * Handles deletion of an underaged member with confirmation.
+     * Shows confirmation dialog, removes from list if confirmed, and tracks
+     * deletion for database update if the member has an existing ID.
+     *
+     * @param child The underaged member to delete
+     */
     private void deleteChild(UnderagedMember child) {
         Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
         confirmation.setTitle("Delete Confirmation");
@@ -627,6 +696,11 @@ public class EditContactDialog {
         }
     }
 
+    /**
+     * Handles adding a new underaged member to the contact.
+     * Validates child input, creates UnderagedMember object, adds to list,
+     * clears form, and shows success confirmation message.
+     */
     private void handleAddChild() {
         if (validateChildInput()) {
             UnderagedMember child = createUnderagedMemberFromInput();
@@ -636,6 +710,11 @@ public class EditContactDialog {
         }
     }
 
+    /**
+     * Handles updating an existing underaged member being edited.
+     * Validates input, updates the existing member object, refreshes table display,
+     * exits edit mode, and shows success confirmation message.
+     */
     private void handleUpdateChild() {
         if (validateChildInput() && currentEditingChild != null) {
             // Update the existing child object
@@ -649,6 +728,11 @@ public class EditContactDialog {
         }
     }
 
+    /**
+     * Cancels child editing mode and returns to add mode.
+     * Clears editing state, resets form, and toggles button visibility
+     * back to normal add mode configuration.
+     */
     private void cancelChildEdit() {
         currentEditingChild = null;
         isEditingChild = false;
@@ -656,12 +740,25 @@ public class EditContactDialog {
         toggleChildFormButtons(false);
     }
 
+    /**
+     * Toggles child form button visibility based on edit mode state.
+     * Shows Add button in normal mode, shows Update/Cancel buttons in edit mode.
+     *
+     * @param editMode true for edit mode, false for add mode
+     */
     private void toggleChildFormButtons(boolean editMode) {
         addChildButton.setVisible(!editMode);
         updateChildButton.setVisible(editMode);
         cancelEditButton.setVisible(editMode);
     }
 
+    /**
+     * Validates child form input before adding or updating underaged member.
+     * Checks required fields (first name, last name, birth date) and shows
+     * validation error dialog with specific field requirements if validation fails.
+     *
+     * @return true if all required child fields are valid, false otherwise
+     */
     private boolean validateChildInput() {
         StringBuilder errors = new StringBuilder();
 
@@ -689,6 +786,13 @@ public class EditContactDialog {
         return true;
     }
 
+    /**
+     * Creates new UnderagedMember object from current child form input fields.
+     * Populates all fields including calculated age, membership details, and timestamps.
+     * Sets creation and update timestamps for new member record.
+     *
+     * @return UnderagedMember object populated with current form data
+     */
     private UnderagedMember createUnderagedMemberFromInput() {
         UnderagedMember child = new UnderagedMember();
         populateUnderagedMemberFromInput(child);
@@ -700,11 +804,24 @@ public class EditContactDialog {
         return child;
     }
 
+    /**
+     * Updates existing UnderagedMember object from current child form input fields.
+     * Populates all fields with current form data and updates the modification timestamp.
+     *
+     * @param child The existing UnderagedMember object to update
+     */
     private void updateUnderagedMemberFromInput(UnderagedMember child) {
         populateUnderagedMemberFromInput(child);
         child.setUpdatedAt(java.time.LocalDateTime.now().toString());
     }
 
+    /**
+     * Populates UnderagedMember object with data from child form input fields.
+     * Common method used by both create and update operations to set member data
+     * including personal info, membership details, and parent contact association.
+     *
+     * @param child The UnderagedMember object to populate with form data
+     */
     private void populateUnderagedMemberFromInput(UnderagedMember child) {
         child.setFirstName(childFirstNameField.getText().trim());
         child.setLastName(childLastNameField.getText().trim());
@@ -725,6 +842,11 @@ public class EditContactDialog {
         child.setContactId(contact.getId());
     }
 
+    /**
+     * Clears all child form input fields and resets to default state.
+     * Resets text fields, date pickers, combo boxes, checkboxes, and text areas.
+     * Disables member date pickers when clearing member checkbox.
+     */
     private void clearChildForm() {
         childFirstNameField.clear();
         childLastNameField.clear();
@@ -742,6 +864,11 @@ public class EditContactDialog {
         childMemberUntilPicker.setDisable(true);
     }
 
+    /**
+     * Populates form fields with existing contact data for editing.
+     * Fills all contact form fields with current contact information and
+     * sets proper member date picker states based on membership status.
+     */
     private void populateFields() {
         // Fill contact fields with existing data
         firstNameField.setText(contact.getFirstName() != null ? contact.getFirstName() : "");
@@ -765,6 +892,12 @@ public class EditContactDialog {
         }
     }
 
+    /**
+     * Creates the dialog button box with Cancel and Save Changes actions.
+     * Configures button styling, sizing, and event handlers for dialog completion.
+     *
+     * @return HBox containing Cancel and Save Changes buttons with proper styling
+     */
     private HBox createButtonBox() {
         HBox buttonBox = new HBox(10);
         buttonBox.setStyle("-fx-alignment: center-right;");
@@ -782,6 +915,11 @@ public class EditContactDialog {
         return buttonBox;
     }
 
+    /**
+     * Handles saving all contact and underaged member changes to database.
+     * Validates input, updates contact record, processes deleted children,
+     * creates/updates remaining children, and closes dialog on success.
+     */
     private void handleSave() {
         if (validateInput()) {
             try {
@@ -823,6 +961,13 @@ public class EditContactDialog {
         }
     }
 
+    /**
+     * Validates main contact form input before saving to database.
+     * Checks required fields (first name, last name, email) and email format.
+     * Shows validation error dialog with specific field requirements if validation fails.
+     *
+     * @return true if all required contact fields are valid, false otherwise
+     */
     private boolean validateInput() {
         StringBuilder errors = new StringBuilder();
 
@@ -852,10 +997,22 @@ public class EditContactDialog {
         return true;
     }
 
+    /**
+     * Performs basic email validation using simple pattern matching.
+     * Checks for presence of @ symbol and at least one dot for domain validation.
+     *
+     * @param email The email address to validate
+     * @return true if email contains @ and . characters, false otherwise
+     */
     private boolean isValidEmail(String email) {
         return email.contains("@") && email.contains(".");
     }
 
+    /**
+     * Updates the contact object with data from main form input fields.
+     * Populates all contact fields including address, membership details, and timestamps.
+     * Sets or clears membership dates based on member checkbox state.
+     */
     private void updateContactFromInput() {
         contact.setFirstName(firstNameField.getText().trim());
         contact.setLastName(lastNameField.getText().trim());
@@ -881,6 +1038,12 @@ public class EditContactDialog {
         contact.setUpdatedAt(java.time.LocalDateTime.now().toString());
     }
 
+    /**
+     * Displays error alert dialog with specified message.
+     * Shows modal error dialog with standard title and header for operation failures.
+     *
+     * @param message The error message to display to the user
+     */
     private void showErrorAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
@@ -889,6 +1052,12 @@ public class EditContactDialog {
         alert.showAndWait();
     }
 
+    /**
+     * Displays success message dialog with specified content.
+     * Shows modal information dialog with success styling for completed operations.
+     *
+     * @param message The success message to display to the user
+     */
     private void showSuccessMessage(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Success");
@@ -897,17 +1066,34 @@ public class EditContactDialog {
         alert.showAndWait();
     }
 
+    /**
+     * Shows the dialog and waits for user interaction.
+     * Updates translations before display and returns whether user saved changes.
+     *
+     * @return true if user saved changes, false if cancelled
+     */
     public boolean showAndWait() {
         updateTexts(); // Update translations before showing
         dialogStage.showAndWait();
         return okClicked;
     }
 
+    /**
+     * Gets the updated contact object after successful dialog completion.
+     * Returns the Contact object with all modifications applied.
+     *
+     * @return The updated Contact object, or original if cancelled
+     */
     public Contact getContact() {
         return contact;
     }
 
-    // Method to get the updated underaged members (if needed for further processing)
+    /**
+     * Gets the list of underaged members associated with this contact.
+     * Provides access to children that were added or modified during editing.
+     *
+     * @return ObservableList of UnderagedMember objects for this contact
+     */
     public ObservableList<UnderagedMember> getUnderagedMembers() {
         return underagedMembersList;
     }

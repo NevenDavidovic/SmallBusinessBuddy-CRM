@@ -627,7 +627,7 @@ public class ContactSelectionDialog extends Dialog<List<Contact>> {
             System.out.println("🔧 ContactWrapper created: " + this.fullName + " (" + this.email + ")");
         }
 
-        // ===== SELECTION PROPERTY METHODS =====
+
 
         /**
          * Returns the observable boolean property for selection state.

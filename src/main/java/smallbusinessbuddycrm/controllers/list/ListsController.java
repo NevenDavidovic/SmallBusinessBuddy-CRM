@@ -47,6 +47,14 @@ public class ListsController implements Initializable {
     private ContactDAO contactDAO;
     private ObservableList<ListRow> listsData;
 
+    /**
+     * Initializes the ListsController after FXML loading.
+     * Sets up DAOs, language management, table configuration, event handlers,
+     * and loads initial list data. Shows error dialog if initialization fails.
+     *
+     * @param location The location used to resolve relative paths for the root object
+     * @param resources The resources used to localize the root object
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("Initializing Lists Controller...");
@@ -80,6 +88,11 @@ public class ListsController implements Initializable {
         }
     }
 
+    /**
+     * Configures the lists table with column bindings and data source.
+     * Sets up table columns with PropertyValueFactory bindings, applies the observable
+     * list data source, and sets localized placeholder text for empty table state.
+     */
     private void setupTable() {
         // Setup table columns
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -98,6 +111,11 @@ public class ListsController implements Initializable {
         System.out.println("Table setup completed");
     }
 
+    /**
+     * Updates all UI text elements based on current language settings.
+     * Refreshes labels, buttons, column headers, placeholders, and table content
+     * when language changes between English and Croatian.
+     */
     private void updateTexts() {
         LanguageManager languageManager = LanguageManager.getInstance();
 
@@ -123,6 +141,12 @@ public class ListsController implements Initializable {
         System.out.println("Lists view texts updated");
     }
 
+
+    /**
+     * Sets up event handlers for UI components.
+     * Configures button actions for create and refresh operations, and sets up
+     * search field listener for real-time filtering. Logs handler setup status.
+     */
     private void setupEventHandlers() {
         if (createListButton != null) {
             createListButton.setOnAction(e -> createNewList());
@@ -152,6 +176,12 @@ public class ListsController implements Initializable {
         }
     }
 
+    /**
+     * Loads all active lists from database and populates the table.
+     * Clears existing data, retrieves lists via DAO, creates ListRow objects,
+     * updates count label with localization, and refreshes table display.
+     * Shows error alert if database operation fails.
+     */
     private void loadLists() {
         try {
             System.out.println("=== ListsController.loadLists() Debug ===");
@@ -213,6 +243,13 @@ public class ListsController implements Initializable {
         loadLists(); // Reload to update count text
     }
 
+    /**
+     * Searches lists by name and updates table with filtered results.
+     * Clears table data, performs database search with provided term,
+     * creates ListRow objects for matching results, and logs search statistics.
+     *
+     * @param searchTerm The text to search for in list names
+     */
     private void searchLists(String searchTerm) {
         try {
             System.out.println("Searching lists for: " + searchTerm);
@@ -231,6 +268,12 @@ public class ListsController implements Initializable {
         }
     }
 
+    /**
+     * Handles creation of new lists with user input dialogs.
+     * Shows input dialogs for list name and optional description, validates input,
+     * creates List object, saves to database via DAO, and refreshes table on success.
+     * Shows appropriate success or error messages based on operation result.
+     */
     @FXML
     private void createNewList() {
         try {
@@ -271,6 +314,14 @@ public class ListsController implements Initializable {
         }
     }
 
+    /**
+     * Opens detailed modal dialog showing list contents and management options.
+     * Creates modal with list information, displays contacts table with remove functionality,
+     * handles empty state display, and provides buttons for adding contacts and closing.
+     * Supports real-time contact removal with confirmation and count updates.
+     *
+     * @param list The list to display in detail modal
+     */
     public void openListDetailModal(List list) {
         try {
             LanguageManager languageManager = LanguageManager.getInstance();
@@ -512,6 +563,14 @@ public class ListsController implements Initializable {
         }
     }
 
+    /**
+     * Handles adding contacts to a list through selection dialog.
+     * Retrieves available contacts excluding those already in list, shows contact
+     * selection dialog, processes selected contacts for batch addition to database,
+     * and displays detailed results with success/failure counts and appropriate alerts.
+     *
+     * @param list The list to add contacts to
+     */
     public void addContactsToList(List list) {
         try {
             LanguageManager languageManager = LanguageManager.getInstance();
@@ -609,6 +668,14 @@ public class ListsController implements Initializable {
         }
     }
 
+    /**
+     * Handles editing of existing list names.
+     * Shows input dialog pre-populated with current name, validates new input,
+     * updates list object, saves changes via DAO, and refreshes table on success.
+     * Shows appropriate success or error messages based on operation result.
+     *
+     * @param list The list to edit
+     */
     public void editList(List list) {
         try {
             LanguageManager languageManager = LanguageManager.getInstance();
@@ -636,6 +703,13 @@ public class ListsController implements Initializable {
         }
     }
 
+    /**
+     * Handles deletion of lists with confirmation dialog.
+     * Shows confirmation dialog with list name, performs database deletion via DAO
+     * if confirmed, refreshes table on success, and shows appropriate status messages.
+     *
+     * @param list The list to delete
+     */
     public void deleteList(List list) {
         try {
             LanguageManager languageManager = LanguageManager.getInstance();
@@ -661,7 +735,12 @@ public class ListsController implements Initializable {
         }
     }
 
-    // Utility methods for alerts
+    /**
+     * Displays localized success alert dialog with specified message.
+     * Shows information-type alert with success title and provided content message.
+     *
+     * @param message The success message to display to the user
+     */
     private void showSuccessAlert(String message) {
         LanguageManager languageManager = LanguageManager.getInstance();
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -671,6 +750,12 @@ public class ListsController implements Initializable {
         alert.showAndWait();
     }
 
+    /**
+     * Displays localized error alert dialog with specified message.
+     * Shows error-type alert with error title and provided content message.
+     *
+     * @param message The error message to display to the user
+     */
     private void showErrorAlert(String message) {
         LanguageManager languageManager = LanguageManager.getInstance();
         Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -680,6 +765,12 @@ public class ListsController implements Initializable {
         alert.showAndWait();
     }
 
+    /**
+     * Displays localized warning alert dialog with specified message.
+     * Shows warning-type alert with warning title and provided content message.
+     *
+     * @param message The warning message to display to the user
+     */
     private void showWarningAlert(String message) {
         LanguageManager languageManager = LanguageManager.getInstance();
         Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -689,7 +780,11 @@ public class ListsController implements Initializable {
         alert.showAndWait();
     }
 
-    // Inner class for table rows
+    /**
+     * Inner class representing a row in the lists table with action buttons.
+     * Encapsulates list data and creates action buttons for view, add contacts,
+     * edit, and delete operations with proper styling and event handlers.
+     */
     public static class ListRow {
         private final List list;
         private final String name;

@@ -88,6 +88,11 @@ public class ContactViewController {
     private LanguageManager languageManager;
     private Runnable languageChangeListener;
 
+    /**
+     * Initializes the ContactViewController after FXML loading.
+     * Sets up language management, column visibility, table configuration,
+     * search functionality, and loads initial contact data.
+     */
     @FXML
     public void initialize() {
 
@@ -110,7 +115,11 @@ public class ContactViewController {
         updateTexts();
     }
 
-
+    /**
+     * Loads column visibility settings from user preferences.
+     * Retrieves saved column display states or applies default visibility rules.
+     * Hidden by default: PIN, Street Number, Member Since, Member Until, Created, Updated.
+     */
     private void loadColumnVisibilitySettings() {
         try {
             Preferences prefs = Preferences.userNodeForPackage(GoogleOAuthController.class);
@@ -147,7 +156,10 @@ public class ContactViewController {
         }
     }
 
-
+    /**
+     * Initializes default column visibility settings when preferences are unavailable.
+     * Sets standard columns as visible and sensitive/administrative columns as hidden.
+     */
     private void initializeDefaultColumnVisibility() {
         String[] columns = {
                 "First Name", "Last Name", "Birthday", "Age", "PIN",
@@ -167,7 +179,10 @@ public class ContactViewController {
         }
     }
 
-
+    /**
+     * Applies loaded column visibility settings to the table columns.
+     * Makes columns visible or hidden based on stored preferences.
+     */
     private void applyColumnVisibilityFromSettings() {
         System.out.println("ContactViewController: Applying column visibility from settings...");
 
@@ -185,7 +200,11 @@ public class ContactViewController {
         }
     }
 
-
+    /**
+     * Handles the edit columns dialog interaction.
+     * Opens column visibility dialog, applies changes, saves preferences,
+     * and shows success confirmation or error message.
+     */
     private void handleEditColumns() {
         System.out.println("ContactViewController: handleEditColumns() called");
 
@@ -236,7 +255,10 @@ public class ContactViewController {
         }
     }
 
-
+    /**
+     * Saves current column visibility settings to user preferences.
+     * Persists column display states for future application sessions.
+     */
     private void saveColumnVisibilitySettings() {
         try {
             Preferences prefs = Preferences.userNodeForPackage(GoogleOAuthController.class);
@@ -253,14 +275,20 @@ public class ContactViewController {
         }
     }
 
-
+    /**
+     * Refreshes column visibility from stored preferences.
+     * Reloads and reapplies column visibility settings without restart.
+     */
     public void refreshColumnVisibilityFromSettings() {
         loadColumnVisibilitySettings();
         applyColumnVisibilityFromSettings();
         System.out.println("ContactViewController: Column visibility refreshed from settings");
     }
 
-
+    /**
+     * Cleans up language change listeners on controller destruction.
+     * Prevents memory leaks by removing language change event listeners.
+     */
     public void cleanup() {
         if (languageManager != null && languageChangeListener != null) {
             languageManager.removeLanguageChangeListener(languageChangeListener);
@@ -268,7 +296,11 @@ public class ContactViewController {
         }
     }
 
-
+    /**
+     * Updates all UI text elements based on current language settings.
+     * Refreshes labels, buttons, column headers, and other text components
+     * when language changes between English and Croatian.
+     */
     private void updateTexts() {
         try {
             System.out.println("ContactViewController: Updating texts for language: " +
@@ -318,6 +350,11 @@ public class ContactViewController {
         }
     }
 
+    /**
+     * Handles barcode generation for selected contacts.
+     * Shows payment template selection dialog, then opens barcode generation dialog
+     * for all selected contacts with chosen template.
+     */
     @FXML
     private void handleGenerateBarcode() {
         System.out.println("🔧 Generate Barcode button clicked");
@@ -405,6 +442,12 @@ public class ContactViewController {
         });
     }
 
+    /**
+     * Shows payment template selection dialog for barcode generation.
+     * Loads active payment templates and presents choice dialog with template details.
+     *
+     * @return Selected PaymentTemplate or null if cancelled
+     */
     private PaymentTemplate showPaymentTemplateSelectionDialog() {
         LoadingManager.getInstance().showLoading("Loading payment templates...");
 
@@ -496,6 +539,13 @@ public class ContactViewController {
         }
     }
 
+    /**
+     * Creates an information pane displaying payment template details.
+     * Shows template name, amount, payment model, and description in formatted layout.
+     *
+     * @param template The payment template to display information for
+     * @return VBox containing formatted template information
+     */
     private VBox createTemplateInfoPane(PaymentTemplate template) {
         VBox infoPane = new VBox(8);
         infoPane.setPadding(new Insets(10, 10, 10, 10));
@@ -529,6 +579,11 @@ public class ContactViewController {
         return infoPane;
     }
 
+    /**
+     * Handles contact import from CSV files.
+     * Opens import dialog, processes selected file, and adds imported contacts to table.
+     * Shows success message with import count or error dialog if operation fails.
+     */
     private void handleImportContacts() {
         LoadingManager.getInstance().showLoading("Opening import dialog...");
 
@@ -584,6 +639,10 @@ public class ContactViewController {
         });
     }
 
+    /**
+     * Creates mapping between column names and TableColumn objects.
+     * Establishes relationship for programmatic column visibility control.
+     */
     private void initializeColumnMapping() {
         System.out.println("Initializing column mapping...");
 
@@ -608,6 +667,11 @@ public class ContactViewController {
         System.out.println("Column mapping completed. Mapped " + columnMap.size() + " columns");
     }
 
+    /**
+     * Configures the contacts table with cell factories and column bindings.
+     * Sets up checkbox selection, edit buttons, barcode buttons, and data binding
+     * for all table columns including formatted date and status displays.
+     */
     private void setupTable() {
         // Set up checkbox column
         selectColumn.setCellFactory(tc -> new TableCell<Contact, Boolean>() {
@@ -731,6 +795,11 @@ public class ContactViewController {
                 new SimpleStringProperty(cellData.getValue().getUpdatedAt()));
     }
 
+    /**
+     * Initializes search functionality and contact filtering.
+     * Creates FilteredList wrapper and sets up search field listeners
+     * for real-time contact filtering based on text input.
+     */
     private void setupSearchAndFilters() {
         // Create filtered list wrapping the original list
         filteredContactsList = new FilteredList<>(allContactsList, p -> true);
@@ -744,6 +813,10 @@ public class ContactViewController {
         });
     }
 
+    /**
+     * Updates contact filters based on current search text and active filter button.
+     * Applies combined filtering logic for search terms and membership status.
+     */
     private void updateFilters() {
         String searchText = searchField.getText().toLowerCase().trim();
 
@@ -777,6 +850,13 @@ public class ContactViewController {
         updateRecordCount();
     }
 
+    /**
+     * Determines if a contact matches the currently active filter.
+     * Checks contact against All Contacts, Members, Non-Members, or Upcoming Birthdays filter.
+     *
+     * @param contact The contact to evaluate against current filter
+     * @return true if contact matches active filter, false otherwise
+     */
     private boolean matchesCurrentFilter(Contact contact) {
         // Check which filter button is active based on their style
         String allContactsStyle = allContactsButton.getStyle();
@@ -804,6 +884,14 @@ public class ContactViewController {
         return true;
     }
 
+    /**
+     * Checks if a contact has an upcoming birthday within specified days.
+     * Handles year transitions and calculates next birthday occurrence.
+     *
+     * @param contact The contact to check for upcoming birthday
+     * @param daysAhead Number of days to look ahead for birthdays
+     * @return true if contact has birthday in specified timeframe, false otherwise
+     */
     private boolean hasUpcomingBirthday(Contact contact, int daysAhead) {
         if (contact.getBirthday() == null) {
             return false;
@@ -824,6 +912,11 @@ public class ContactViewController {
         return !thisYearBirthday.isBefore(today) && !thisYearBirthday.isAfter(futureDate);
     }
 
+    /**
+     * Loads all contacts from database asynchronously.
+     * Displays loading indicator and populates contact table with retrieved data.
+     * Shows error dialog if database operation fails.
+     */
     private void loadContacts() {
         LoadingManager.getInstance().showLoading("Loading contacts...");
 
@@ -855,11 +948,19 @@ public class ContactViewController {
         });
     }
 
+    /**
+     * Updates the record count label with current filtered contact count.
+     * Shows number of visible contacts after filtering and searching.
+     */
     private void updateRecordCount() {
         int count = filteredContactsList.size();
         recordCountLabel.setText(count + " record" + (count != 1 ? "s" : ""));
     }
 
+    /**
+     * Sets up event handlers for all UI components.
+     * Configures button actions, filter buttons, and other interactive elements.
+     */
     private void setupEventHandlers() {
         System.out.println("Setting up event handlers...");
 
@@ -890,6 +991,12 @@ public class ContactViewController {
         System.out.println("Event handlers setup completed");
     }
 
+    /**
+     * Handles filter button clicks and updates UI state.
+     * Sets clicked button as active, resets other buttons, and triggers filter update.
+     *
+     * @param clickedButton The filter button that was clicked
+     */
     private void handleFilterButton(Button clickedButton) {
         // Reset all button styles to inactive
         allContactsButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
@@ -906,6 +1013,11 @@ public class ContactViewController {
         updateFilters();
     }
 
+    /**
+     * Handles export of filtered contacts to CSV file.
+     * Exports currently visible contacts based on active filters and search terms.
+     * Shows file chooser and creates CSV with Croatian headers and UTF-8 encoding.
+     */
     private void handleExportContacts() {
         try {
             // Get currently visible contacts (filtered/searched)
@@ -956,6 +1068,14 @@ public class ContactViewController {
         }
     }
 
+    /**
+     * Exports contact list to CSV file with proper encoding and formatting.
+     * Creates UTF-8 encoded CSV with BOM for Excel compatibility and Croatian headers.
+     *
+     * @param contacts List of contacts to export
+     * @param file Target file for CSV export
+     * @throws IOException if file writing fails
+     */
     private void exportContactsToCSV(List<Contact> contacts, File file) throws IOException {
         // Use UTF-8 encoding with BOM for proper Croatian character support
         try (BufferedWriter writer = new BufferedWriter(
@@ -996,6 +1116,13 @@ public class ContactViewController {
         }
     }
 
+    /**
+     * Escapes CSV values by wrapping in quotes and escaping internal quotes.
+     * Handles commas, quotes, and newlines in contact data for proper CSV formatting.
+     *
+     * @param value The string value to escape for CSV
+     * @return Properly escaped CSV value
+     */
     private String escapeCsvValue(String value) {
         if (value == null) {
             return "";
@@ -1009,6 +1136,10 @@ public class ContactViewController {
         return value;
     }
 
+    /**
+     * Opens the create contact dialog and handles new contact creation.
+     * Shows loading indicator, displays dialog, and adds new contact to table if successful.
+     */
     private void handleCreateContact() {
         LoadingManager.getInstance().showLoading("Opening contact creation...");
 
@@ -1045,6 +1176,11 @@ public class ContactViewController {
         });
     }
 
+    /**
+     * Handles deletion of selected contacts with confirmation.
+     * Shows warning if no selection, confirms deletion, and removes contacts from database.
+     * Displays success/error messages based on operation result.
+     */
     private void handleDeleteSelected() {
         // Get all selected contacts from the filtered list
         List<Contact> selectedContacts = filteredContactsList.stream()
@@ -1131,6 +1267,12 @@ public class ContactViewController {
         }
     }
 
+    /**
+     * Opens the edit contact dialog for the specified contact.
+     * Allows modification of contact details and refreshes table on successful update.
+     *
+     * @param contact The contact to edit
+     */
     private void handleEditContact(Contact contact) {
         try {
             Stage currentStage = (Stage) createContactButton.getScene().getWindow();
@@ -1154,7 +1296,10 @@ public class ContactViewController {
         }
     }
 
-    // New method to show upcoming birthdays
+    /**
+     * Shows upcoming birthdays dialog with contacts having birthdays in next 30 days.
+     * Queries database for upcoming birthdays and displays formatted list with ages.
+     */
     @FXML
     private void handleUpcomingBirthdays() {
         try {
@@ -1195,6 +1340,14 @@ public class ContactViewController {
         }
     }
 
+    /**
+     * Generates HUB-3 payment barcode for individual contact.
+     * Opens a modal barcode payment dialog for the specified contact, allowing
+     * user to select payment template and generate Croatian HUB-3 payment barcode.
+     * Shows error dialog if barcode generation dialog fails to open.
+     *
+     * @param contact The contact to generate HUB-3 payment barcode for
+     */
     private void handleGenerateHUB3Barcode(Contact contact) {
         try {
             Stage currentStage = (Stage) createContactButton.getScene().getWindow();

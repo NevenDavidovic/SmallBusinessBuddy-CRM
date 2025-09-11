@@ -16,6 +16,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+/**
+ * Controller for the Organization Profile interface providing comprehensive organization management.
+ * Features organization information editing, image upload and management, form validation,
+ * and complete localization support. Handles both creation of new organizations and
+ * updating existing ones with proper database persistence and user feedback.
+ */
 public class OrganizationController implements Initializable {
 
     @FXML private Button editButton;
@@ -77,6 +83,14 @@ public class OrganizationController implements Initializable {
 
     private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
+    /**
+     * Initializes the OrganizationController after FXML loading.
+     * Sets up DAO connections, initializes image view, loads organization data,
+     * and configures language management with change listeners for dynamic updates.
+     *
+     * @param location The location used to resolve relative paths for the root object
+     * @param resources The resources used to localize the root object
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         languageManager = LanguageManager.getInstance();
@@ -89,6 +103,12 @@ public class OrganizationController implements Initializable {
         updateTexts();
     }
 
+    /**
+     * Updates all UI text elements based on current language settings.
+     * Refreshes buttons, title labels, field labels, and image status text
+     * when language changes between English and Croatian. Ensures complete
+     * interface localization across all organization management components.
+     */
     private void updateTexts() {
         // Update button texts
         if (editButton != null) editButton.setText(languageManager.getText("organization.button.edit"));
@@ -121,6 +141,11 @@ public class OrganizationController implements Initializable {
         updateImageStatusText();
     }
 
+    /**
+     * Updates image status label text based on current state and language.
+     * Checks current image status text and updates it with appropriate localized
+     * message for new image selection, image removal, errors, or no image states.
+     */
     private void updateImageStatusText() {
         if (imageStatusLabel != null && imageStatusLabel.isVisible()) {
             String currentText = imageStatusLabel.getText();
@@ -138,11 +163,21 @@ public class OrganizationController implements Initializable {
         }
     }
 
+    /**
+     * Sets up initial styling for the organization image view.
+     * Applies default background color and border styling to provide
+     * visual feedback when no image is present.
+     */
     private void setupImageView() {
         // Set default styling for image view
         organizationImageView.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #cccccc;");
     }
 
+    /**
+     * Loads organization data from database or creates default organization.
+     * Retrieves the first organization record from database and displays it,
+     * or creates a new default organization if none exists and enters edit mode.
+     */
     private void loadOrganization() {
         Optional<Organization> orgOptional = organizationDAO.getFirst();
 
@@ -155,6 +190,11 @@ public class OrganizationController implements Initializable {
         }
     }
 
+    /**
+     * Creates a new default organization for first-time setup.
+     * Initializes organization with default name, enters edit mode automatically,
+     * and shows welcome dialog to guide user through initial setup process.
+     */
     private void createDefaultOrganization() {
         currentOrganization = new Organization(
                 languageManager.getText("organization.default.name"), "");
@@ -164,6 +204,12 @@ public class OrganizationController implements Initializable {
                 languageManager.getText("organization.welcome.content"));
     }
 
+    /**
+     * Displays current organization data in the UI labels.
+     * Updates all display labels with organization information including
+     * basic info, address details, timestamp metadata, and organization image.
+     * Handles null values gracefully by displaying empty strings.
+     */
     private void displayOrganization() {
         if (currentOrganization == null) return;
 
@@ -191,6 +237,11 @@ public class OrganizationController implements Initializable {
         displayImage();
     }
 
+    /**
+     * Displays organization image in the image view or shows appropriate status.
+     * Loads image from byte array data, handles loading errors gracefully,
+     * and displays appropriate status messages for missing or invalid images.
+     */
     private void displayImage() {
         if (currentOrganization.getImage() != null && currentOrganization.getImage().length > 0) {
             try {
@@ -217,11 +268,22 @@ public class OrganizationController implements Initializable {
         }
     }
 
+    /**
+     * Handles the edit button action to enter edit mode.
+     * Enables editing interface by switching to edit mode which shows
+     * text fields instead of labels and displays edit action buttons.
+     */
     @FXML
     private void handleEdit() {
         setEditMode(true);
     }
 
+    /**
+     * Handles the save button action to persist organization changes.
+     * Validates input data, updates organization object from form fields,
+     * saves to database, handles image updates, and provides user feedback.
+     * Returns to display mode on successful save or shows error messages.
+     */
     @FXML
     private void handleSave() {
         if (!validateInput()) {
@@ -261,6 +323,11 @@ public class OrganizationController implements Initializable {
         }
     }
 
+    /**
+     * Handles the cancel button action to discard changes.
+     * Resets any pending image changes, exits edit mode, and restores
+     * the display to show current saved organization data.
+     */
     @FXML
     private void handleCancel() {
         newImageData = null;
@@ -268,6 +335,12 @@ public class OrganizationController implements Initializable {
         displayOrganization();
     }
 
+    /**
+     * Handles organization image selection and upload.
+     * Shows file chooser dialog with image format filters, validates file size,
+     * converts selected image to byte array, displays preview, and updates
+     * status label with appropriate feedback messages.
+     */
     @FXML
     private void handleChangeImage() {
         FileChooser fileChooser = new FileChooser();
@@ -312,6 +385,11 @@ public class OrganizationController implements Initializable {
         }
     }
 
+    /**
+     * Handles organization image removal with confirmation.
+     * Shows confirmation dialog, marks image for removal if confirmed,
+     * clears the image view, and updates status label to indicate removal.
+     */
     @FXML
     private void handleRemoveImage() {
         Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
@@ -330,6 +408,14 @@ public class OrganizationController implements Initializable {
         }
     }
 
+    /**
+     * Toggles between edit mode and display mode for the organization interface.
+     * Controls visibility of edit buttons vs action buttons, switches between
+     * display labels and input fields, and populates edit fields when entering
+     * edit mode. Manages remove image button visibility based on current image.
+     *
+     * @param editMode true to enter edit mode, false to enter display mode
+     */
     private void setEditMode(boolean editMode) {
         this.isEditMode = editMode;
 
@@ -371,6 +457,12 @@ public class OrganizationController implements Initializable {
         }
     }
 
+    /**
+     * Populates edit form fields with current organization data.
+     * Fills all text fields with existing organization information,
+     * handling null values by setting empty strings to prevent
+     * null pointer exceptions during editing.
+     */
     private void populateEditFields() {
         if (currentOrganization == null) return;
 
@@ -384,6 +476,12 @@ public class OrganizationController implements Initializable {
         cityField.setText(currentOrganization.getCity() != null ? currentOrganization.getCity() : "");
     }
 
+    /**
+     * Updates organization object with data from edit form fields.
+     * Transfers all form field values to the organization object,
+     * handles empty fields by setting null values, and processes
+     * any pending image changes for save operation.
+     */
     private void updateOrganizationFromFields() {
         if (currentOrganization == null) return;
 
@@ -407,6 +505,13 @@ public class OrganizationController implements Initializable {
         }
     }
 
+    /**
+     * Validates organization form input data before saving.
+     * Checks required fields (name and IBAN), validates email format if provided,
+     * and shows validation error dialog with specific field requirements.
+     *
+     * @return true if all validation passes, false if validation errors exist
+     */
     private boolean validateInput() {
         StringBuilder errors = new StringBuilder();
 
@@ -434,6 +539,15 @@ public class OrganizationController implements Initializable {
         return true;
     }
 
+    /**
+     * Converts selected image file to byte array for database storage.
+     * Reads file using FileInputStream and converts to byte array using
+     * ByteArrayOutputStream with buffered reading for memory efficiency.
+     *
+     * @param file The image file to convert to byte array
+     * @return byte array containing the image data
+     * @throws IOException if file reading operations fail
+     */
     private byte[] convertFileToByteArray(File file) throws IOException {
         try (FileInputStream fis = new FileInputStream(file);
              ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -447,6 +561,15 @@ public class OrganizationController implements Initializable {
         }
     }
 
+    /**
+     * Displays alert dialog with specified type, title, and message.
+     * Creates and shows modal alert dialog with no header text for clean appearance.
+     * Used throughout the controller for user feedback and error notifications.
+     *
+     * @param type The type of alert (INFORMATION, ERROR, WARNING, CONFIRMATION)
+     * @param title The title text for the alert dialog
+     * @param message The main content message to display to the user
+     */
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

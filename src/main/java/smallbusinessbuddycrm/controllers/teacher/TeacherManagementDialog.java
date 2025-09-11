@@ -21,33 +21,117 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * A comprehensive teacher management dialog that provides full CRUD (Create, Read, Update, Delete)
+ * operations for teacher records in the Small Business Buddy CRM system.
+ *
+ * <p>This dialog features:</p>
+ * <ul>
+ *   <li><strong>Data Table View:</strong> Displays all teachers in a sortable, filterable table</li>
+ *   <li><strong>Search Functionality:</strong> Real-time filtering by name, email, or phone number</li>
+ *   <li><strong>CRUD Operations:</strong> Add new teachers, edit existing records, delete multiple teachers</li>
+ *   <li><strong>Multi-Selection:</strong> Checkbox-based selection for batch operations</li>
+ *   <li><strong>Internationalization:</strong> Full support for language switching with dynamic text updates</li>
+ *   <li><strong>Data Persistence:</strong> Direct integration with TeacherDAO for database operations</li>
+ *   <li><strong>Error Handling:</strong> Comprehensive error messaging and user feedback</li>
+ * </ul>
+ *
+ * <p>The dialog supports real-time language switching through the LanguageManager, automatically
+ * updating all UI text, error messages, and table headers when the application language changes.</p>
+ *
+ * <p>Usage example:</p>
+ * <pre>{@code
+ * TeacherManagementDialog dialog = new TeacherManagementDialog(parentStage);
+ * boolean result = dialog.showAndWait();
+ * // Dialog result indicates if any changes were made
+ * }</pre>
+ *
+ * <p><strong>Database Integration:</strong> This dialog directly modifies teacher data in the database.
+ * All changes (add, edit, delete) are immediately persisted through the TeacherDAO.</p>
+ *
+ * @author Small Business Buddy CRM Team
+ * @version 1.0
+ * @since 1.0
+ * @see CreateEditTeacherDialog
+ * @see Teacher
+ * @see TeacherDAO
+ * @see LanguageManager
+ */
 public class TeacherManagementDialog {
 
+    /** The main dialog stage window */
     private Stage dialog;
+
+    /** Flag indicating whether any operations were performed (always true for this dialog) */
     private boolean result = false;
+
+    /** Data Access Object for teacher database operations */
     private TeacherDAO teacherDAO;
+
+    /** Observable list containing all teachers loaded from the database */
     private ObservableList<Teacher> allTeachers;
+
+    /** Filtered view of teachers based on search criteria */
     private FilteredList<Teacher> filteredTeachers;
+
+    /** Main table view displaying teacher data */
     private TableView<Teacher> teachersTable;
+
+    /** Text field for search/filter functionality */
     private TextField searchField;
+
+    /** Label displaying the current record count */
     private Label recordCountLabel;
+
+    /** Language manager for internationalization support */
     private LanguageManager languageManager;
 
-    // Selection tracking (since Teacher model might not have isSelected field)
+    /**
+     * Set tracking selected teacher IDs for batch operations.
+     * Uses teacher IDs rather than object references to maintain selection
+     * across table refreshes and data updates.
+     */
     private Set<Integer> selectedTeacherIds = new HashSet<>();
 
-    // UI Labels that need to be updated on language change
+    // UI Components that require language updates
+    /** Main title label at the top of the dialog */
     private Label titleLabel;
+
+    /** Button for deleting all selected teachers */
     private Button deleteSelectedButton;
+
+    /** Button for adding a new teacher */
     private Button addTeacherButton;
+
+    /** Button for closing the dialog */
     private Button closeButton;
+
+    /** Table column containing edit buttons for each teacher */
     private TableColumn<Teacher, Void> editColumn;
+
+    /** Table column displaying teacher first names */
     private TableColumn<Teacher, String> firstNameColumn;
+
+    /** Table column displaying teacher last names */
     private TableColumn<Teacher, String> lastNameColumn;
+
+    /** Table column displaying teacher email addresses */
     private TableColumn<Teacher, String> emailColumn;
+
+    /** Table column displaying teacher phone numbers */
     private TableColumn<Teacher, String> phoneColumn;
+
+    /** Table column displaying teacher creation timestamps */
     private TableColumn<Teacher, String> createdColumn;
 
+    /**
+     * Constructs a new TeacherManagementDialog with full teacher management capabilities.
+     * Initializes the dialog UI, loads teacher data from the database, and sets up
+     * language change listeners for internationalization support.
+     *
+     * @param parent the parent stage that owns this modal dialog, used for proper window management
+     *               and ensuring the dialog appears centered relative to the parent
+     */
     public TeacherManagementDialog(Stage parent) {
         this.teacherDAO = new TeacherDAO();
         this.languageManager = LanguageManager.getInstance();
@@ -60,6 +144,21 @@ public class TeacherManagementDialog {
         updateTexts();
     }
 
+    /**
+     * Updates all UI text elements when the application language changes.
+     * This method is called automatically when a language change event is fired
+     * by the LanguageManager, ensuring that the entire dialog interface is
+     * immediately updated to reflect the new language.
+     *
+     * <p>Updates include:</p>
+     * <ul>
+     *   <li>Dialog title and main heading</li>
+     *   <li>All button labels</li>
+     *   <li>Table column headers</li>
+     *   <li>Placeholder text for search field and empty table</li>
+     *   <li>Record count labels</li>
+     * </ul>
+     */
     private void updateTexts() {
         // Update dialog title
         if (dialog != null) {
@@ -116,6 +215,14 @@ public class TeacherManagementDialog {
         updateRecordCount();
     }
 
+    /**
+     * Creates and configures the main dialog window with all UI components.
+     * Sets up the modal dialog with proper styling, layout, and event handlers.
+     * The dialog includes a header section, search functionality, data table,
+     * and action buttons arranged in a vertical layout.
+     *
+     * @param parent the parent stage for this modal dialog, used for ownership and positioning
+     */
     private void createDialog(Stage parent) {
         dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
@@ -186,6 +293,17 @@ public class TeacherManagementDialog {
         dialog.setScene(scene);
     }
 
+    /**
+     * Creates and configures the main data table with all columns and cell factories.
+     * Sets up a comprehensive table view including:
+     * - Selection checkboxes for batch operations
+     * - Edit buttons for individual teacher modification
+     * - Data columns for all teacher properties
+     * - Proper cell value factories and formatting
+     *
+     * <p>The table supports multi-selection through checkboxes and provides
+     * inline edit functionality through dedicated edit buttons in each row.</p>
+     */
     private void createTeachersTable() {
         teachersTable = new TableView<>();
         teachersTable.setPrefHeight(400);
@@ -278,6 +396,20 @@ public class TeacherManagementDialog {
         teachersTable.setPlaceholder(new Label(languageManager.getText("teacher.management.table.placeholder")));
     }
 
+    /**
+     * Loads all teacher records from the database and populates the table view.
+     * Creates observable collections for data binding and sets up filtering support.
+     * Handles database errors gracefully by displaying error messages to the user.
+     *
+     * <p>This method:</p>
+     * <ul>
+     *   <li>Retrieves all teachers from the database via TeacherDAO</li>
+     *   <li>Creates observable and filtered lists for data binding</li>
+     *   <li>Updates the record count display</li>
+     *   <li>Clears any existing selections</li>
+     *   <li>Handles and displays database errors</li>
+     * </ul>
+     */
     private void loadTeachers() {
         try {
             List<Teacher> teachers = teacherDAO.getAllTeachers();
@@ -294,6 +426,23 @@ public class TeacherManagementDialog {
         }
     }
 
+    /**
+     * Updates the table filter based on the current search field content.
+     * Performs case-insensitive searching across multiple teacher fields including
+     * first name, last name, email, and phone number. Updates the record count
+     * display to reflect the filtered results.
+     *
+     * <p>The filter searches the following fields:</p>
+     * <ul>
+     *   <li>First Name</li>
+     *   <li>Last Name</li>
+     *   <li>Email Address</li>
+     *   <li>Phone Number</li>
+     * </ul>
+     *
+     * <p>Search is performed using case-insensitive substring matching,
+     * so partial matches will be displayed in the results.</p>
+     */
     private void updateFilter() {
         String searchText = searchField.getText().toLowerCase().trim();
 
@@ -311,6 +460,15 @@ public class TeacherManagementDialog {
         updateRecordCount();
     }
 
+    /**
+     * Updates the record count label with the current number of displayed teachers.
+     * Provides internationalized text that changes based on the number of records:
+     * different messages for zero, one, or multiple teachers. Supports language
+     * switching by using the LanguageManager for all text retrieval.
+     *
+     * <p>The count reflects the filtered results, not the total number of teachers
+     * in the database, so it updates dynamically as the user types in the search field.</p>
+     */
     private void updateRecordCount() {
         int count = filteredTeachers.size();
         String countText;
@@ -324,6 +482,20 @@ public class TeacherManagementDialog {
         recordCountLabel.setText(countText);
     }
 
+    /**
+     * Handles the "Add Teacher" button action by opening the CreateEditTeacherDialog.
+     * Creates a new teacher through the dialog interface and, if successful,
+     * adds the teacher to the database and updates the table view.
+     *
+     * <p>Process flow:</p>
+     * <ol>
+     *   <li>Opens CreateEditTeacherDialog in create mode (no existing teacher)</li>
+     *   <li>If user confirms, attempts to save the new teacher to database</li>
+     *   <li>On success, adds teacher to the observable list and shows success message</li>
+     *   <li>On failure, displays an error message</li>
+     *   <li>Updates record count to reflect changes</li>
+     * </ol>
+     */
     private void handleAddTeacher() {
         CreateEditTeacherDialog dialog = new CreateEditTeacherDialog((Stage) this.dialog.getOwner(), null);
 
@@ -341,6 +513,21 @@ public class TeacherManagementDialog {
         }
     }
 
+    /**
+     * Handles editing an existing teacher by opening the CreateEditTeacherDialog.
+     * Opens the dialog in edit mode with the teacher's current information pre-populated.
+     * If the user confirms changes, updates the teacher in the database and refreshes the display.
+     *
+     * @param teacher the teacher record to edit, must not be null
+     *
+     * <p>Process flow:</p>
+     * <ol>
+     *   <li>Opens CreateEditTeacherDialog in edit mode with existing teacher data</li>
+     *   <li>If user confirms changes, attempts to update teacher in database</li>
+     *   <li>On success, refreshes table view and shows success message</li>
+     *   <li>On failure, displays an error message and reverts any UI changes</li>
+     * </ol>
+     */
     private void handleEditTeacher(Teacher teacher) {
         CreateEditTeacherDialog dialog = new CreateEditTeacherDialog((Stage) this.dialog.getOwner(), teacher);
 
@@ -356,6 +543,24 @@ public class TeacherManagementDialog {
         }
     }
 
+    /**
+     * Handles the deletion of selected teachers with confirmation dialog.
+     * Performs batch deletion of all teachers selected via checkboxes in the table.
+     * Provides appropriate confirmation messages and handles both single and multiple deletions.
+     *
+     * <p>Process flow:</p>
+     * <ol>
+     *   <li>Validates that at least one teacher is selected</li>
+     *   <li>Shows confirmation dialog with details about the deletion</li>
+     *   <li>If confirmed, attempts to delete teachers from database</li>
+     *   <li>On success, removes teachers from UI and shows success message</li>
+     *   <li>On failure, displays error message and maintains current state</li>
+     *   <li>Updates record count and clears selections</li>
+     * </ol>
+     *
+     * <p><strong>Warning:</strong> This operation cannot be undone. Teachers are permanently
+     * removed from the database upon confirmation.</p>
+     */
     private void handleDeleteSelected() {
         List<Teacher> selectedTeachers = filteredTeachers.stream()
                 .filter(teacher -> selectedTeacherIds.contains(teacher.getId()))
@@ -403,6 +608,13 @@ public class TeacherManagementDialog {
         }
     }
 
+    /**
+     * Displays a success message dialog to the user.
+     * Uses internationalized text for the dialog title and displays the provided message.
+     *
+     * @param message the success message to display, may contain placeholders that should
+     *                be resolved before calling this method
+     */
     private void showSuccess(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(languageManager.getText("teacher.management.alert.success.title"));
@@ -411,6 +623,14 @@ public class TeacherManagementDialog {
         alert.showAndWait();
     }
 
+    /**
+     * Displays an error message dialog to the user.
+     * Uses internationalized text for the dialog elements and provides consistent
+     * error reporting throughout the application.
+     *
+     * @param title the title for the error dialog
+     * @param message the specific error message to display to the user
+     */
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
@@ -419,6 +639,14 @@ public class TeacherManagementDialog {
         alert.showAndWait();
     }
 
+    /**
+     * Displays a warning message dialog to the user.
+     * Used for non-critical issues that require user attention, such as
+     * attempting operations without proper selections.
+     *
+     * @param title the title for the warning dialog
+     * @param message the warning message to display to the user
+     */
     private void showWarning(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle(title);
@@ -427,6 +655,15 @@ public class TeacherManagementDialog {
         alert.showAndWait();
     }
 
+    /**
+     * Displays the dialog modally and waits for user interaction.
+     * Blocks execution until the user closes the dialog through any means
+     * (close button, window close, or escape key).
+     *
+     * @return true indicating that the dialog was displayed (always returns true for this dialog)
+     *         Note: Unlike CreateEditTeacherDialog, this dialog doesn't track whether changes
+     *         were made, as it's a management interface rather than a single-operation dialog
+     */
     public boolean showAndWait() {
         dialog.showAndWait();
         return result;

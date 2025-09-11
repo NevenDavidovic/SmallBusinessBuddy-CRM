@@ -21,6 +21,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
+/**
+ * Controller for the Lists Report interface providing comprehensive analytics and reporting
+ * for contact lists. Features filtering capabilities, visual analytics with charts,
+ * summary statistics, and CSV export functionality. Supports full localization
+ * with dynamic language switching and real-time data updates.
+ */
 public class ListsReportController {
 
     @FXML private VBox root;
@@ -64,6 +70,12 @@ public class ListsReportController {
     private ObservableList<String> objectTypeOptions;
     private ObservableList<String> folderOptions;
 
+    /**
+     * Initializes the Lists Report Controller after FXML loading.
+     * Sets up DAO connections, observable lists, table column bindings,
+     * loads initial data, configures event handlers, and sets up language
+     * management with initial text updates.
+     */
     @FXML
     public void initialize() {
         listsDAO = new ListsDAO();
@@ -94,6 +106,12 @@ public class ListsReportController {
         updateTexts();
     }
 
+    /**
+     * Updates all UI text elements based on current language settings.
+     * Refreshes labels, buttons, table headers, chart titles, field placeholders,
+     * and combo box options when language changes. Also updates summary labels
+     * and combo box localization to maintain consistency.
+     */
     private void updateTexts() {
         LanguageManager languageManager = LanguageManager.getInstance();
 
@@ -139,6 +157,12 @@ public class ListsReportController {
         updateSummaryLabels();
     }
 
+    /**
+     * Updates combo box options with localized "All" text and maintains selections.
+     * Refreshes the first option in each filter combo box to use current language
+     * "All" text while preserving user selections. Resets selection to first item
+     * if current selection is no longer valid after language change.
+     */
     private void updateComboBoxes() {
         LanguageManager languageManager = LanguageManager.getInstance();
         String allText = languageManager.getText("lists.report.filter.all");
@@ -171,6 +195,12 @@ public class ListsReportController {
         }
     }
 
+    /**
+     * Updates summary statistics labels with current filtered data.
+     * Calculates and displays total lists count, average list size,
+     * number of unique types, and number of unique folders based on
+     * currently filtered data with proper localization.
+     */
     private void updateSummaryLabels() {
         LanguageManager languageManager = LanguageManager.getInstance();
 
@@ -200,6 +230,12 @@ public class ListsReportController {
             uniqueFoldersLabel.setText(languageManager.getText("lists.report.unique.folders") + uniqueFolders);
     }
 
+    /**
+     * Loads all active lists from database and populates filter options.
+     * Retrieves all lists via DAO, populates table and filter combo boxes with
+     * unique values, adds localized "All" option to each filter, and updates
+     * summary statistics and charts with complete dataset.
+     */
     private void loadAllLists() {
         listData.setAll(listsDAO.getAllActiveLists());
         listsTable.setItems(listData);
@@ -240,6 +276,12 @@ public class ListsReportController {
         updateSummaryAndCharts();
     }
 
+    /**
+     * Applies current filter settings to the lists data.
+     * Processes name text filter, type filter, object type filter, and folder filter
+     * in sequence. Updates table data with filtered results and refreshes
+     * summary statistics and charts to reflect filtered dataset.
+     */
     private void applyFilters() {
         java.util.List<List> filteredLists = listsDAO.getAllActiveLists();
 
@@ -276,6 +318,11 @@ public class ListsReportController {
         updateSummaryAndCharts();
     }
 
+    /**
+     * Clears all filter settings and reloads complete dataset.
+     * Resets name filter text field, resets all combo box selections to "All",
+     * and reloads all lists from database to restore original unfiltered view.
+     */
     private void clearFilters() {
         nameFilterField.clear();
         typeComboBox.getSelectionModel().selectFirst();
@@ -284,6 +331,12 @@ public class ListsReportController {
         loadAllLists();
     }
 
+    /**
+     * Exports current filtered data to CSV file with proper formatting.
+     * Creates CSV file with localized headers, handles quote escaping for text fields,
+     * formats all list data according to CSV standards, and shows success/error
+     * alert based on export operation result.
+     */
     private void exportToCSV() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("lists_report.csv"))) {
             LanguageManager lm = LanguageManager.getInstance();
@@ -317,6 +370,12 @@ public class ListsReportController {
         }
     }
 
+    /**
+     * Updates summary statistics and visual analytics charts with current data.
+     * Refreshes summary labels, regenerates pie chart for type distribution
+     * with proper data grouping, and updates bar chart for size distribution
+     * with predefined size ranges (0-10, 11-50, 51+ contacts).
+     */
     private void updateSummaryAndCharts() {
         updateSummaryLabels();
 
@@ -349,6 +408,15 @@ public class ListsReportController {
         sizeBarChart.getData().add(series);
     }
 
+    /**
+     * Displays alert dialog with specified type, title, and content.
+     * Creates and shows modal alert dialog with no header text for clean appearance.
+     * Used for showing export results and other user notifications.
+     *
+     * @param type The type of alert (INFORMATION, ERROR, WARNING, etc.)
+     * @param title The title text for the alert dialog
+     * @param content The main content message to display
+     */
     private void showAlert(Alert.AlertType type, String title, String content) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

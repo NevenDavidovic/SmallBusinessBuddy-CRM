@@ -18,6 +18,12 @@ import java.io.*;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+/**
+ * Dialog for initial organization setup with comprehensive form interface and image management.
+ * Provides a complete setup wizard for creating new organizations with professional styling,
+ * image upload capabilities, form validation, and full localization support. Features
+ * sectioned layout with basic information, address details, and optional organization image.
+ */
 public class OrganizationSetupDialog {
 
     private Organization result = null;
@@ -56,10 +62,24 @@ public class OrganizationSetupDialog {
     private Button saveButton;
     private FileChooser fileChooser;
 
+    /**
+     * Creates a new OrganizationSetupDialog for initial organization configuration.
+     * Initializes the dialog with language manager instance for proper localization
+     * support throughout the setup process.
+     */
     public OrganizationSetupDialog() {
         this.languageManager = LanguageManager.getInstance();
     }
 
+    /**
+     * Shows the organization setup dialog and waits for user completion.
+     * Creates the dialog interface, registers language change listeners, applies
+     * initial text updates, and displays modal dialog. Returns organization data
+     * if user completes setup or empty Optional if cancelled.
+     *
+     * @param parentStage The parent stage that owns this modal dialog
+     * @return Optional containing the created Organization object, or empty if cancelled
+     */
     public Optional<Organization> showAndWait(Stage parentStage) {
         createDialog(parentStage);
 
@@ -71,6 +91,12 @@ public class OrganizationSetupDialog {
         return Optional.ofNullable(result);
     }
 
+    /**
+     * Updates all UI text elements based on current language settings.
+     * Refreshes dialog title, header labels, section titles, field labels and prompts,
+     * buttons, and specialized components like file chooser when language changes
+     * between English and Croatian. Ensures complete interface localization.
+     */
     private void updateTexts() {
         // Update dialog title
         if (dialogStage != null) {
@@ -136,6 +162,11 @@ public class OrganizationSetupDialog {
         updateFileChooser();
     }
 
+    /**
+     * Updates image status label text based on current state and language.
+     * Handles different image states including no image, image selected with filename,
+     * and applies appropriate styling for each state with localized text.
+     */
     private void updateImageStatusLabel() {
         if (imageStatusLabel != null) {
             String currentText = imageStatusLabel.getText();
@@ -154,6 +185,14 @@ public class OrganizationSetupDialog {
         }
     }
 
+    /**
+     * Extracts filename from image status text for language updates.
+     * Parses status text to preserve selected filename when updating language
+     * while maintaining the file reference for user clarity.
+     *
+     * @param statusText The current status text containing filename information
+     * @return The extracted filename or default fallback if parsing fails
+     */
     private String extractFilenameFromStatus(String statusText) {
         // Extract filename from status text like "Image selected (filename.jpg)"
         int start = statusText.indexOf('(');
@@ -164,6 +203,11 @@ public class OrganizationSetupDialog {
         return "image.jpg"; // fallback
     }
 
+    /**
+     * Updates file chooser with localized title and extension filters.
+     * Refreshes file chooser dialog title and extension filter descriptions
+     * to match current language settings for consistent user experience.
+     */
     private void updateFileChooser() {
         if (fileChooser != null) {
             fileChooser.setTitle(languageManager.getText("organization.setup.file.chooser.title"));
@@ -182,6 +226,13 @@ public class OrganizationSetupDialog {
         }
     }
 
+    /**
+     * Creates and configures the main dialog stage with proper modality and styling.
+     * Sets up modal behavior, decorations, sizing, positioning, and creates
+     * the complete dialog content with scene configuration.
+     *
+     * @param parentStage The parent stage for modal dialog initialization and positioning
+     */
     private void createDialog(Stage parentStage) {
         dialogStage = new Stage();
         dialogStage.initModality(Modality.APPLICATION_MODAL);
@@ -200,6 +251,13 @@ public class OrganizationSetupDialog {
         dialogStage.setY(parentStage.getY() + (parentStage.getHeight() - 750) / 2);
     }
 
+    /**
+     * Creates the main content layout for the organization setup dialog.
+     * Constructs the complete dialog structure with header, scrollable content,
+     * and footer sections using gradient styling and proper layout management.
+     *
+     * @return VBox containing the complete dialog layout structure
+     */
     private VBox createMainContent() {
         VBox mainVBox = new VBox(0);
         mainVBox.setStyle("-fx-background-color: linear-gradient(to bottom, #f8f9fa, #e9ecef);");
@@ -224,6 +282,13 @@ public class OrganizationSetupDialog {
         return mainVBox;
     }
 
+    /**
+     * Creates the dialog header with title, icon, and subtitle.
+     * Builds visually appealing header section with gradient background,
+     * organization icon, main title, and descriptive subtitle with proper styling.
+     *
+     * @return VBox containing the styled header section
+     */
     private VBox createHeader() {
         VBox header = new VBox();
         header.setAlignment(Pos.CENTER);
@@ -243,6 +308,13 @@ public class OrganizationSetupDialog {
         return header;
     }
 
+    /**
+     * Creates the scrollable content form with all input sections.
+     * Constructs the main form content including image section, basic info section,
+     * and address section with proper spacing and layout management.
+     *
+     * @return VBox containing all form sections with appropriate spacing
+     */
     private VBox createContentForm() {
         VBox content = new VBox(25);
         content.setPadding(new Insets(30));
@@ -260,6 +332,13 @@ public class OrganizationSetupDialog {
         return content;
     }
 
+    /**
+     * Creates the image selection section with preview and upload functionality.
+     * Builds image management interface including preview area, status label,
+     * and image selection button with proper styling and user feedback.
+     *
+     * @return VBox containing the complete image selection interface
+     */
     private VBox createImageSection() {
         VBox section = new VBox(15);
         section.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; " +
@@ -294,6 +373,13 @@ public class OrganizationSetupDialog {
         return section;
     }
 
+    /**
+     * Creates the basic information form section with required organization fields.
+     * Constructs form section for essential organization data including name, IBAN,
+     * email, and phone number with proper field styling and grid layout.
+     *
+     * @return VBox containing the basic information form section
+     */
     private VBox createBasicInfoSection() {
         VBox section = new VBox(15);
         section.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; " +
@@ -329,6 +415,13 @@ public class OrganizationSetupDialog {
         return section;
     }
 
+    /**
+     * Creates the address information form section with location fields.
+     * Builds address input section including street name and number, postal code,
+     * and city fields with combined street input and proper layout management.
+     *
+     * @return VBox containing the address information form section
+     */
     private VBox createAddressSection() {
         VBox section = new VBox(15);
         section.setStyle("-fx-background-color: white; -fx-background-radius: 15; -fx-padding: 25; " +
@@ -366,6 +459,14 @@ public class OrganizationSetupDialog {
         return section;
     }
 
+    /**
+     * Creates styled text field with consistent appearance and prompt text.
+     * Generates uniformly styled text field with rounded borders, padding,
+     * and proper font sizing for consistent form appearance.
+     *
+     * @param promptText The placeholder text to display in the empty field
+     * @return TextField with applied styling and prompt text
+     */
     private TextField createStyledTextField(String promptText) {
         TextField field = new TextField();
         field.setPromptText(promptText);
@@ -374,6 +475,16 @@ public class OrganizationSetupDialog {
         return field;
     }
 
+    /**
+     * Adds a form row to the grid with label and input field.
+     * Configures grid layout with proper column constraints, label styling,
+     * and field placement for consistent form appearance.
+     *
+     * @param grid The GridPane to add the row to
+     * @param row The row index for placement
+     * @param label The label for the form field
+     * @param field The input field or container
+     */
     private void addFormRow(GridPane grid, int row, Label label, Region field) {
         label.setStyle("-fx-font-weight: bold; -fx-text-fill: #495057; -fx-font-size: 14px;");
 
@@ -390,6 +501,13 @@ public class OrganizationSetupDialog {
         grid.getColumnConstraints().setAll(col1, col2);
     }
 
+    /**
+     * Creates the dialog footer with required note and action buttons.
+     * Builds footer section containing validation note, spacer, and cancel/save
+     * buttons with proper styling and event handler configuration.
+     *
+     * @return HBox containing the complete footer with buttons and note
+     */
     private HBox createFooter() {
         HBox footer = new HBox(15);
         footer.setAlignment(Pos.CENTER_RIGHT);
@@ -418,6 +536,12 @@ public class OrganizationSetupDialog {
         return footer;
     }
 
+    /**
+     * Handles image selection through file chooser dialog.
+     * Shows file chooser with image format filters, validates file size limits,
+     * converts selected image to byte array, displays preview, and updates
+     * status label with appropriate feedback messages.
+     */
     private void selectImage() {
         if (fileChooser == null) {
             fileChooser = new FileChooser();
@@ -454,6 +578,12 @@ public class OrganizationSetupDialog {
         }
     }
 
+    /**
+     * Handles the save action and organization creation.
+     * Validates form input, creates Organization object from form data,
+     * sets optional fields and image data, configures timestamps,
+     * and closes dialog with successful result.
+     */
     private void handleSave() {
         if (!validateInput()) {
             return;
@@ -498,6 +628,13 @@ public class OrganizationSetupDialog {
         dialogStage.close();
     }
 
+    /**
+     * Validates organization setup form input before saving.
+     * Checks required fields (name and IBAN), validates email format if provided,
+     * and displays validation error dialog with specific field requirements.
+     *
+     * @return true if all validation passes, false if validation errors exist
+     */
     private boolean validateInput() {
         StringBuilder errors = new StringBuilder();
 
@@ -525,6 +662,15 @@ public class OrganizationSetupDialog {
         return true;
     }
 
+    /**
+     * Converts selected image file to byte array for storage.
+     * Reads image file using FileInputStream and converts to byte array using
+     * ByteArrayOutputStream with buffered reading for efficient memory usage.
+     *
+     * @param file The image file to convert to byte array
+     * @return byte array containing the complete image data
+     * @throws IOException if file reading operations fail
+     */
     private byte[] convertFileToByteArray(File file) throws IOException {
         try (FileInputStream fis = new FileInputStream(file);
              ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -538,6 +684,15 @@ public class OrganizationSetupDialog {
         }
     }
 
+    /**
+     * Displays alert dialog with specified type, title, and message.
+     * Creates modal alert dialog owned by the setup dialog with no header text
+     * for clean appearance. Used for validation errors and user notifications.
+     *
+     * @param type The type of alert (INFORMATION, ERROR, WARNING, CONFIRMATION)
+     * @param title The title text for the alert dialog
+     * @param message The main content message to display to the user
+     */
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
         alert.initOwner(dialogStage);

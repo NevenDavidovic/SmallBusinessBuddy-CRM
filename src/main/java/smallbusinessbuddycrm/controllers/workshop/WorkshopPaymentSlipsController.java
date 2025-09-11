@@ -403,10 +403,10 @@ public class WorkshopPaymentSlipsController implements Initializable {
     private void loadPaymentTemplates() {
         try {
             LanguageManager languageManager = LanguageManager.getInstance();
-            List<PaymentTemplate> templateList = paymentTemplateDAO.getAllPaymentTemplates();
+            List<PaymentTemplate> templateList = paymentTemplateDAO.getActivePaymentTemplates();
             paymentTemplates.clear();
             paymentTemplates.addAll(templateList);
-            System.out.println("✅ " + languageManager.getText("data.loaded.templates").replace("{0}", String.valueOf(paymentTemplates.size())));
+
         } catch (Exception e) {
             LanguageManager languageManager = LanguageManager.getInstance();
             System.err.println("❌ " + languageManager.getText("data.failed.load.templates").replace("{0}", e.getMessage()));

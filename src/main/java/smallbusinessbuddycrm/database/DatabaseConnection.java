@@ -128,30 +128,6 @@ public class DatabaseConnection {
 
                 "CREATE INDEX IF NOT EXISTS idx_payment_attachment_default ON payment_attachment(is_default)",
                 "CREATE INDEX IF NOT EXISTS idx_payment_attachment_name ON payment_attachment(name)",
-
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_organization_id ON payment_info(organization_id)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_payment_template_id ON payment_info(payment_template_id)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_newsletter_template_id ON payment_info(newsletter_template_id) WHERE newsletter_template_id IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_contact_id ON payment_info(contact_id) WHERE contact_id IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_list_id ON payment_info(list_id) WHERE list_id IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_workshop_id ON payment_info(workshop_id) WHERE workshop_id IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_status ON payment_info(status)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_target_type ON payment_info(target_type)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_generated_at ON payment_info(generated_at) WHERE generated_at IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_sent_at ON payment_info(sent_at) WHERE sent_at IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_paid_at ON payment_info(paid_at) WHERE paid_at IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_amount ON payment_info(amount)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_status_target ON payment_info(status, target_type)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_org_status ON payment_info(organization_id, status)",
-
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_payment_info_id ON payment_slip(payment_info_id)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_contact_id ON payment_slip(contact_id)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_status ON payment_slip(status)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_sent_at ON payment_slip(sent_at) WHERE sent_at IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_paid_at ON payment_slip(paid_at) WHERE paid_at IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_amount ON payment_slip(amount)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_contact_status ON payment_slip(contact_id, status)",
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_payment_status ON payment_slip(payment_info_id, status)"
         };
 
         executeIndexes(paymentIndexes, "payment system");
@@ -194,12 +170,6 @@ public class DatabaseConnection {
 
                 "CREATE INDEX IF NOT EXISTS idx_payment_attachment_created_at ON payment_attachment(created_at) WHERE created_at IS NOT NULL",
                 "CREATE INDEX IF NOT EXISTS idx_payment_attachment_updated_at ON payment_attachment(updated_at) WHERE updated_at IS NOT NULL",
-
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_created_at ON payment_info(created_at) WHERE created_at IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_info_updated_at ON payment_info(updated_at) WHERE updated_at IS NOT NULL",
-
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_created_at ON payment_slip(created_at) WHERE created_at IS NOT NULL",
-                "CREATE INDEX IF NOT EXISTS idx_payment_slip_updated_at ON payment_slip(updated_at) WHERE updated_at IS NOT NULL"
         };
 
         executeIndexes(reportingIndexes, "reporting and analytics");
@@ -585,58 +555,6 @@ public class DatabaseConnection {
             );
             """;
 
-        String createPaymentInfoTableSQL = """
-            CREATE TABLE IF NOT EXISTS payment_info (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                organization_id INTEGER NOT NULL,
-                payment_template_id INTEGER NOT NULL,
-                newsletter_template_id INTEGER,
-                contact_id INTEGER,
-                list_id INTEGER,
-                workshop_id INTEGER,
-                target_type TEXT NOT NULL CHECK (target_type IN ('CONTACT', 'LIST', 'WORKSHOP')),
-                amount DECIMAL(10,2) NOT NULL,
-                model_of_payment TEXT NOT NULL,
-                poziv_na_broj TEXT,
-                barcode_data TEXT,
-                pdf_path TEXT,
-                status TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED', 'SENT', 'PAID', 'CANCELLED')),
-                generated_at TEXT,
-                sent_at TEXT,
-                paid_at TEXT,
-                created_at TEXT,
-                updated_at TEXT,
-                FOREIGN KEY (organization_id) REFERENCES organization(id) ON DELETE CASCADE,
-                FOREIGN KEY (payment_template_id) REFERENCES payment_template(id) ON DELETE CASCADE,
-                FOREIGN KEY (newsletter_template_id) REFERENCES newsletter_template(id) ON DELETE SET NULL,
-                FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE,
-                FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
-                FOREIGN KEY (workshop_id) REFERENCES workshops(id) ON DELETE CASCADE,
-                CHECK (
-                    (contact_id IS NOT NULL AND list_id IS NULL AND workshop_id IS NULL AND target_type = 'CONTACT') OR
-                    (list_id IS NOT NULL AND contact_id IS NULL AND workshop_id IS NULL AND target_type = 'LIST') OR
-                    (workshop_id IS NOT NULL AND contact_id IS NULL AND list_id IS NULL AND target_type = 'WORKSHOP')
-                )
-            );
-            """;
-
-        String createPaymentSlipTableSQL = """
-            CREATE TABLE IF NOT EXISTS payment_slip (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                payment_info_id INTEGER NOT NULL,
-                contact_id INTEGER NOT NULL,
-                amount DECIMAL(10,2) NOT NULL,
-                poziv_na_broj TEXT,
-                barcode_data TEXT,
-                status TEXT NOT NULL DEFAULT 'GENERATED' CHECK (status IN ('GENERATED', 'SENT', 'PAID', 'CANCELLED')),
-                sent_at TEXT,
-                paid_at TEXT,
-                created_at TEXT,
-                updated_at TEXT,
-                FOREIGN KEY (payment_info_id) REFERENCES payment_info(id) ON DELETE CASCADE,
-                FOREIGN KEY (contact_id) REFERENCES contacts(id) ON DELETE CASCADE
-            );
-            """;
 
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
@@ -654,8 +572,6 @@ public class DatabaseConnection {
             stmt.execute(createPaymentTemplateTableSQL);
             stmt.execute(createNewsletterTemplateTableSQL);
             stmt.execute(createPaymentAttachmentTableSQL);
-            stmt.execute(createPaymentInfoTableSQL);
-            stmt.execute(createPaymentSlipTableSQL);
 
             System.out.println("Database tables created successfully");
 

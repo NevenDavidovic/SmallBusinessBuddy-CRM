@@ -22,6 +22,12 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Dialog for importing contacts from CSV files with preview and template generation functionality.
+ * Supports UTF-8 encoding, multiple date formats, proper CSV parsing with quote handling,
+ * and provides localized templates and error messages. Includes validation and batch import
+ * with detailed success/error reporting.
+ */
 public class ImportContactsDialog {
 
     private Stage dialog;
@@ -33,11 +39,25 @@ public class ImportContactsDialog {
     private File selectedFile;
     private LanguageManager languageManager;
 
+    /**
+     * Creates a new ImportContactsDialog for importing contacts from CSV files.
+     * Initializes the dialog with language manager and creates the user interface
+     * with template download, file selection, preview, and import functionality.
+     *
+     * @param parent The parent stage that owns this modal dialog
+     */
     public ImportContactsDialog(Stage parent) {
         languageManager = LanguageManager.getInstance();
         createDialog(parent);
     }
 
+    /**
+     * Creates and configures the main dialog stage with all UI components.
+     * Sets up modal behavior, creates sections for template download, file selection,
+     * CSV preview, and import controls with proper styling and event handlers.
+     *
+     * @param parent The parent stage for modal dialog initialization
+     */
     private void createDialog(Stage parent) {
         dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
@@ -141,6 +161,12 @@ public class ImportContactsDialog {
         dialog.setScene(scene);
     }
 
+    /**
+     * Handles the template download functionality.
+     * Shows file chooser dialog, generates CSV template with proper headers and example data,
+     * saves template with UTF-8 encoding and BOM, and displays success confirmation.
+     * Shows error dialog if template creation fails.
+     */
     private void handleDownloadTemplate() {
         try {
             FileChooser fileChooser = new FileChooser();
@@ -166,6 +192,14 @@ public class ImportContactsDialog {
         }
     }
 
+    /**
+     * Creates a CSV template file with headers, example data, and usage instructions.
+     * Writes UTF-8 encoded CSV with BOM for Excel compatibility, includes localized
+     * headers and sample data, and adds commented instructions for proper usage.
+     *
+     * @param file The target file where the CSV template will be saved
+     * @throws IOException if file writing operations fail
+     */
     private void createCsvTemplate(File file) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
@@ -208,6 +242,12 @@ public class ImportContactsDialog {
         }
     }
 
+    /**
+     * Handles file selection for CSV import.
+     * Shows file chooser dialog with CSV and all files filters, updates status label
+     * with selected filename, generates preview of selected file content,
+     * and enables the import button when valid file is selected.
+     */
     private void handleSelectFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(languageManager.getText("import.select.file.title"));
@@ -224,6 +264,14 @@ public class ImportContactsDialog {
         }
     }
 
+    /**
+     * Generates a preview of the CSV file content for user verification.
+     * Reads up to 10 lines from the file with UTF-8 encoding, handles BOM removal,
+     * skips comment lines starting with #, and displays preview in text area.
+     * Shows error message in preview area if file reading fails.
+     *
+     * @param file The CSV file to preview
+     */
     private void previewCsvFile(File file) {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
@@ -258,6 +306,13 @@ public class ImportContactsDialog {
         }
     }
 
+    /**
+     * Handles the complete contact import process from CSV file.
+     * Validates file selection, parses CSV content, shows confirmation dialog,
+     * performs batch database import with individual error tracking,
+     * and displays detailed results with success count and error summary.
+     * Updates imported contacts list and closes dialog on successful import.
+     */
     private void handleImportContacts() {
         if (selectedFile == null) {
             showError(languageManager.getText("import.error.no.file.title"),
@@ -340,6 +395,16 @@ public class ImportContactsDialog {
         }
     }
 
+    /**
+     * Parses the entire CSV file and converts it to a list of Contact objects.
+     * Handles UTF-8 encoding with BOM removal, skips header and comment lines,
+     * processes each data line individually with error isolation,
+     * and returns list of successfully parsed contacts.
+     *
+     * @param file The CSV file to parse
+     * @return List of Contact objects parsed from valid CSV rows
+     * @throws IOException if file reading operations fail
+     */
     private List<Contact> parseCsvFile(File file) throws IOException {
         List<Contact> contacts = new ArrayList<>();
 
@@ -392,6 +457,17 @@ public class ImportContactsDialog {
         return contacts;
     }
 
+    /**
+     * Parses a single CSV line into a Contact object with validation.
+     * Handles CSV field parsing with quote support, validates required fields,
+     * parses dates in multiple formats, processes membership information,
+     * and sets appropriate timestamps for new contact creation.
+     *
+     * @param line The CSV line to parse
+     * @param lineNumber The line number for error reporting
+     * @return Contact object parsed from the CSV line
+     * @throws IllegalArgumentException if required fields are missing or invalid
+     */
     private Contact parseCsvLine(String line, int lineNumber) {
         String[] fields = parseCsvFields(line);
 
@@ -436,6 +512,15 @@ public class ImportContactsDialog {
         return contact;
     }
 
+    /**
+     * Parses CSV fields from a line handling proper quote escaping.
+     * Processes quoted fields that may contain commas, handles escaped quotes
+     * (double quotes within quoted fields), and maintains field integrity
+     * for complex CSV data with embedded delimiters.
+     *
+     * @param line The CSV line to parse into individual fields
+     * @return Array of field values extracted from the CSV line
+     */
     private String[] parseCsvFields(String line) {
         List<String> fields = new ArrayList<>();
         boolean inQuotes = false;
@@ -468,6 +553,16 @@ public class ImportContactsDialog {
         return fields.toArray(new String[0]);
     }
 
+    /**
+     * Safely retrieves a field value from the fields array with bounds checking.
+     * Returns the field value at the specified index if it exists and is not null,
+     * otherwise returns the provided default value with proper trimming.
+     *
+     * @param fields Array of field values from CSV parsing
+     * @param index The index of the desired field
+     * @param defaultValue The default value to return if field doesn't exist
+     * @return The field value or default value, properly trimmed
+     */
     private String getField(String[] fields, int index, String defaultValue) {
         if (index < fields.length && fields[index] != null) {
             return fields[index].trim();
@@ -475,6 +570,14 @@ public class ImportContactsDialog {
         return defaultValue;
     }
 
+    /**
+     * Parses date strings in multiple common formats with graceful error handling.
+     * Attempts to parse dates in DD.MM.YYYY, DD/MM/YYYY, and YYYY-MM-DD formats.
+     * Returns null for empty/invalid dates and logs parsing errors without throwing exceptions.
+     *
+     * @param dateStr The date string to parse
+     * @return LocalDate object parsed from string, or null if parsing fails
+     */
     private LocalDate parseDate(String dateStr) {
         if (dateStr == null || dateStr.trim().isEmpty()) {
             return null;
@@ -499,6 +602,14 @@ public class ImportContactsDialog {
         }
     }
 
+    /**
+     * Displays standardized error dialog with localized title and message.
+     * Shows modal error alert with consistent styling and localized header text.
+     * Used throughout the import process for consistent error presentation.
+     *
+     * @param title The localized title for the error dialog
+     * @param message The error message to display to the user
+     */
     private void showError(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
@@ -507,11 +618,25 @@ public class ImportContactsDialog {
         alert.showAndWait();
     }
 
+    /**
+     * Shows the import dialog and waits for user completion.
+     * Displays the modal dialog and blocks until user either completes
+     * the import process or cancels the operation.
+     *
+     * @return true if contacts were successfully imported, false if cancelled
+     */
     public boolean showAndWait() {
         dialog.showAndWait();
         return result;
     }
 
+    /**
+     * Gets the list of contacts that were successfully imported.
+     * Returns the contacts that were parsed from CSV and successfully
+     * saved to the database during the import operation.
+     *
+     * @return List of Contact objects that were successfully imported
+     */
     public List<Contact> getImportedContacts() {
         return importedContacts;
     }
