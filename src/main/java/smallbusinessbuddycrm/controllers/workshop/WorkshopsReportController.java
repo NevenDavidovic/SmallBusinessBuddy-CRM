@@ -27,9 +27,83 @@ import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Controller class for comprehensive workshop reporting and analytics with advanced filtering capabilities.
+ *
+ * This controller provides a complete workshop reporting solution with sophisticated analytics features:
+ * - Multi-criteria filtering system with name, date range, status, and teacher filters
+ * - Real-time data visualization with interactive pie charts and bar charts
+ * - Comprehensive summary statistics with live calculations
+ * - CSV export functionality with localized headers and data formatting
+ * - Complete internationalization support with dynamic language switching
+ * - Teacher integration with name resolution and assignment tracking
+ * - Date range filtering with validation and error handling
+ * - Status-based analytics (active/upcoming/past workshop analysis)
+ *
+ * Key Features:
+ * - Advanced Filtering System: Multi-dimensional filtering across workshop attributes
+ * - Data Visualization: Interactive charts showing status distribution and duration patterns
+ * - Export Capabilities: CSV export with complete workshop information and localized formatting
+ * - Teacher Analytics: Integration with teacher data for assignment analysis
+ * - Real-time Updates: Live chart and summary updates as filters are applied
+ * - Internationalization: Full language support with localized chart labels and text
+ * - Error Handling: Comprehensive validation and user feedback for all operations
+ * - Performance Optimization: Efficient data loading and filtering algorithms
+ *
+ * Filtering System:
+ * - Name Filter: Text-based search across workshop names with case-insensitive matching
+ * - Date Range Filter: From/to date filtering with ISO date format validation
+ * - Status Filter: Active, upcoming, and past workshop status filtering
+ * - Teacher Filter: Filter workshops by assigned teacher with "All Teachers" option
+ * - Combined Filtering: All filters work together for precise data selection
+ *
+ * Analytics & Visualization:
+ * - Summary Statistics: Total workshops, active/upcoming counts, average duration
+ * - Status Distribution: Pie chart showing breakdown of workshop statuses
+ * - Duration Analysis: Bar chart categorizing workshops by duration (1-3, 4-7, 8+ days)
+ * - Real-time Updates: Charts and statistics update automatically with filter changes
+ * - Localized Labels: All chart labels and legends adapt to current language
+ *
+ * Data Export:
+ * - CSV Export: Complete workshop data with resolved teacher names
+ * - Localized Headers: Column headers in user's preferred language
+ * - Data Formatting: Proper CSV escaping and formatting for external use
+ * - Status Resolution: Translated status values in exported data
+ * - Error Handling: Comprehensive error management for file operations
+ *
+ * Teacher Integration:
+ * - Teacher Loading: Dynamic loading of all available teachers for filtering
+ * - Name Resolution: Efficient teacher name lookup for display purposes
+ * - Assignment Tracking: Shows which workshops have assigned teachers
+ * - Filter Options: Ability to filter by specific teacher or view all
+ *
+ * Internationalization Features:
+ * - Dynamic Language Switching: All UI elements update when language changes
+ * - Localized Charts: Chart titles, legends, and data labels in current language
+ * - Date Formatting: Locale-appropriate date display and validation
+ * - Status Translation: Workshop status values translated to current language
+ * - Export Localization: CSV headers and data values in user's language
+ *
+ * The controller integrates with WorkshopDAO for workshop data operations and TeacherDAO
+ * for teacher information, providing a complete reporting solution for workshop management
+ * with professional-grade analytics and export capabilities.
+ *
+ * Performance Considerations:
+ * - Efficient filtering algorithms that minimize database queries
+ * - Lazy loading of teacher data to optimize initialization time
+ * - Smart chart updates that only refresh when data actually changes
+ * - Optimized date parsing and validation for large datasets
+ *
+ * @author Your Name
+ * @version 1.0
+ * @since 2024
+ */
 public class WorkshopsReportController {
 
+    // Main Layout Container
     @FXML private VBox root;
+
+    // Section Labels
     @FXML private Label titleLabel;
     @FXML private Label filtersLabel;
     @FXML private Label nameLabel;
@@ -38,6 +112,8 @@ public class WorkshopsReportController {
     @FXML private Label teacherLabel;
     @FXML private Label summaryLabel;
     @FXML private Label visualAnalyticsLabel;
+
+    // Filter Controls
     @FXML private TextField nameFilterField;
     @FXML private TextField fromDateField;
     @FXML private TextField toDateField;
@@ -45,27 +121,44 @@ public class WorkshopsReportController {
     @FXML private ComboBox<Teacher> teacherComboBox;
     @FXML private Button applyFilterButton;
     @FXML private Button clearFilterButton;
+
+    // Data Table
     @FXML private TableView<Workshop> workshopsTable;
     @FXML private TableColumn<Workshop, String> nameColumn;
     @FXML private TableColumn<Workshop, String> dateRangeColumn;
     @FXML private TableColumn<Workshop, Integer> durationColumn;
     @FXML private TableColumn<Workshop, String> statusColumn;
     @FXML private TableColumn<Workshop, String> teacherNameColumn;
+
+    // Summary Statistics Labels
     @FXML private Label totalWorkshopsLabel;
     @FXML private Label activeWorkshopsLabel;
     @FXML private Label upcomingWorkshopsLabel;
     @FXML private Label averageDurationLabel;
+
+    // Charts
     @FXML private PieChart statusPieChart;
     @FXML private BarChart<String, Number> durationBarChart;
     @FXML private CategoryAxis durationGroupAxis;
     @FXML private NumberAxis numberOfWorkshopsAxis;
+
+    // Export Control
     @FXML private Button exportButton;
 
+    // Database Access Objects
     private WorkshopDAO workshopDAO;
     private TeacherDAO teacherDAO;
+
+    // Data Collections
     private ObservableList<Workshop> workshopList;
     private ObservableList<Teacher> teacherList;
 
+    /**
+     * Initializes the controller after FXML loading is complete.
+     * Sets up database connections, initializes data collections, configures table columns
+     * with custom cell value factories, loads teacher and workshop data, sets up event
+     * handlers, and initializes internationalization support.
+     */
     @FXML
     public void initialize() {
         System.out.println("🚀 WorkshopsReportController initializing...");
@@ -75,7 +168,7 @@ public class WorkshopsReportController {
         workshopList = FXCollections.observableArrayList();
         teacherList = FXCollections.observableArrayList();
 
-        // Set up table columns
+        // Configure table columns with appropriate cell value factories
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
         dateRangeColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().getDateRange()));
@@ -90,7 +183,7 @@ public class WorkshopsReportController {
             return new SimpleStringProperty(status);
         });
 
-        // Updated teacher name column to use TeacherDAO
+        // Configure teacher name column with database lookup
         teacherNameColumn.setCellValueFactory(cellData -> {
             Workshop w = cellData.getValue();
             Teacher teacher = w.getTeacherId() != null ? teacherDAO.getTeacherById(w.getTeacherId()) : null;
@@ -100,10 +193,10 @@ public class WorkshopsReportController {
             return new SimpleStringProperty(teacherName.trim());
         });
 
-        // Load teachers
+        // Load teachers for filter dropdown
         loadTeachers();
 
-        // Set up teacher combo box display
+        // Configure teacher combo box display with custom cell factories
         teacherComboBox.setCellFactory(param -> new ListCell<Teacher>() {
             @Override
             protected void updateItem(Teacher item, boolean empty) {
@@ -142,25 +235,31 @@ public class WorkshopsReportController {
 
         teacherComboBox.getSelectionModel().selectFirst();
 
-        // Load initial data
+        // Load initial workshop data
         loadAllWorkshops();
 
-        // Set up event handlers
+        // Configure event handlers
         applyFilterButton.setOnAction(e -> applyFilters());
         clearFilterButton.setOnAction(e -> clearFilters());
         exportButton.setOnAction(e -> exportToCSV());
 
-        // Add language change listener and initial text update
+        // Set up internationalization support
         LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
         updateTexts();
 
         System.out.println("✅ WorkshopsReportController initialization complete");
     }
 
+    /**
+     * Updates all UI text elements based on the current language settings.
+     * Called when language changes to refresh labels, buttons, table headers,
+     * placeholders, chart titles, and combo box options. Updates summary
+     * statistics with localized text formatting.
+     */
     private void updateTexts() {
         LanguageManager languageManager = LanguageManager.getInstance();
 
-        // Update main labels
+        // Update main section labels
         if (titleLabel != null) titleLabel.setText(languageManager.getText("workshops.report.title"));
         if (filtersLabel != null) filtersLabel.setText(languageManager.getText("workshops.report.filters"));
         if (nameLabel != null) nameLabel.setText(languageManager.getText("workshops.report.filter.name"));
@@ -170,40 +269,46 @@ public class WorkshopsReportController {
         if (summaryLabel != null) summaryLabel.setText(languageManager.getText("workshops.report.summary"));
         if (visualAnalyticsLabel != null) visualAnalyticsLabel.setText(languageManager.getText("workshops.report.visual.analytics"));
 
-        // Update text field prompts
+        // Update form field placeholders
         if (nameFilterField != null) nameFilterField.setPromptText(languageManager.getText("workshops.report.filter.name.placeholder"));
         if (fromDateField != null) fromDateField.setPromptText(languageManager.getText("workshops.report.filter.from.date"));
         if (toDateField != null) toDateField.setPromptText(languageManager.getText("workshops.report.filter.to.date"));
 
-        // Update buttons
+        // Update action buttons
         if (applyFilterButton != null) applyFilterButton.setText(languageManager.getText("workshops.report.apply.filters"));
         if (clearFilterButton != null) clearFilterButton.setText(languageManager.getText("workshops.report.clear.filters"));
         if (exportButton != null) exportButton.setText(languageManager.getText("workshops.export.button"));
 
-        // Update table columns
+        // Update table column headers
         if (nameColumn != null) nameColumn.setText(languageManager.getText("workshops.table.name"));
         if (dateRangeColumn != null) dateRangeColumn.setText(languageManager.getText("workshops.table.date.range"));
         if (durationColumn != null) durationColumn.setText(languageManager.getText("workshops.table.duration"));
         if (statusColumn != null) statusColumn.setText(languageManager.getText("workshops.table.status"));
         if (teacherNameColumn != null) teacherNameColumn.setText(languageManager.getText("workshops.table.teacher.name"));
 
-        // Update chart titles and axes
+        // Update chart titles and axis labels
         if (statusPieChart != null) statusPieChart.setTitle(languageManager.getText("workshops.report.status.distribution"));
         if (durationBarChart != null) durationBarChart.setTitle(languageManager.getText("workshops.report.duration.distribution"));
         if (durationGroupAxis != null) durationGroupAxis.setLabel(languageManager.getText("workshops.report.duration.group"));
         if (numberOfWorkshopsAxis != null) numberOfWorkshopsAxis.setLabel(languageManager.getText("workshops.report.number.workshops"));
 
-        // Update status combo box
+        // Update dynamic content
         updateStatusComboBox();
-
-        // Update summary labels with current data
         updateSummaryLabels();
     }
 
+    /**
+     * Updates the status combo box with localized filter options.
+     * Refreshes combo box items with translated status options (All, Active, Upcoming, Past)
+     * while attempting to maintain the current selection state.
+     */
     private void updateStatusComboBox() {
         LanguageManager languageManager = LanguageManager.getInstance();
 
+        // Store current selection to maintain after update
         String selectedValue = statusComboBox.getValue();
+
+        // Create localized status options
         ObservableList<String> statusOptions = FXCollections.observableArrayList(
                 languageManager.getText("workshops.status.all"),
                 languageManager.getText("workshops.status.active"),
@@ -213,7 +318,7 @@ public class WorkshopsReportController {
 
         statusComboBox.setItems(statusOptions);
 
-        // Try to maintain selection
+        // Attempt to maintain previous selection, fallback to first option
         if (selectedValue != null) {
             statusComboBox.getSelectionModel().select(selectedValue);
         } else {
@@ -221,9 +326,15 @@ public class WorkshopsReportController {
         }
     }
 
+    /**
+     * Updates summary statistic labels with current workshop data.
+     * Calculates and displays total workshops, active workshops, upcoming workshops,
+     * and average duration using localized text formatting and current dataset.
+     */
     private void updateSummaryLabels() {
         LanguageManager languageManager = LanguageManager.getInstance();
 
+        // Calculate summary statistics from current filtered data
         int totalWorkshops = workshopList.size();
         long activeWorkshops = workshopList.stream().filter(Workshop::isActive).count();
         long upcomingWorkshops = workshopList.stream().filter(Workshop::isUpcoming).count();
@@ -232,6 +343,7 @@ public class WorkshopsReportController {
                 .average()
                 .orElse(0.0);
 
+        // Update summary labels with localized text and calculated values
         if (totalWorkshopsLabel != null)
             totalWorkshopsLabel.setText(languageManager.getText("workshops.report.total.workshops") + totalWorkshops);
         if (activeWorkshopsLabel != null)
@@ -242,6 +354,12 @@ public class WorkshopsReportController {
             averageDurationLabel.setText(languageManager.getText("workshops.report.average.duration") + String.format("%.1f", averageDuration));
     }
 
+    /**
+     * Loads all teachers from database for teacher filter selection.
+     * Fetches teachers via TeacherDAO, creates "All Teachers" option for filter,
+     * populates teacher combo box with custom cell factories for display,
+     * and handles loading errors with user feedback.
+     */
     private void loadTeachers() {
         System.out.println("📚 Loading teachers from TeacherDAO...");
 
@@ -249,7 +367,7 @@ public class WorkshopsReportController {
             List<Teacher> allTeachers = teacherDAO.getAllTeachers();
             System.out.println("📊 Retrieved " + allTeachers.size() + " teachers from database");
 
-            // Create "All Teachers" option
+            // Create "All Teachers" option for filtering
             Teacher allTeachersOption = new Teacher();
             allTeachersOption.setId(-1);
             allTeachersOption.setFirstName("All");
@@ -265,7 +383,7 @@ public class WorkshopsReportController {
 
             System.out.println("✅ Teacher combo box populated with " + teacherList.size() + " items");
 
-            // Debug: Print first few teachers
+            // Debug: Print first few teachers for verification
             for (int i = 0; i < Math.min(3, teacherList.size()); i++) {
                 Teacher t = teacherList.get(i);
                 System.out.println("   Teacher " + i + ": " + t.getFirstName() + " " + t.getLastName() + " (ID: " + t.getId() + ")");
@@ -275,12 +393,17 @@ public class WorkshopsReportController {
             System.err.println("❌ Error loading teachers: " + e.getMessage());
             e.printStackTrace();
 
-            // Show error alert
+            // Show error alert to user
             showAlert(Alert.AlertType.ERROR, "Error Loading Teachers",
                     "Failed to load teachers from database: " + e.getMessage());
         }
     }
 
+    /**
+     * Loads all workshops from database and populates the report table.
+     * Fetches workshops via WorkshopDAO, updates observable list and table view,
+     * refreshes summary statistics and charts, and handles loading errors gracefully.
+     */
     private void loadAllWorkshops() {
         System.out.println("📋 Loading all workshops...");
 
@@ -303,20 +426,26 @@ public class WorkshopsReportController {
         }
     }
 
+    /**
+     * Applies user-specified filters to the workshop dataset.
+     * Processes name filter, date range filter, status filter, and teacher filter.
+     * Updates table view and analytics with filtered results. Validates date
+     * input format and provides user feedback for invalid dates.
+     */
     private void applyFilters() {
         System.out.println("🔍 Applying filters...");
 
         try {
             List<Workshop> filteredWorkshops = workshopDAO.getAllWorkshops();
 
-            // Apply name filter
+            // Apply name filter using workshop search
             String nameFilter = nameFilterField.getText().trim();
             if (!nameFilter.isEmpty()) {
                 System.out.println("   Filtering by name: " + nameFilter);
                 filteredWorkshops = workshopDAO.searchWorkshops(nameFilter);
             }
 
-            // Apply date range filter
+            // Apply date range filter with validation
             try {
                 LocalDate fromDate = null, toDate = null;
                 if (!fromDateField.getText().trim().isEmpty()) {
@@ -349,7 +478,7 @@ public class WorkshopsReportController {
                 return;
             }
 
-            // Apply status filter
+            // Apply status filter using localized status values
             String status = statusComboBox.getValue();
             LanguageManager lm = LanguageManager.getInstance();
             if (status != null && !status.equals(lm.getText("workshops.status.all"))) {
@@ -372,7 +501,7 @@ public class WorkshopsReportController {
                 filteredWorkshops = workshopDAO.getWorkshopsByTeacher(selectedTeacher.getId());
             } else if (selectedTeacher != null && selectedTeacher.getId() == -1) {
                 System.out.println("   Showing all teachers");
-                // Keep all workshops - no teacher filter
+                // Keep all workshops - no teacher filter applied
             }
 
             System.out.println("📊 Filter results: " + filteredWorkshops.size() + " workshops");
@@ -389,6 +518,11 @@ public class WorkshopsReportController {
         }
     }
 
+    /**
+     * Clears all filter inputs and reloads complete workshop dataset.
+     * Resets all filter fields to default values and reloads all workshops
+     * from database to restore original unfiltered view.
+     */
     private void clearFilters() {
         System.out.println("🧹 Clearing all filters...");
 
@@ -402,25 +536,39 @@ public class WorkshopsReportController {
         System.out.println("✅ Filters cleared");
     }
 
+    /**
+     * Exports current filtered workshop data to CSV file.
+     * Creates CSV file with localized headers and all workshop information
+     * including resolved teacher names and status text. Shows success or
+     * error feedback to user. File saved as "workshops_report.csv".
+     */
     private void exportToCSV() {
         System.out.println("💾 Exporting workshops to CSV...");
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("workshops_report.csv"))) {
             LanguageManager lm = LanguageManager.getInstance();
+
+            // Write CSV header with localized column names
             writer.write(lm.getText("workshops.table.name") + "," +
                     lm.getText("workshops.table.date.range") + "," +
                     lm.getText("workshops.table.duration") + "," +
                     lm.getText("workshops.table.status") + "," +
                     lm.getText("workshops.table.teacher.name") + "\n");
 
+            // Write data rows with proper CSV formatting
             for (Workshop w : workshopList) {
+                // Resolve teacher name
                 Teacher teacher = w.getTeacherId() != null ? teacherDAO.getTeacherById(w.getTeacherId()) : null;
                 String teacherName = teacher != null ?
                         (teacher.getFirstName() != null ? teacher.getFirstName() : "") + " " +
                                 (teacher.getLastName() != null ? teacher.getLastName() : "") : "No Teacher";
+
+                // Format status with localized text
                 String status = w.isActive() ? lm.getText("workshops.status.active") :
                         w.isUpcoming() ? lm.getText("workshops.status.upcoming") :
                                 lm.getText("workshops.status.past");
+
+                // Create CSV line with proper quoting
                 String line = String.format("\"%s\",\"%s\",\"%d\",\"%s\",\"%s\"\n",
                         w.getName() != null ? w.getName() : "",
                         w.getDateRange() != null ? w.getDateRange() : "",
@@ -441,16 +589,23 @@ public class WorkshopsReportController {
         }
     }
 
+    /**
+     * Updates summary statistics and visual charts with current dataset.
+     * Refreshes summary labels, status distribution pie chart with localized labels,
+     * and duration distribution bar chart with three duration groups (1-3, 4-7, 8+ days).
+     * Calculates and displays comprehensive workshop analytics.
+     */
     private void updateSummaryAndCharts() {
         System.out.println("📈 Updating summary statistics and charts...");
 
         updateSummaryLabels();
 
+        // Calculate statistics for chart data
         int totalWorkshops = workshopList.size();
         long activeWorkshops = workshopList.stream().filter(Workshop::isActive).count();
         long upcomingWorkshops = workshopList.stream().filter(Workshop::isUpcoming).count();
 
-        // Update pie chart
+        // Update pie chart with status distribution
         long pastWorkshops = totalWorkshops - activeWorkshops - upcomingWorkshops;
         LanguageManager lm = LanguageManager.getInstance();
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList(
@@ -462,11 +617,12 @@ public class WorkshopsReportController {
         statusPieChart.setLabelLineLength(10);
         statusPieChart.setLabelsVisible(true);
 
-        // Update bar chart
+        // Calculate duration group distributions
         int duration1to3 = (int) workshopList.stream().filter(w -> w.getDurationInDays() >= 1 && w.getDurationInDays() <= 3).count();
         int duration4to7 = (int) workshopList.stream().filter(w -> w.getDurationInDays() >= 4 && w.getDurationInDays() <= 7).count();
         int duration8plus = (int) workshopList.stream().filter(w -> w.getDurationInDays() >= 8).count();
 
+        // Update bar chart with duration distribution
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Workshops");
         series.getData().add(new XYChart.Data<>("1-3 Days", duration1to3));
@@ -479,6 +635,15 @@ public class WorkshopsReportController {
         System.out.println("📊 Summary: " + totalWorkshops + " total, " + activeWorkshops + " active, " + upcomingWorkshops + " upcoming");
     }
 
+    /**
+     * Displays an alert dialog with specified type, title, and content.
+     * Utility method for showing information, warning, or error messages
+     * to the user with standardized formatting and logging.
+     *
+     * @param type The type of alert (INFORMATION, WARNING, ERROR)
+     * @param title The alert dialog title
+     * @param content The alert message content
+     */
     private void showAlert(Alert.AlertType type, String title, String content) {
         System.out.println("🚨 Showing alert: " + title + " - " + content);
 

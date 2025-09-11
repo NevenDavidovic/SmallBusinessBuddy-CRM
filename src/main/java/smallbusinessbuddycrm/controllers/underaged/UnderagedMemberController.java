@@ -21,15 +21,42 @@ import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+/**
+ * Controller class for managing underaged members in a JavaFX application.
+ *
+ * This controller provides comprehensive CRUD operations for underaged members including:
+ * - Table view with sortable columns and checkbox selection
+ * - Form-based data entry and editing
+ * - Search and filtering capabilities
+ * - Bulk delete operations
+ * - Contact/parent-guardian relationship management
+ * - Automatic age calculation from birth date
+ * - Member status tracking with date ranges
+ *
+ * Features:
+ * - Real-time search across name, PIN, and notes
+ * - Category filters (members, non-members, age groups)
+ * - Form validation with comprehensive error reporting
+ * - Checkbox-based multi-selection for bulk operations
+ * - Automatic data refresh and synchronization
+ *
+ * The controller integrates with UnderagedDAO for database operations and ContactDAO
+ * for parent/guardian contact management.
+ *
+ * @author Your Name
+ * @version 1.0
+ * @since 2024
+ */
 public class UnderagedMemberController implements Initializable {
 
+    // Table View and Columns
     @FXML private TableView<UnderagedMember> underagedTableView;
     @FXML private TableColumn<UnderagedMember, Boolean> selectColumn;
     @FXML private TableColumn<UnderagedMember, String> firstNameColumn;
     @FXML private TableColumn<UnderagedMember, String> lastNameColumn;
     @FXML private TableColumn<UnderagedMember, String> birthDateColumn;
     @FXML private TableColumn<UnderagedMember, Integer> ageColumn;
-    @FXML private TableColumn<UnderagedMember, String> pinColumn; // Added PIN column
+    @FXML private TableColumn<UnderagedMember, String> pinColumn;
     @FXML private TableColumn<UnderagedMember, String> genderColumn;
     @FXML private TableColumn<UnderagedMember, String> memberStatusColumn;
     @FXML private TableColumn<UnderagedMember, String> memberSinceColumn;
@@ -37,12 +64,12 @@ public class UnderagedMemberController implements Initializable {
     @FXML private TableColumn<UnderagedMember, String> contactColumn;
     @FXML private TableColumn<UnderagedMember, String> noteColumn;
 
-    // Form fields
+    // Form Fields
     @FXML private TextField firstNameField;
     @FXML private TextField lastNameField;
     @FXML private DatePicker birthDatePicker;
     @FXML private TextField ageField;
-    @FXML private TextField pinField; // Added PIN field
+    @FXML private TextField pinField;
     @FXML private ComboBox<String> genderComboBox;
     @FXML private CheckBox isMemberCheckBox;
     @FXML private DatePicker memberSincePicker;
@@ -50,7 +77,7 @@ public class UnderagedMemberController implements Initializable {
     @FXML private ComboBox<Contact> contactComboBox;
     @FXML private TextArea noteTextArea;
 
-    // Buttons
+    // Action Buttons
     @FXML private Button addButton;
     @FXML private Button editButton;
     @FXML private Button deleteButton;
@@ -59,19 +86,30 @@ public class UnderagedMemberController implements Initializable {
     @FXML private Button cancelButton;
     @FXML private Button refreshButton;
 
-    // Search and filter
+    // Search and Filter Controls
     @FXML private TextField searchField;
     @FXML private ComboBox<String> filterComboBox;
 
+    // Data Collections
     private ObservableList<UnderagedMember> underagedMembersList = FXCollections.observableArrayList();
     private ObservableList<Contact> contactsList = FXCollections.observableArrayList();
 
+    // Database Access Objects
     private UnderagedDAO underagedDAO = new UnderagedDAO();
     private ContactDAO contactDAO = new ContactDAO();
 
+    // State Management
     private UnderagedMember currentUnderagedMember;
     private boolean isEditMode = false;
 
+    /**
+     * Initializes the controller after FXML loading is complete.
+     * Sets up table columns, form fields, loads data from database, configures event handlers,
+     * and sets initial form mode to read-only.
+     *
+     * @param location The location used to resolve relative paths for the root object
+     * @param resources The resources used to localize the root object
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         setupTableColumns();
@@ -81,6 +119,11 @@ public class UnderagedMemberController implements Initializable {
         toggleFormMode(false);
     }
 
+    /**
+     * Configures all table columns with appropriate cell value factories and formatting.
+     * Sets up checkbox selection column, basic info columns, date formatting for birth date,
+     * member since/until dates, and contact name resolution from contact ID.
+     */
     private void setupTableColumns() {
         // Select column with checkboxes
         selectColumn.setCellValueFactory(new PropertyValueFactory<>("selected"));
@@ -140,6 +183,11 @@ public class UnderagedMemberController implements Initializable {
         underagedTableView.setItems(underagedMembersList);
     }
 
+    /**
+     * Initializes form field configurations and behavior.
+     * Sets up gender and filter combo boxes, auto-calculation of age from birth date,
+     * and contact combo box with custom string converter for display.
+     */
     private void setupFormFields() {
         // Setup gender combo box
         genderComboBox.setItems(FXCollections.observableArrayList("Male", "Female", "Other"));
@@ -178,6 +226,10 @@ public class UnderagedMemberController implements Initializable {
         });
     }
 
+    /**
+     * Loads all required data from database.
+     * Loads contacts for combo box selection and refreshes underaged members list.
+     */
     private void loadData() {
         // Load contacts for combo box
         contactsList.clear();
@@ -188,6 +240,11 @@ public class UnderagedMemberController implements Initializable {
         refreshUnderagedMembersList();
     }
 
+    /**
+     * Refreshes the underaged members list from database.
+     * Clears current list, loads all members from database, and applies current filter.
+     * Prints count of loaded members to console for debugging.
+     */
     private void refreshUnderagedMembersList() {
         underagedMembersList.clear();
         List<UnderagedMember> allMembers = underagedDAO.getAllUnderagedMembers();
@@ -199,6 +256,11 @@ public class UnderagedMemberController implements Initializable {
         System.out.println("Loaded " + allMembers.size() + " underaged members");
     }
 
+    /**
+     * Sets up event handlers for UI interactions.
+     * Configures table selection listener, search field text change listener,
+     * and filter combo box change listener for real-time filtering.
+     */
     private void setupEventHandlers() {
         // Table selection handler
         underagedTableView.getSelectionModel().selectedItemProperty().addListener(
@@ -217,6 +279,10 @@ public class UnderagedMemberController implements Initializable {
         filterComboBox.valueProperty().addListener((obs, oldValue, newValue) -> applyFilter());
     }
 
+    /**
+     * Handles the Add button click event.
+     * Clears form, enables form editing mode, and prepares for creating new underaged member.
+     */
     @FXML
     private void handleAdd() {
         clearForm();
@@ -225,6 +291,11 @@ public class UnderagedMemberController implements Initializable {
         currentUnderagedMember = null;
     }
 
+    /**
+     * Handles the Edit button click event.
+     * Enables form editing mode for the currently selected underaged member.
+     * Populates form with selected member's data and sets edit mode flag.
+     */
     @FXML
     private void handleEdit() {
         UnderagedMember selected = underagedTableView.getSelectionModel().getSelectedItem();
@@ -236,6 +307,11 @@ public class UnderagedMemberController implements Initializable {
         }
     }
 
+    /**
+     * Handles the Delete button click event.
+     * Shows confirmation dialog and deletes the currently selected underaged member.
+     * Refreshes list and clears form after successful deletion.
+     */
     @FXML
     private void handleDelete() {
         UnderagedMember selected = underagedTableView.getSelectionModel().getSelectedItem();
@@ -258,6 +334,11 @@ public class UnderagedMemberController implements Initializable {
         }
     }
 
+    /**
+     * Handles the Delete Selected button click event.
+     * Deletes all underaged members that have been selected via checkboxes.
+     * Shows confirmation dialog with count of selected members before deletion.
+     */
     @FXML
     private void handleDeleteSelected() {
         List<UnderagedMember> selectedMembers = underagedMembersList.stream()
@@ -290,6 +371,11 @@ public class UnderagedMemberController implements Initializable {
         }
     }
 
+    /**
+     * Handles the Save button click event.
+     * Validates form data and either creates new underaged member or updates existing one.
+     * Refreshes list and returns to read-only mode after successful save.
+     */
     @FXML
     private void handleSave() {
         if (!validateForm()) {
@@ -318,24 +404,39 @@ public class UnderagedMemberController implements Initializable {
         }
     }
 
+    /**
+     * Handles the Cancel button click event.
+     * Cancels current edit operation, returns to read-only mode, and clears form.
+     */
     @FXML
     private void handleCancel() {
         toggleFormMode(false);
         clearForm();
     }
 
+    /**
+     * Handles the Refresh button click event.
+     * Reloads all underaged members data from database and shows success message.
+     */
     @FXML
     private void handleRefresh() {
         refreshUnderagedMembersList();
         showSuccessMessage("Data refreshed successfully!");
     }
 
+    /**
+     * Populates form fields with data from the specified underaged member.
+     * Sets all form fields including calculated age, PIN, dates, and resolves contact
+     * from contact ID to populate the contact combo box.
+     *
+     * @param underagedMember The underaged member whose data will populate the form
+     */
     private void populateForm(UnderagedMember underagedMember) {
         firstNameField.setText(underagedMember.getFirstName());
         lastNameField.setText(underagedMember.getLastName());
         birthDatePicker.setValue(underagedMember.getBirthDate());
         ageField.setText(String.valueOf(underagedMember.getAge()));
-        pinField.setText(underagedMember.getPin()); // Added PIN field population
+        pinField.setText(underagedMember.getPin());
         genderComboBox.setValue(underagedMember.getGender());
         isMemberCheckBox.setSelected(underagedMember.isMember());
         memberSincePicker.setValue(underagedMember.getMemberSince());
@@ -350,12 +451,17 @@ public class UnderagedMemberController implements Initializable {
         contactComboBox.setValue(contact);
     }
 
+    /**
+     * Clears all form fields and resets them to default states.
+     * Clears text fields, resets date pickers, unchecks member checkbox,
+     * and resets combo box selections.
+     */
     private void clearForm() {
         firstNameField.clear();
         lastNameField.clear();
         birthDatePicker.setValue(null);
         ageField.clear();
-        pinField.clear(); // Added PIN field clearing
+        pinField.clear();
         genderComboBox.setValue(null);
         isMemberCheckBox.setSelected(false);
         memberSincePicker.setValue(null);
@@ -364,13 +470,20 @@ public class UnderagedMemberController implements Initializable {
         noteTextArea.clear();
     }
 
+    /**
+     * Creates an UnderagedMember object from current form field values.
+     * Extracts and validates data from all form fields, handles number parsing
+     * for age field, and sets current timestamp for updatedAt field.
+     *
+     * @return UnderagedMember object populated with form data
+     */
     private UnderagedMember createUnderagedMemberFromForm() {
         UnderagedMember underagedMember = new UnderagedMember();
 
         underagedMember.setFirstName(firstNameField.getText().trim());
         underagedMember.setLastName(lastNameField.getText().trim());
         underagedMember.setBirthDate(birthDatePicker.getValue());
-        underagedMember.setPin(pinField.getText().trim()); // Added PIN field handling
+        underagedMember.setPin(pinField.getText().trim());
 
         try {
             underagedMember.setAge(Integer.parseInt(ageField.getText().trim()));
@@ -393,6 +506,13 @@ public class UnderagedMemberController implements Initializable {
         return underagedMember;
     }
 
+    /**
+     * Validates all required form fields.
+     * Checks for required fields: first name, last name, birth date, and parent/guardian contact.
+     * Collects all validation errors and displays them if any are found.
+     *
+     * @return true if all validation passes, false if there are validation errors
+     */
     private boolean validateForm() {
         List<String> errors = new ArrayList<>();
 
@@ -417,6 +537,12 @@ public class UnderagedMemberController implements Initializable {
         return true;
     }
 
+    /**
+     * Applies search and filter criteria to the underaged members list.
+     * Filters by search text (name, PIN, or notes) and category filter
+     * (all, members only, non-members, age groups). Updates the table view
+     * with filtered results.
+     */
     private void applyFilter() {
         String searchText = searchField.getText().toLowerCase().trim();
         String filterValue = filterComboBox.getValue();
@@ -424,7 +550,7 @@ public class UnderagedMemberController implements Initializable {
         List<UnderagedMember> allMembers = underagedDAO.getAllUnderagedMembers();
         List<UnderagedMember> filteredMembers = allMembers.stream()
                 .filter(member -> {
-                    // Search filter - now includes PIN search
+                    // Search filter - includes PIN search
                     boolean matchesSearch = searchText.isEmpty() ||
                             member.getFirstName().toLowerCase().contains(searchText) ||
                             member.getLastName().toLowerCase().contains(searchText) ||
@@ -448,13 +574,20 @@ public class UnderagedMemberController implements Initializable {
         underagedMembersList.addAll(filteredMembers);
     }
 
+    /**
+     * Toggles between form editing mode and read-only mode.
+     * Enables/disables form fields, shows/hides action buttons,
+     * and updates button states based on edit mode.
+     *
+     * @param editMode true to enable editing, false for read-only mode
+     */
     private void toggleFormMode(boolean editMode) {
         // Enable/disable form fields
         firstNameField.setDisable(!editMode);
         lastNameField.setDisable(!editMode);
         birthDatePicker.setDisable(!editMode);
         ageField.setDisable(true); // Always disabled as it's calculated
-        pinField.setDisable(!editMode); // Added PIN field toggle
+        pinField.setDisable(!editMode);
         genderComboBox.setDisable(!editMode);
         isMemberCheckBox.setDisable(!editMode);
         memberSincePicker.setDisable(!editMode);
@@ -474,6 +607,11 @@ public class UnderagedMemberController implements Initializable {
         refreshButton.setDisable(editMode);
     }
 
+    /**
+     * Updates the enabled/disabled state of action buttons.
+     * Enables/disables edit and delete buttons based on table selection,
+     * and delete selected button based on checkbox selections.
+     */
     private void updateButtonStates() {
         UnderagedMember selected = underagedTableView.getSelectionModel().getSelectedItem();
         boolean hasSelection = selected != null;
@@ -484,7 +622,12 @@ public class UnderagedMemberController implements Initializable {
         deleteSelectedButton.setDisable(!hasSelectedItems);
     }
 
-    // Message helper methods
+    /**
+     * Displays a success message dialog.
+     * Shows an information alert with the specified success message.
+     *
+     * @param message The success message to display
+     */
     private void showSuccessMessage(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Success");
@@ -493,6 +636,12 @@ public class UnderagedMemberController implements Initializable {
         alert.showAndWait();
     }
 
+    /**
+     * Displays an error message dialog.
+     * Shows an error alert with the specified error message.
+     *
+     * @param message The error message to display
+     */
     private void showErrorMessage(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
@@ -501,6 +650,12 @@ public class UnderagedMemberController implements Initializable {
         alert.showAndWait();
     }
 
+    /**
+     * Displays a warning message dialog.
+     * Shows a warning alert with the specified warning message.
+     *
+     * @param message The warning message to display
+     */
     private void showWarningMessage(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Warning");
@@ -509,6 +664,12 @@ public class UnderagedMemberController implements Initializable {
         alert.showAndWait();
     }
 
+    /**
+     * Displays validation errors in a formatted error dialog.
+     * Shows all validation errors in a single dialog with each error on a new line.
+     *
+     * @param errors List of validation error messages to display
+     */
     private void showValidationErrors(List<String> errors) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Validation Error");

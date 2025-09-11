@@ -17,69 +17,129 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Modal dialog class for creating new workshops with comprehensive form validation.
+ *
+ * This dialog provides a complete workshop creation interface with the following features:
+ * - Modal dialog window with professional styling and layout
+ * - Form validation with real-time feedback and error messaging
+ * - Teacher assignment with optional selection from available teachers
+ * - Date range validation ensuring logical from/to date relationships
+ * - Database integration for workshop creation and teacher loading
+ * - Success/error feedback with detailed user messages
+ * - Responsive UI with conditional button enabling based on validation
+ *
+ * Key Components:
+ * - Workshop Information Form: Name, date range, and teacher selection
+ * - Real-time Validation: Immediate feedback on form field changes
+ * - Teacher Integration: Loads available teachers with "No Teacher" option
+ * - Date Logic: Automatically adjusts to date when from date changes
+ * - Error Handling: Comprehensive error management with user-friendly messages
+ * - Database Operations: Creates workshops via WorkshopDAO with proper error handling
+ *
+ * Validation Features:
+ * - Required field validation for name and dates
+ * - Date range logic validation (from date cannot be after to date)
+ * - Real-time UI updates with error label display
+ * - Conditional save button enabling based on validation state
+ * - Visual feedback with color-coded button states
+ *
+ * Teacher Assignment:
+ * - Optional teacher selection via combo box
+ * - "No Teacher" option for workshops without assigned teachers
+ * - Custom string converter for proper teacher display
+ * - Fallback handling if teacher loading fails
+ *
+ * The dialog integrates with WorkshopDAO for database operations and TeacherDAO
+ * for loading available teachers, providing a complete workshop creation solution.
+ *
+ * @author Your Name
+ * @version 1.0
+ * @since 2024
+ */
 public class CreateWorkshopDialog {
 
+    // Dialog Management
     private Stage dialogStage;
     private Workshop result = null;
     private boolean okClicked = false;
 
-    // Workshop form fields - matching your current Workshop model
+    // Form Controls
     private TextField nameField;
     private DatePicker fromDatePicker;
     private DatePicker toDatePicker;
-    private ComboBox<Teacher> teacherComboBox; // NEW: Teacher selection
-    private Button saveButton; // Make save button a class field so we can control it
+    private ComboBox<Teacher> teacherComboBox;
+    private Button saveButton;
 
-    // Error labels for validation
+    // Validation Error Labels
     private Label nameErrorLabel;
     private Label fromDateErrorLabel;
     private Label toDateErrorLabel;
 
-    // DAOs
+    // Database Access Objects
     private TeacherDAO teacherDAO = new TeacherDAO();
 
+    /**
+     * Constructs a new CreateWorkshopDialog with the specified parent stage.
+     * Initializes the dialog stage, sets up the UI components, and configures
+     * the modal dialog window with proper owner relationship.
+     *
+     * @param parentStage The parent stage that owns this dialog
+     */
     public CreateWorkshopDialog(Stage parentStage) {
-        System.out.println("CreateWorkshopDialog constructor called"); // DEBUG
+        System.out.println("CreateWorkshopDialog constructor called");
         createDialogStage();
         dialogStage.initOwner(parentStage);
     }
 
+    /**
+     * Creates and configures the main dialog stage with all UI components.
+     * Sets up the modal dialog window, creates the layout structure,
+     * loads teacher data, and initializes form validation.
+     */
     private void createDialogStage() {
-        System.out.println("Creating dialog stage..."); // DEBUG
+        System.out.println("Creating dialog stage...");
 
         dialogStage = new Stage();
         dialogStage.setTitle("Create Workshop");
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.setResizable(false);
 
-        // Create the main layout
+        // Create the main layout structure
         VBox mainLayout = new VBox(20);
         mainLayout.setPadding(new Insets(20));
 
-        // Title
+        // Dialog title
         Label titleLabel = new Label("Create New Workshop");
         titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #0099cc;");
 
-        // Workshop form
+        // Workshop form section
         VBox workshopSection = createWorkshopSection();
 
-        // Buttons
+        // Action buttons
         HBox buttonBox = createButtonBox();
 
-        System.out.println("Button box created with children: " + buttonBox.getChildren().size()); // DEBUG
+        System.out.println("Button box created with children: " + buttonBox.getChildren().size());
 
         mainLayout.getChildren().addAll(titleLabel, workshopSection, buttonBox);
 
-        Scene scene = new Scene(mainLayout, 500, 500); // Made taller for teacher field
+        Scene scene = new Scene(mainLayout, 500, 500);
         dialogStage.setScene(scene);
 
-        // Load teachers and initial validation
+        // Initialize data and validation
         loadTeachers();
         validateForm();
 
-        System.out.println("Dialog stage created successfully"); // DEBUG
+        System.out.println("Dialog stage created successfully");
     }
 
+    /**
+     * Creates the workshop information form section with input fields.
+     * Builds a grid layout containing workshop name, date range, and teacher selection
+     * with appropriate labels, validation error displays, and real-time listeners.
+     *
+     * @return VBox containing the complete workshop form section
+     */
     private VBox createWorkshopSection() {
         VBox section = new VBox(15);
 
@@ -92,46 +152,46 @@ public class CreateWorkshopDialog {
 
         int row = 0;
 
-        // Workshop Name
+        // Workshop Name Field
         grid.add(new Label("Workshop Name *:"), 0, row);
         nameField = new TextField();
         nameField.setPrefWidth(280);
         nameField.setPromptText("Enter workshop name...");
         grid.add(nameField, 1, row++);
 
-        // Name error label
+        // Name validation error label
         nameErrorLabel = new Label();
         nameErrorLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 10px;");
         nameErrorLabel.setVisible(false);
         grid.add(nameErrorLabel, 1, row++);
 
-        // From Date
+        // From Date Field
         grid.add(new Label("From Date *:"), 0, row);
         fromDatePicker = new DatePicker();
         fromDatePicker.setValue(LocalDate.now());
         fromDatePicker.setPrefWidth(130);
         grid.add(fromDatePicker, 1, row++);
 
-        // From date error label
+        // From date validation error label
         fromDateErrorLabel = new Label();
         fromDateErrorLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 10px;");
         fromDateErrorLabel.setVisible(false);
         grid.add(fromDateErrorLabel, 1, row++);
 
-        // To Date
+        // To Date Field
         grid.add(new Label("To Date *:"), 0, row);
         toDatePicker = new DatePicker();
         toDatePicker.setValue(LocalDate.now());
         toDatePicker.setPrefWidth(130);
         grid.add(toDatePicker, 1, row++);
 
-        // To date error label
+        // To date validation error label
         toDateErrorLabel = new Label();
         toDateErrorLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 10px;");
         toDateErrorLabel.setVisible(false);
         grid.add(toDateErrorLabel, 1, row++);
 
-        // NEW: Teacher Selection
+        // Teacher Selection Field
         grid.add(new Label("Teacher:"), 0, row);
         teacherComboBox = new ComboBox<>();
         teacherComboBox.setPrefWidth(280);
@@ -158,12 +218,12 @@ public class CreateWorkshopDialog {
 
         grid.add(teacherComboBox, 1, row++);
 
-        // Add a note about teacher assignment
+        // Teacher assignment note
         Label teacherNote = new Label("You can assign or change the teacher later");
         teacherNote.setStyle("-fx-text-fill: #6c757d; -fx-font-size: 10px;");
         grid.add(teacherNote, 1, row++);
 
-        // Add date validation listeners
+        // Set up real-time validation listeners
         fromDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && toDatePicker.getValue() != null && newVal.isAfter(toDatePicker.getValue())) {
                 toDatePicker.setValue(newVal);
@@ -172,16 +232,21 @@ public class CreateWorkshopDialog {
         });
 
         toDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> validateForm());
-
-        // Real-time validation for name
         nameField.textProperty().addListener((obs, oldVal, newVal) -> validateForm());
 
         section.getChildren().addAll(sectionTitle, grid);
         return section;
     }
 
+    /**
+     * Creates the button box containing Cancel and Save action buttons.
+     * Configures button styling, event handlers, and layout positioning
+     * for the dialog's primary actions.
+     *
+     * @return HBox containing the Cancel and Save buttons
+     */
     private HBox createButtonBox() {
-        System.out.println("Creating button box..."); // DEBUG
+        System.out.println("Creating button box...");
 
         HBox buttonBox = new HBox(10);
         buttonBox.setStyle("-fx-alignment: center-right;");
@@ -190,28 +255,33 @@ public class CreateWorkshopDialog {
         cancelButton.setPrefWidth(80);
         cancelButton.setOnAction(e -> dialogStage.close());
 
-        System.out.println("Cancel button created"); // DEBUG
+        System.out.println("Cancel button created");
 
-        saveButton = new Button("Save"); // Create as class field
+        saveButton = new Button("Save");
         saveButton.setPrefWidth(80);
         saveButton.setStyle("-fx-background-color: #ff7a59; -fx-text-fill: white;");
         saveButton.setOnAction(e -> handleSave());
 
-        System.out.println("Save button created"); // DEBUG
+        System.out.println("Save button created");
 
         buttonBox.getChildren().addAll(cancelButton, saveButton);
 
-        System.out.println("Buttons added to box. Total children: " + buttonBox.getChildren().size()); // DEBUG
+        System.out.println("Buttons added to box. Total children: " + buttonBox.getChildren().size());
 
         return buttonBox;
     }
 
-    // NEW: Load teachers for selection
+    /**
+     * Loads all available teachers from database for teacher selection.
+     * Fetches teachers via TeacherDAO, adds "No Teacher" option for optional selection,
+     * and populates the teacher combo box with appropriate string converter.
+     * Handles loading errors gracefully with fallback options.
+     */
     private void loadTeachers() {
         try {
             List<Teacher> teachers = teacherDAO.getAllTeachers();
 
-            // Add "No Teacher" option
+            // Create "No Teacher" option for optional selection
             Teacher noTeacher = new Teacher();
             noTeacher.setId(-1);
             noTeacher.setFirstName("No");
@@ -239,6 +309,14 @@ public class CreateWorkshopDialog {
         }
     }
 
+    /**
+     * Validates the entire form and updates UI feedback accordingly.
+     * Checks required fields, date range validity, and enables/disables
+     * the save button based on validation results. Updates error labels
+     * and button styling to provide immediate user feedback.
+     *
+     * @return true if all form fields are valid, false otherwise
+     */
     private boolean validateForm() {
         boolean isValid = true;
 
@@ -247,7 +325,7 @@ public class CreateWorkshopDialog {
         fromDateErrorLabel.setVisible(false);
         toDateErrorLabel.setVisible(false);
 
-        // Validate name
+        // Validate workshop name
         if (nameField == null || nameField.getText().trim().isEmpty()) {
             if (nameErrorLabel != null) {
                 nameErrorLabel.setText("Workshop name is required");
@@ -256,7 +334,7 @@ public class CreateWorkshopDialog {
             isValid = false;
         }
 
-        // Validate dates
+        // Validate date fields
         LocalDate fromDate = fromDatePicker != null ? fromDatePicker.getValue() : null;
         LocalDate toDate = toDatePicker != null ? toDatePicker.getValue() : null;
 
@@ -284,25 +362,31 @@ public class CreateWorkshopDialog {
             isValid = false;
         }
 
-        // Enable/disable save button based on validation
+        // Update save button state based on validation
         if (saveButton != null) {
             saveButton.setDisable(!isValid);
             if (isValid) {
                 saveButton.setStyle("-fx-background-color: #ff7a59; -fx-text-fill: white;");
-                System.out.println("Save button ENABLED (orange)"); // DEBUG
+                System.out.println("Save button ENABLED (orange)");
             } else {
                 saveButton.setStyle("-fx-background-color: #cccccc; -fx-text-fill: #666666;");
-                System.out.println("Save button DISABLED (gray)"); // DEBUG
+                System.out.println("Save button DISABLED (gray)");
             }
         } else {
-            System.out.println("WARNING: saveButton is null!"); // DEBUG
+            System.out.println("WARNING: saveButton is null!");
         }
 
         return isValid;
     }
 
+    /**
+     * Handles the Save button click event and workshop creation process.
+     * Validates input, creates workshop object, saves to database via DAO,
+     * and provides user feedback with success or error messages including
+     * teacher assignment information.
+     */
     private void handleSave() {
-        System.out.println("Save button clicked!"); // DEBUG
+        System.out.println("Save button clicked!");
 
         if (validateInput()) {
             try {
@@ -316,7 +400,7 @@ public class CreateWorkshopDialog {
                     okClicked = true;
                     dialogStage.close();
 
-                    // Show success message with teacher info
+                    // Show success message with teacher information
                     String successMessage = "Workshop '" + newWorkshop.getName() + "' has been created successfully!";
                     if (newWorkshop.hasTeacher()) {
                         Teacher selectedTeacher = teacherComboBox.getValue();
@@ -343,6 +427,13 @@ public class CreateWorkshopDialog {
         }
     }
 
+    /**
+     * Performs comprehensive input validation before saving.
+     * Validates required fields and business rules, collects all validation
+     * errors, and displays them in a warning dialog if any are found.
+     *
+     * @return true if all input is valid and ready for saving, false otherwise
+     */
     private boolean validateInput() {
         StringBuilder errors = new StringBuilder();
 
@@ -377,15 +468,23 @@ public class CreateWorkshopDialog {
         return true;
     }
 
+    /**
+     * Creates a Workshop object from the current form input values.
+     * Extracts data from all form fields, handles teacher assignment,
+     * sets creation and update timestamps, and returns a complete
+     * Workshop object ready for database persistence.
+     *
+     * @return Workshop object populated with form data
+     */
     private Workshop createWorkshopFromInput() {
         Workshop workshop = new Workshop();
 
-        // Set the basic fields that match your current model
+        // Set basic workshop information
         workshop.setName(nameField.getText().trim());
         workshop.setFromDate(fromDatePicker.getValue());
         workshop.setToDate(toDatePicker.getValue());
 
-        // NEW: Set teacher if selected
+        // Handle teacher assignment
         Teacher selectedTeacher = teacherComboBox.getValue();
         if (selectedTeacher != null && selectedTeacher.getId() != -1) {
             workshop.setTeacherId(selectedTeacher.getId());
@@ -395,7 +494,7 @@ public class CreateWorkshopDialog {
             System.out.println("No teacher assigned");
         }
 
-        // Set timestamps using LocalDateTime.now().toString() format like your Contact dialog
+        // Set creation and update timestamps
         String now = LocalDateTime.now().toString();
         workshop.setCreatedAt(now);
         workshop.setUpdatedAt(now);
@@ -403,6 +502,13 @@ public class CreateWorkshopDialog {
         return workshop;
     }
 
+    /**
+     * Displays an error alert dialog with the specified message.
+     * Shows a standardized error dialog with title, header, and content
+     * for consistent error reporting throughout the dialog.
+     *
+     * @param message The error message to display to the user
+     */
     private void showErrorAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
@@ -411,13 +517,27 @@ public class CreateWorkshopDialog {
         alert.showAndWait();
     }
 
+    /**
+     * Shows the dialog and waits for user interaction.
+     * Displays the modal dialog window and blocks until the user
+     * either saves the workshop or cancels the operation.
+     *
+     * @return true if user clicked Save and workshop was created, false if cancelled
+     */
     public boolean showAndWait() {
-        System.out.println("Showing dialog..."); // DEBUG
+        System.out.println("Showing dialog...");
         dialogStage.showAndWait();
-        System.out.println("Dialog closed. okClicked: " + okClicked); // DEBUG
+        System.out.println("Dialog closed. okClicked: " + okClicked);
         return okClicked;
     }
 
+    /**
+     * Returns the workshop that was created by this dialog.
+     * Provides access to the Workshop object after successful creation,
+     * or null if no workshop was created.
+     *
+     * @return The created Workshop object, or null if cancelled or failed
+     */
     public Workshop getResult() {
         return result;
     }

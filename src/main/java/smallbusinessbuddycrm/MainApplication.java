@@ -62,11 +62,13 @@ public class MainApplication extends Application {
 
                 if (!saved) {
                     System.err.println("Failed to save organization to database!");
+                    // If save fails, exit the app
+                    javafx.application.Platform.exit();
                 }
             } else {
-                // User cancelled setup, create a default organization
-                Organization defaultOrg = new Organization("Nova organizacija", "");
-                organizationDAO.save(defaultOrg);
+                // User cancelled setup, exit the app
+                System.out.println("No organization created, exiting application.");
+                javafx.application.Platform.exit();
             }
         }
     }

@@ -27,8 +27,77 @@ import javafx.scene.Scene;
 import javafx.stage.Modality;
 import smallbusinessbuddycrm.utilities.LanguageManager;
 
+/**
+ * Controller class for comprehensive workshop management with advanced table interface.
+ *
+ * This controller provides a complete workshop management system with sophisticated features:
+ * - Advanced table view with multiple action columns and data visualization
+ * - Teacher assignment management with real-time cache optimization
+ * - Participant management integration with modal window support
+ * - Multi-criteria search and filtering system (status-based and text search)
+ * - Batch operations for efficient workshop management
+ * - Complete internationalization with dynamic language switching
+ * - Status tracking with visual indicators (active/upcoming/past/draft)
+ * - Real-time data synchronization and cache management
+ *
+ * Key Features:
+ * - Workshop CRUD Operations: Complete create, read, update, delete functionality
+ * - Teacher Management: Assign, change, or remove teachers from workshops
+ * - Participant Integration: Direct access to participant management for each workshop
+ * - Advanced Filtering: Status-based filters (all/active/upcoming/past) plus text search
+ * - Batch Operations: Multi-select deletion with confirmation dialogs
+ * - Performance Optimization: Teacher name caching for efficient table rendering
+ * - Status Visualization: Real-time status calculation and display
+ * - Internationalization: Full language support with pluralization rules
+ *
+ * Table Management Features:
+ * - Checkbox selection column for batch operations
+ * - Inline edit buttons for quick workshop modification
+ * - Teacher management buttons with assignment dialogs
+ * - Participant management buttons opening dedicated windows
+ * - Status indicators with color coding and localized text
+ * - Duration calculation and formatting
+ * - Creation date tracking and display
+ * - Real-time participant count updates
+ *
+ * Search & Filter System:
+ * - Text search across workshop names and teacher names
+ * - Status-based filtering (active, upcoming, past workshops)
+ * - Real-time filter application with instant results
+ * - Visual filter button states with active/inactive styling
+ * - Search highlighting and case-insensitive matching
+ *
+ * Teacher Assignment Management:
+ * - Teacher selection dialogs with current assignment indication
+ * - "No Teacher" option for workshops without assigned teachers
+ * - Teacher cache optimization for fast name resolution
+ * - Assignment change tracking with detailed user feedback
+ * - Database integration for persistent teacher assignments
+ *
+ * Internationalization Support:
+ * - Dynamic language switching for all UI elements
+ * - Localized status text (active/upcoming/past/draft)
+ * - Language-specific pluralization rules (Croatian vs English)
+ * - Localized error messages and confirmation dialogs
+ * - Date formatting according to locale preferences
+ *
+ * The controller integrates with multiple DAO classes (WorkshopDAO, TeacherDAO,
+ * WorkshopParticipantDAO) and provides seamless navigation to related management
+ * windows (participant management, workshop creation/editing dialogs).
+ *
+ * Performance Considerations:
+ * - Teacher name caching reduces database queries during table rendering
+ * - Filtered lists provide efficient search without full data reloading
+ * - Lazy loading of participant counts for optimal performance
+ * - Smart cache invalidation when data changes occur
+ *
+ * @author Your Name
+ * @version 1.0
+ * @since 2024
+ */
 public class WorkshopsViewController implements Initializable {
 
+    // Table View and Columns
     @FXML private TableView<Workshop> workshopsTable;
     @FXML private TableColumn<Workshop, Boolean> selectColumn;
     @FXML private TableColumn<Workshop, Void> editColumn;
@@ -37,10 +106,10 @@ public class WorkshopsViewController implements Initializable {
     @FXML private TableColumn<Workshop, String> toDateColumn;
     @FXML private TableColumn<Workshop, String> durationColumn;
     @FXML private TableColumn<Workshop, String> statusColumn;
-    @FXML private TableColumn<Workshop, String> teacherColumn; // NEW: Teacher column
+    @FXML private TableColumn<Workshop, String> teacherColumn;
     @FXML private TableColumn<Workshop, String> participantCountColumn;
     @FXML private TableColumn<Workshop, Void> manageParticipantsColumn;
-    @FXML private TableColumn<Workshop, Void> manageTeacherColumn; // NEW: Manage teacher column
+    @FXML private TableColumn<Workshop, Void> manageTeacherColumn;
     @FXML private TableColumn<Workshop, String> createdAtColumn;
 
     // UI Controls
@@ -55,21 +124,28 @@ public class WorkshopsViewController implements Initializable {
     @FXML private Label recordCountLabel;
     @FXML private Label workshopsPageTitle;
 
-    // Data lists
+    // Data Collections
     private ObservableList<Workshop> allWorkshopsList = FXCollections.observableArrayList();
     private FilteredList<Workshop> filteredWorkshopsList;
 
-    // DAOs
+    // Database Access Objects
     private WorkshopDAO workshopDAO = new WorkshopDAO();
     private WorkshopParticipantDAO participantDAO = new WorkshopParticipantDAO();
-    private TeacherDAO teacherDAO = new TeacherDAO(); // NEW: Teacher DAO
+    private TeacherDAO teacherDAO = new TeacherDAO();
 
-    // Cache for teacher names
+    // Performance Cache
     private Map<Integer, String> teacherNamesCache;
 
+    /**
+     * Initializes the controller after FXML loading is complete.
+     * Sets up teacher cache, table columns, search/filter functionality, loads workshop data,
+     * configures event handlers, and initializes internationalization support.
+     *
+     * @param location The location used to resolve relative paths for the root object
+     * @param resources The resources used to localize the root object
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-
         loadTeacherCache();
         setupTable();
         setupSearchAndFilters();
@@ -77,18 +153,23 @@ public class WorkshopsViewController implements Initializable {
         setupEventHandlers();
         LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
         updateTexts();
-
     }
 
+    /**
+     * Updates all UI text elements based on the current language settings.
+     * Called when language changes to refresh page title, buttons, table headers,
+     * placeholders, and record count display with localized text. Refreshes table
+     * to update cell values and status displays.
+     */
     private void updateTexts() {
         LanguageManager languageManager = LanguageManager.getInstance();
 
-        // Page title
+        // Update page title
         if (workshopsPageTitle != null) {
             workshopsPageTitle.setText(languageManager.getText("workshops.page.title"));
         }
 
-        // Buttons
+        // Update action buttons
         if (deleteSelectedButton != null) {
             deleteSelectedButton.setText(languageManager.getText("workshops.delete.selected"));
         }
@@ -99,7 +180,7 @@ public class WorkshopsViewController implements Initializable {
             refreshButton.setText(languageManager.getText("workshops.refresh"));
         }
 
-        // Filter buttons
+        // Update filter buttons
         if (allWorkshopsButton != null) {
             allWorkshopsButton.setText(languageManager.getText("workshops.all.workshops"));
         }
@@ -113,12 +194,12 @@ public class WorkshopsViewController implements Initializable {
             pastWorkshopsButton.setText(languageManager.getText("workshops.past"));
         }
 
-        // Search field
+        // Update search field placeholder
         if (searchField != null) {
             searchField.setPromptText(languageManager.getText("workshops.search.placeholder"));
         }
 
-        // Table columns
+        // Update table column headers
         if (editColumn != null) {
             editColumn.setText(languageManager.getText("workshops.column.edit"));
         }
@@ -153,24 +234,27 @@ public class WorkshopsViewController implements Initializable {
             createdAtColumn.setText(languageManager.getText("workshops.column.created"));
         }
 
-        // Update table placeholder if exists
+        // Update table placeholder
         if (workshopsTable != null) {
             workshopsTable.setPlaceholder(new Label(languageManager.getText("workshops.no.workshops.found")));
         }
 
-        // Refresh table to update cell values with new language
+        // Refresh table to update localized cell values
         if (workshopsTable != null) {
             workshopsTable.refresh();
         }
 
-        // Update record count
+        // Update record count display
         updateRecordCount();
 
         System.out.println("Workshops view texts updated");
     }
 
-
-    // NEW: Load teacher names into cache for quick lookup
+    /**
+     * Loads all teachers into a cache for quick name lookup during table display.
+     * Creates a map of teacher IDs to full names for efficient teacher name resolution
+     * in workshop table cells. Handles loading errors with empty map fallback.
+     */
     private void loadTeacherCache() {
         try {
             List<Teacher> teachers = teacherDAO.getAllTeachers();
@@ -186,8 +270,14 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+    /**
+     * Configures all table columns with appropriate cell factories and value factories.
+     * Sets up checkbox selection, action buttons (edit, manage participants, manage teacher),
+     * data columns with formatting, and applies conditional styling. Includes teacher
+     * name resolution and participant count calculation.
+     */
     private void setupTable() {
-        // FIXED: Set up checkbox column properly
+        // Configure checkbox selection column
         selectColumn.setCellFactory(tc -> {
             CheckBox checkBox = new CheckBox();
             TableCell<Workshop, Boolean> cell = new TableCell<Workshop, Boolean>() {
@@ -212,7 +302,7 @@ public class WorkshopsViewController implements Initializable {
             return cell;
         });
 
-        // Set up edit button column
+        // Configure edit button column
         editColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
             private final Button editButton = new Button();
 
@@ -240,7 +330,8 @@ public class WorkshopsViewController implements Initializable {
                 }
             }
         });
-        // Set up manage participants column
+
+        // Configure manage participants column
         manageParticipantsColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
             private final Button manageButton = new Button();
 
@@ -268,7 +359,8 @@ public class WorkshopsViewController implements Initializable {
                 }
             }
         });
-        // NEW: Set up manage teacher column
+
+        // Configure manage teacher column
         manageTeacherColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
             private final Button manageButton = new Button();
 
@@ -297,7 +389,7 @@ public class WorkshopsViewController implements Initializable {
             }
         });
 
-        // Set up column bindings
+        // Configure data column bindings
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
 
         fromDateColumn.setCellValueFactory(cellData -> {
@@ -340,7 +432,7 @@ public class WorkshopsViewController implements Initializable {
             return new SimpleStringProperty(status);
         });
 
-        // NEW: Set up teacher column
+        // Configure teacher column with cache lookup
         teacherColumn.setCellValueFactory(cellData -> {
             Workshop workshop = cellData.getValue();
             LanguageManager languageManager = LanguageManager.getInstance();
@@ -368,6 +460,11 @@ public class WorkshopsViewController implements Initializable {
         workshopsTable.setEditable(true);
     }
 
+    /**
+     * Initializes search functionality and filtering system.
+     * Creates filtered list wrapper around workshop data and sets up real-time
+     * search listener that triggers filter updates on text changes.
+     */
     private void setupSearchAndFilters() {
         // Create filtered list wrapping the original list
         filteredWorkshopsList = new FilteredList<>(allWorkshopsList, p -> true);
@@ -375,12 +472,17 @@ public class WorkshopsViewController implements Initializable {
         // Set the table to use the filtered list
         workshopsTable.setItems(filteredWorkshopsList);
 
-        // Set up search functionality
+        // Set up real-time search functionality
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             updateFilters();
         });
     }
 
+    /**
+     * Updates the filtered list based on current search text and active filter.
+     * Applies search criteria across workshop names and teacher names, combined
+     * with current filter state (all/active/upcoming/past workshops).
+     */
     private void updateFilters() {
         String searchText = searchField.getText().toLowerCase().trim();
 
@@ -403,8 +505,16 @@ public class WorkshopsViewController implements Initializable {
         updateRecordCount();
     }
 
+    /**
+     * Determines if a workshop matches the currently active filter button.
+     * Checks which filter button is active based on styling and returns whether
+     * the workshop should be displayed according to that filter criteria.
+     *
+     * @param workshop The Workshop to check against current filter
+     * @return true if workshop matches current filter criteria, false otherwise
+     */
     private boolean matchesCurrentFilter(Workshop workshop) {
-        // Check which filter button is active based on their style
+        // Check which filter button is active based on their styling
         String allStyle = allWorkshopsButton.getStyle();
         String activeStyle = activeWorkshopsButton.getStyle();
         String upcomingStyle = upcomingWorkshopsButton.getStyle();
@@ -420,9 +530,14 @@ public class WorkshopsViewController implements Initializable {
             return workshop.isPast();
         }
 
-        return true; // Default: show all
+        return true; // Default: show all workshops
     }
 
+    /**
+     * Loads all workshops from database and populates the table.
+     * Fetches workshops via WorkshopDAO, updates the observable list,
+     * and refreshes record count display. Handles loading errors gracefully.
+     */
     private void loadWorkshops() {
         try {
             List<Workshop> workshops = workshopDAO.getAllWorkshops();
@@ -437,11 +552,16 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+    /**
+     * Updates the record count label with current filtered workshop count.
+     * Displays localized count text with appropriate singular/plural forms
+     * and language-specific pluralization rules (Croatian vs English).
+     */
     private void updateRecordCount() {
         int count = filteredWorkshopsList.size();
         LanguageManager languageManager = LanguageManager.getInstance();
 
-        // Handle plural form for Croatian
+        // Handle language-specific pluralization
         String recordText;
         if (languageManager.isCroatian()) {
             String pluralSuffix = (count == 1) ? "" : "a";
@@ -458,14 +578,20 @@ public class WorkshopsViewController implements Initializable {
         recordCountLabel.setText(recordText);
     }
 
+    /**
+     * Configures event handlers for all interactive UI components.
+     * Sets up button click handlers for create, delete, refresh, and filter
+     * buttons with appropriate behavior and styling management.
+     */
     private void setupEventHandlers() {
         System.out.println("Setting up event handlers...");
 
+        // Main action button handlers
         createWorkshopButton.setOnAction(e -> handleCreateWorkshop());
         deleteSelectedButton.setOnAction(e -> handleDeleteSelected());
         refreshButton.setOnAction(e -> handleRefresh());
 
-        // Filter buttons
+        // Filter button handlers
         allWorkshopsButton.setOnAction(e -> handleFilterButton(allWorkshopsButton));
         activeWorkshopsButton.setOnAction(e -> handleFilterButton(activeWorkshopsButton));
         upcomingWorkshopsButton.setOnAction(e -> handleFilterButton(upcomingWorkshopsButton));
@@ -474,8 +600,15 @@ public class WorkshopsViewController implements Initializable {
         System.out.println("Event handlers setup completed");
     }
 
+    /**
+     * Handles filter button clicks and updates active filter state.
+     * Resets all filter button styles to inactive, sets clicked button to active,
+     * and triggers filter update to refresh the displayed workshop list.
+     *
+     * @param clickedButton The filter button that was clicked
+     */
     private void handleFilterButton(Button clickedButton) {
-        // Reset all button styles to inactive
+        // Reset all button styles to inactive state
         allWorkshopsButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
         activeWorkshopsButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
         upcomingWorkshopsButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
@@ -484,10 +617,15 @@ public class WorkshopsViewController implements Initializable {
         // Set clicked button to active style
         clickedButton.setStyle("-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;");
 
-        // Update the filter
+        // Update the filter to reflect new selection
         updateFilters();
     }
 
+    /**
+     * Handles creating a new workshop via dialog.
+     * Opens create workshop dialog, processes the result if successful,
+     * adds new workshop to the list, updates displays, and refreshes teacher cache.
+     */
     private void handleCreateWorkshop() {
         try {
             Stage currentStage = (Stage) createWorkshopButton.getScene().getWindow();
@@ -519,6 +657,13 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+    /**
+     * Handles editing an existing workshop via dialog.
+     * Opens edit workshop dialog with current workshop data, processes updates,
+     * refreshes table display and caches, and provides user feedback.
+     *
+     * @param workshop The Workshop to edit
+     */
     private void handleEditWorkshop(Workshop workshop) {
         try {
             Stage currentStage = (Stage) createWorkshopButton.getScene().getWindow();
@@ -544,7 +689,14 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
-    // NEW: Handle teacher management for a workshop
+    /**
+     * Handles teacher assignment management for a workshop.
+     * Shows teacher selection dialog, processes assignment changes, updates database
+     * via DAO, refreshes displays, and provides detailed user feedback with
+     * assignment change information.
+     *
+     * @param workshop The Workshop to manage teacher assignment for
+     */
     private void handleManageTeacher(Workshop workshop) {
         try {
             LanguageManager languageManager = LanguageManager.getInstance();
@@ -639,11 +791,16 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+    /**
+     * Handles deletion of selected workshops with confirmation.
+     * Identifies selected workshops, shows confirmation dialog, performs batch
+     * deletion via DAO, updates UI, and provides localized user feedback.
+     */
     private void handleDeleteSelected() {
         LanguageManager languageManager = LanguageManager.getInstance();
-        System.out.println("Delete button clicked"); // Debug
+        System.out.println("Delete button clicked");
 
-        // Debug: Print all workshops and their selection status
+        // Debug: Print workshop selection status
         System.out.println("=== Current Workshop Selection Status ===");
         for (Workshop workshop : filteredWorkshopsList) {
             System.out.println("Workshop: " + workshop.getName() + ", Selected: " + workshop.isSelected());
@@ -654,7 +811,7 @@ public class WorkshopsViewController implements Initializable {
                 .filter(Workshop::isSelected)
                 .collect(Collectors.toList());
 
-        System.out.println("Selected workshops count: " + selectedWorkshops.size()); // Debug
+        System.out.println("Selected workshops count: " + selectedWorkshops.size());
 
         if (selectedWorkshops.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -665,7 +822,7 @@ public class WorkshopsViewController implements Initializable {
             return;
         }
 
-        // Confirm deletion
+        // Show confirmation dialog
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
         confirmAlert.setTitle(languageManager.getText("workshops.delete.confirm.title"));
         confirmAlert.setHeaderText(languageManager.getText("workshops.delete.confirm.header"));
@@ -685,7 +842,7 @@ public class WorkshopsViewController implements Initializable {
                         .map(Workshop::getId)
                         .collect(Collectors.toList());
 
-                System.out.println("Attempting to delete workshop IDs: " + workshopIds); // Debug
+                System.out.println("Attempting to delete workshop IDs: " + workshopIds);
 
                 boolean success = workshopDAO.deleteWorkshops(workshopIds);
 
@@ -728,6 +885,14 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+    /**
+     * Handles opening the workshop participants management window.
+     * Loads participant management view in modal window, sets workshop context,
+     * configures window properties, and refreshes table after window closes
+     * to update participant counts.
+     *
+     * @param workshop The Workshop to manage participants for
+     */
     private void handleManageParticipants(Workshop workshop) {
         try {
             // Load the workshop participants view
@@ -747,16 +912,15 @@ public class WorkshopsViewController implements Initializable {
             participantsStage.initModality(Modality.APPLICATION_MODAL);
             participantsStage.initOwner(createWorkshopButton.getScene().getWindow());
 
-            // Set minimum size and make it resizable
+            // Set window properties
             participantsStage.setMinWidth(1000);
             participantsStage.setMinHeight(700);
             participantsStage.setMaximized(false);
 
-            // Show the stage
+            // Show the stage and wait for it to close
             participantsStage.showAndWait();
 
-            // After closing the participants window, refresh the workshops table
-            // to update participant counts in case they changed
+            // Refresh workshops table to update participant counts
             workshopsTable.refresh();
 
         } catch (Exception e) {
@@ -772,6 +936,11 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+    /**
+     * Handles refreshing all workshop data from database.
+     * Reloads workshops and teacher cache, updates displays, and shows
+     * success confirmation to user with localized messaging.
+     */
     private void handleRefresh() {
         loadWorkshops();
         loadTeacherCache(); // Also refresh teacher cache

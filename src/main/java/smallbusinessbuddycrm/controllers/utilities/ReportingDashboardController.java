@@ -25,9 +25,42 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
+/**
+ * Controller class for the main reporting dashboard that provides real-time analytics overview.
+ *
+ * This controller serves as the central hub for system-wide reporting and analytics, providing:
+ * - Real-time statistics dashboard with live data from all modules
+ * - Quick navigation to detailed reports for each system component
+ * - Multi-language support with dynamic text updates
+ * - System status monitoring and data synchronization tracking
+ * - Card-based layout for intuitive data visualization
+ *
+ * Key Features:
+ * - Real-time Metrics: Live counts for contacts, members, workshops, teachers, and lists
+ * - Active Status Tracking: Distinguishes between total records and currently active items
+ * - Navigation Hub: One-click access to detailed analytics for each module
+ * - Internationalization: Full language switching support with real-time UI updates
+ * - Error Resilience: Graceful handling of database connectivity issues
+ * - Timestamp Tracking: Shows last update time for data freshness verification
+ *
+ * Dashboard Cards:
+ * - Contacts: Total records and active members with pulse monitoring
+ * - Youth: Underaged member insights with member status tracking
+ * - Workshops: Activity tracking with total and currently active sessions
+ * - Teachers: Educator hub with total teacher count
+ * - Lists: Data manager with active list monitoring
+ * - Support: Help center access and export functionality
+ *
+ * The controller integrates with multiple DAO classes to aggregate data from across
+ * the entire system, providing a comprehensive overview of organizational metrics.
+ *
+ * @author Your Name
+ * @version 1.0
+ * @since 2024
+ */
 public class ReportingDashboardController implements Initializable {
 
-    // FXML injected labels for displaying counts
+    // FXML injected labels for displaying statistical counts
     @FXML private Label totalContacts;
     @FXML private Label activeMembers;
     @FXML private Label totalUnderaged;
@@ -38,14 +71,14 @@ public class ReportingDashboardController implements Initializable {
     @FXML private Label totalLists;
     @FXML private Label activeLists;
 
-    // FXML injected buttons for navigation
+    // FXML injected navigation buttons for accessing detailed reports
     @FXML private Button contactsReportButton;
     @FXML private Button underagedReportButton;
     @FXML private Button workshopsReportButton;
     @FXML private Button teachersReportButton;
     @FXML private Button listsReportButton;
 
-    // FXML injected labels for text content
+    // FXML injected labels for internationalized text content
     @FXML private Label analyticsOverviewTitle;
     @FXML private Label realtimeInsightsSubtitle;
     @FXML private Label contactsLabel;
@@ -79,16 +112,24 @@ public class ReportingDashboardController implements Initializable {
     @FXML private Label lastUpdatedLabel;
     @FXML private Label dataSyncLabel;
 
-    // FXML injected content area for navigation
+    // FXML injected content area for dynamic navigation
     @FXML private VBox contentArea;
 
-    // DAO instances
+    // Database Access Objects for all system modules
     private ContactDAO contactDAO;
     private UnderagedDAO underagedDAO;
     private WorkshopDAO workshopDAO;
     private TeacherDAO teacherDAO;
     private ListsDAO listsDAO;
 
+    /**
+     * Initializes the dashboard controller after FXML loading is complete.
+     * Sets up all DAO instances, loads dashboard statistics from database,
+     * updates timestamp, and configures internationalization support.
+     *
+     * @param location The location used to resolve relative paths for the root object
+     * @param resources The resources used to localize the root object
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         // Initialize DAO instances
@@ -105,6 +146,11 @@ public class ReportingDashboardController implements Initializable {
         updateTexts();
     }
 
+    /**
+     * Updates all UI text elements based on the current language settings.
+     * Called when language changes to refresh labels, buttons, and card content
+     * across all dashboard sections including header, analytics cards, and footer.
+     */
     private void updateTexts() {
         LanguageManager languageManager = LanguageManager.getInstance();
 
@@ -168,6 +214,11 @@ public class ReportingDashboardController implements Initializable {
         System.out.println("Dashboard texts updated");
     }
 
+    /**
+     * Updates the last updated timestamp label with current date and time.
+     * Formats current LocalDateTime and displays it in the dashboard footer
+     * to show when data was last refreshed.
+     */
     private void updateLastUpdatedTime() {
         if (lastUpdatedLabel != null) {
             String formattedTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
@@ -175,6 +226,11 @@ public class ReportingDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Initializes all DAO (Data Access Object) instances for database connectivity.
+     * Creates instances of ContactDAO, UnderagedDAO, WorkshopDAO, TeacherDAO, and ListsDAO.
+     * Includes error handling and logging for initialization success/failure.
+     */
     private void initializeDAOs() {
         try {
             contactDAO = new ContactDAO();
@@ -199,6 +255,11 @@ public class ReportingDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Orchestrates loading of all dashboard statistics from various data sources.
+     * Calls individual data loading methods for each module and handles overall
+     * error recovery by setting default values if any loading fails.
+     */
     private void loadDashboardData() {
         try {
             loadContactsData();
@@ -215,6 +276,11 @@ public class ReportingDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Loads and displays contact statistics including total contacts and active members.
+     * Fetches all contacts from database, counts total and active members,
+     * and updates corresponding dashboard labels. Handles null DAO and exceptions gracefully.
+     */
     private void loadContactsData() {
         try {
             if (contactDAO != null) {
@@ -241,6 +307,11 @@ public class ReportingDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Loads and displays underaged member statistics including total and active counts.
+     * Fetches all underaged members from database, counts total and member status,
+     * and updates dashboard labels. Includes error handling and fallback values.
+     */
     private void loadUnderagedData() {
         try {
             if (underagedDAO != null) {
@@ -267,6 +338,11 @@ public class ReportingDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Loads and displays workshop statistics including total and active workshop counts.
+     * Fetches all workshops and currently active workshops from database,
+     * updates dashboard labels with counts. Includes error handling and logging.
+     */
     private void loadWorkshopsData() {
         try {
             if (workshopDAO != null) {
@@ -292,6 +368,11 @@ public class ReportingDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Loads and displays teacher statistics including total teacher count.
+     * Fetches all teachers from database and updates dashboard label.
+     * Handles null DAO instances and exceptions with fallback values.
+     */
     private void loadTeachersData() {
         try {
             if (teacherDAO != null) {
@@ -312,6 +393,11 @@ public class ReportingDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Loads and displays list statistics including total and active list counts.
+     * Fetches all active lists from database, counts total and non-empty lists,
+     * and updates dashboard labels. Includes comprehensive error handling.
+     */
     private void loadListsData() {
         try {
             if (listsDAO != null) {
@@ -338,6 +424,11 @@ public class ReportingDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Sets all dashboard statistic labels to default zero values.
+     * Used as fallback when database loading fails or DAOs are unavailable.
+     * Ensures dashboard displays consistent state even during errors.
+     */
     private void setDefaultValues() {
         totalContacts.setText("0");
         activeMembers.setText("0");
@@ -350,33 +441,58 @@ public class ReportingDashboardController implements Initializable {
         activeLists.setText("0");
     }
 
+    /**
+     * Handles navigation to the contact reporting screen.
+     * Event handler for contact analytics button that loads the contacts report view.
+     */
     @FXML
     private void handleContactReportingScreen() {
         navigateTo("/views/reporting/contacts-report.fxml");
     }
 
+    /**
+     * Handles navigation to the help/support screen.
+     * Event handler for help button that loads the help documentation view.
+     */
     @FXML
     private void handleHelpReportingScreen() {
         navigateTo("/views/general/help-view.fxml");
     }
 
+    /**
+     * Handles navigation to the underaged member reporting screen.
+     * Event handler for youth analytics button that loads the underaged report view.
+     */
     @FXML
     private void handleUnderagedReportingScreen() {
         navigateTo("/views/reporting/underaged-report.fxml");
     }
 
+    /**
+     * Handles navigation to the workshop reporting screen.
+     * Event handler for workshop analytics button that loads the workshop report view.
+     */
     @FXML
     private void handleWorkshopReportingScreen() {
         navigateTo("/views/reporting/workshops-report.fxml");
     }
 
-
-
+    /**
+     * Handles navigation to the lists reporting screen.
+     * Event handler for lists analytics button that loads the lists report view.
+     */
     @FXML
     private void handleListReportingScreen() {
         navigateTo("/views/reporting/lists-report.fxml");
     }
 
+    /**
+     * Navigates to the specified FXML view by loading it into the content area.
+     * Clears current content and loads new view from the given FXML path.
+     * Includes comprehensive error handling for missing resources and load failures.
+     *
+     * @param fxmlPath The path to the FXML file to load (e.g., "/views/reporting/contacts-report.fxml")
+     */
     public void navigateTo(String fxmlPath) {
         try {
             URL resourceUrl = getClass().getResource(fxmlPath);
@@ -401,6 +517,11 @@ public class ReportingDashboardController implements Initializable {
         }
     }
 
+    /**
+     * Refreshes all dashboard data by reloading statistics from database.
+     * Public method that can be called externally to update dashboard with latest data.
+     * Updates both statistics and timestamp to reflect current state.
+     */
     public void refreshDashboard() {
         System.out.println("Refreshing dashboard data...");
         loadDashboardData();

@@ -124,6 +124,13 @@ public class BarcodeGeneratorViewController implements Initializable {
     private String currentPaymentData;
     private BufferedImage currentBarcodeImage;
 
+    /**
+     * Initializes the controller after FXML loading is complete.
+     * Sets up payment attachment templates, initial values, event handlers, and language listeners.
+     *
+     * @param location The location used to resolve relative paths for the root object
+     * @param resources The resources used to localize the root object
+     */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         System.out.println("BarcodeGeneratorViewController.initialize() called");
@@ -138,6 +145,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         updateTexts();
     }
 
+    /**
+     * Updates all UI text elements based on the current language settings.
+     * Called when language changes to refresh labels, buttons, and placeholders.
+     */
     private void updateTexts() {
         LanguageManager languageManager = LanguageManager.getInstance();
 
@@ -272,6 +283,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         System.out.println("Barcode generator view texts updated");
     }
 
+    /**
+     * Initializes database connection and loads organization data.
+     * Creates a default organization if none exists in the database.
+     */
     private void initializeDatabase() {
         try {
             organizationDAO = new OrganizationDAO();
@@ -293,7 +308,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
-    // NEW: Initialize Payment Attachment templates
+    /**
+     * Initializes payment attachment template system.
+     * Loads default template or falls back to first available template.
+     */
     private void initializePaymentAttachments() {
         try {
             paymentAttachmentDAO = new PaymentAttachmentDAO();
@@ -319,6 +337,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Creates and saves a default organization to the database.
+     * Used when no organization exists in the system.
+     */
     private void createDefaultOrganization() {
         try {
             // Create a default organization
@@ -344,6 +366,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Sets up initial form values and loads organization data into recipient fields.
+     * Sets default payment model to "HR01".
+     */
     private void setupInitialValues() {
         // Set default values
         modelField.setText("HR01");
@@ -355,6 +381,10 @@ public class BarcodeGeneratorViewController implements Initializable {
 
     }
 
+    /**
+     * Populates recipient form fields with current organization data.
+     * Includes name, address, city, and IBAN information.
+     */
     private void loadOrganizationData() {
         if (currentOrganization != null) {
             // Populate recipient fields with organization data
@@ -375,6 +405,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Configures all UI event handlers for buttons and form interactions.
+     * Sets up currency formatting and double-click refresh functionality.
+     */
     private void setupEventHandlers() {
         System.out.println("Setting up event handlers...");
 
@@ -403,6 +437,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         System.out.println("Event handlers setup completed");
     }
 
+    /**
+     * Configures real-time Croatian currency formatting for the amount field.
+     * Formats input as 1.234,56 EUR and handles keyboard events.
+     */
     private void setupCurrencyFormatting() {
         // Add listener to format amount as currency while typing
         amountField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -457,6 +495,13 @@ public class BarcodeGeneratorViewController implements Initializable {
         });
     }
 
+    /**
+     * Formats a numeric string as Croatian currency.
+     * Converts digits to format: 1.234,56 with thousand separators.
+     *
+     * @param digitsOnly String containing only numeric digits
+     * @return Formatted currency string in Croatian format
+     */
     private String formatCurrency(String digitsOnly) {
         if (digitsOnly == null || digitsOnly.isEmpty()) {
             return "";
@@ -496,6 +541,12 @@ public class BarcodeGeneratorViewController implements Initializable {
         return euros + "," + cents;
     }
 
+    /**
+     * Converts display currency format back to cents for HUB-3 encoding.
+     * Extracts numeric digits from formatted display text.
+     *
+     * @return String representing amount in cents for HUB-3 standard
+     */
     private String getCurrencyValueForHUB3() {
         // Convert display format back to cents for HUB-3 encoding
         String displayText = amountField.getText();
@@ -514,7 +565,10 @@ public class BarcodeGeneratorViewController implements Initializable {
     }
 
 
-
+    /**
+     * Handles the main barcode generation process.
+     * Validates form data, generates HUB-3 string, creates PDF417 barcode, and displays result.
+     */
     private void handleGenerateBarcode() {
         try {
             System.out.println("Generate barcode clicked");
@@ -545,6 +599,12 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Validates required form fields before barcode generation.
+     * Checks for payer name, recipient name, amount, and IBAN.
+     *
+     * @return true if all required fields are filled, false otherwise
+     */
     private boolean validateFields() {
         LanguageManager languageManager = LanguageManager.getInstance();
         StringBuilder errors = new StringBuilder();
@@ -572,6 +632,12 @@ public class BarcodeGeneratorViewController implements Initializable {
         return true;
     }
 
+    /**
+     * Generates HUB-3 standard payment data string.
+     * Creates 14-line format with fixed EUR currency and HRVHUB30 bank code.
+     *
+     * @return HUB-3 formatted payment data string
+     */
     private String generateHUB3Data() {
         // Generate HUB-3 format data string with fixed bank code and EUR currency
         StringBuilder hub3Data = new StringBuilder();
@@ -632,6 +698,11 @@ public class BarcodeGeneratorViewController implements Initializable {
         return hub3Data.toString();
     }
 
+    /**
+     * Generates PDF417 barcode image from current payment data.
+     *
+     * @throws WriterException if barcode generation fails
+     */
     private void generateBarcodeImage() throws WriterException {
         try {
             // Generate PDF417 barcode
@@ -645,6 +716,13 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Creates PDF417 barcode using ZXing library.
+     * Configured for HUB-3 standard with proper dimensions and error correction.
+     *
+     * @return BufferedImage containing the generated PDF417 barcode
+     * @throws WriterException if barcode encoding fails
+     */
     private BufferedImage generatePDF417Barcode() throws WriterException {
         PDF417Writer writer = new PDF417Writer();
 
@@ -666,6 +744,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         return MatrixToImageWriter.toBufferedImage(bitMatrix);
     }
 
+    /**
+     * Displays generated barcode in Croatian uplatnica template format.
+     * Creates WebView with full payment slip layout and embedded barcode.
+     */
     private void showGeneratedBarcode() {
         try {
             // Generate the full Croatian uplatnica template
@@ -705,7 +787,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
-    // UPDATED: Handle Save Payment Slip with Template Selection
+    /**
+     * Handles saving complete payment slip with template selection.
+     * Shows template selection dialog and exports as PDF or HTML.
+     */
     private void handleSavePaymentSlip() {
         if (currentBarcodeImage == null || currentPaymentData == null) {
             showAlert("No Payment Data", "Please generate a barcode first.", Alert.AlertType.WARNING);
@@ -757,7 +842,11 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
-    // NEW: Show template selection dialog
+    /**
+     * Shows dialog for selecting payment attachment template.
+     *
+     * @return Selected PaymentAttachment template or null if cancelled
+     */
     private PaymentAttachment showTemplateSelectionDialog() {
         try {
             List<PaymentAttachment> templates = paymentAttachmentDAO.findAll();
@@ -793,6 +882,13 @@ public class BarcodeGeneratorViewController implements Initializable {
         return null; // User cancelled or error occurred
     }
 
+    /**
+     * Saves payment slip as PDF using selected template.
+     *
+     * @param file Output file for PDF
+     * @param template PaymentAttachment template to use
+     * @throws Exception if PDF generation fails
+     */
     private void savePaymentSlipAsPDF(File file, PaymentAttachment template) throws Exception {
         // Create HTML content using selected template
         String htmlContent = generatePaymentSlipHTML(template);
@@ -803,6 +899,13 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Saves payment slip as HTML using selected template.
+     *
+     * @param file Output file for HTML
+     * @param template PaymentAttachment template to use
+     * @throws Exception if HTML generation fails
+     */
     private void savePaymentSlipAsHTML(File file, PaymentAttachment template) throws Exception {
         String htmlContent = generatePaymentSlipHTML(template);
 
@@ -811,7 +914,13 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
-    // UPDATED: Generate HTML using selected template
+    /**
+     * Generates HTML content using selected payment attachment template.
+     *
+     * @param template PaymentAttachment template for processing
+     * @return Processed HTML content with variables replaced
+     * @throws Exception if template processing fails
+     */
     private String generatePaymentSlipHTML(PaymentAttachment template) throws Exception {
         // Convert barcode image to base64 for embedding
         String barcodeBase64 = encodeImageToBase64(currentBarcodeImage);
@@ -824,6 +933,13 @@ public class BarcodeGeneratorViewController implements Initializable {
     }
 
 
+    /**
+     * Creates variable map for template processing.
+     * Maps all form field values and system data to template variables.
+     *
+     * @param barcodeBase64 Base64-encoded barcode image
+     * @return Map of template variables and their values
+     */
     private Map<String, String> createVariableMap(String barcodeBase64) {
         Map<String, String> variables = new HashMap<>();
 
@@ -858,7 +974,12 @@ public class BarcodeGeneratorViewController implements Initializable {
         return variables;
     }
 
-    // NEW: Get the Croatian Uplatnica template HTML
+    /**
+     * Returns hardcoded Croatian uplatnica HTML template.
+     * Complete HTML template with CSS styling for official Croatian payment slip format.
+     *
+     * @return HTML template string with variable placeholders
+     */
     private String getCroatianUplatnicaTemplate() {
         return """
 <!DOCTYPE html>
@@ -1142,7 +1263,14 @@ public class BarcodeGeneratorViewController implements Initializable {
     }
 
 
-    // NEW: Process template by replacing variables
+    /**
+     * Processes HTML template by replacing variable placeholders.
+     * Replaces all {{VARIABLE_NAME}} placeholders with actual values.
+     *
+     * @param htmlTemplate HTML template with variable placeholders
+     * @param variables Map of variable names and values
+     * @return Processed HTML with variables replaced
+     */
     private String processTemplate(String htmlTemplate, Map<String, String> variables) {
         String processed = htmlTemplate;
 
@@ -1156,7 +1284,13 @@ public class BarcodeGeneratorViewController implements Initializable {
         return processed;
     }
 
-    // Keep the old method for backward compatibility (fallback to default template)
+    /**
+     * Generates HTML using default fallback template.
+     * Used when no payment attachment template is available.
+     *
+     * @return HTML content using hardcoded template
+     * @throws Exception if HTML generation fails
+     */
     private String generatePaymentSlipHTML() throws Exception {
         if (selectedTemplate == null) {
             // Fallback to hardcoded template if no template selected
@@ -1165,7 +1299,13 @@ public class BarcodeGeneratorViewController implements Initializable {
         return generatePaymentSlipHTML(selectedTemplate);
     }
 
-    // Fallback HTML generation (your original method)
+    /**
+     * Creates basic HTML without template system.
+     * Fallback method for backward compatibility.
+     *
+     * @return Basic HTML payment slip
+     * @throws Exception if HTML generation fails
+     */
     private String generateFallbackHTML() throws Exception {
         String barcodeBase64 = encodeImageToBase64(currentBarcodeImage);
         String currentDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
@@ -1362,6 +1502,14 @@ public class BarcodeGeneratorViewController implements Initializable {
         );
     }
 
+    /**
+     * Converts BufferedImage to Base64 encoded string.
+     * Used for embedding images in HTML templates.
+     *
+     * @param image BufferedImage to encode
+     * @return Base64 encoded image string
+     * @throws Exception if image encoding fails
+     */
     private String encodeImageToBase64(BufferedImage image) throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(image, "png", baos);
@@ -1369,6 +1517,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         return Base64.getEncoder().encodeToString(imageBytes);
     }
 
+    /**
+     * Handles loading payment template from Properties file.
+     * Opens file chooser and populates form fields with template data.
+     */
     private void handleLoadTemplate() {
         try {
             FileChooser fileChooser = new FileChooser();
@@ -1429,6 +1581,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Handles saving current form data as Properties template file.
+     * Opens file chooser and saves all form field values.
+     */
     private void handleSaveTemplate() {
         try {
             FileChooser fileChooser = new FileChooser();
@@ -1476,6 +1632,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Clears all form fields except recipient information.
+     * Keeps organization data and reloads default values.
+     */
     private void handleClearAll() {
         // Clear all fields
         amountField.clear();
@@ -1484,12 +1644,6 @@ public class BarcodeGeneratorViewController implements Initializable {
         payerNameField.clear();
         payerAddressField.clear();
         payerCityField.clear();
-
-        // Don't clear recipient fields - they should keep organization data
-        // recipientNameField.clear();
-        // recipientAddressField.clear();
-        // recipientCityField.clear();
-        // ibanField.clear();
 
         modelField.clear();
         purposeCodeField.clear();
@@ -1507,6 +1661,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         showSuccess("All fields cleared! (Recipient info kept from organization)");
     }
 
+    /**
+     * Handles saving barcode image as PNG or JPEG file.
+     * Opens file chooser for image export.
+     */
     private void handleSaveBarcode() {
         if (currentBarcodeImage == null) {
             LanguageManager languageManager = LanguageManager.getInstance();
@@ -1544,6 +1702,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Placeholder method for print functionality.
+     * Shows information dialog about future implementation.
+     */
     private void handlePrintBarcode() {
         Alert info = new Alert(Alert.AlertType.INFORMATION);
         info.setTitle("Print");
@@ -1552,6 +1714,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         info.showAndWait();
     }
 
+    /**
+     * Copies HUB-3 payment data string to system clipboard.
+     * Allows users to paste payment data elsewhere.
+     */
     private void handleCopyData() {
         if (currentPaymentData != null) {
             // Copy to system clipboard
@@ -1569,6 +1735,13 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Displays alert dialog with specified title, message, and type.
+     *
+     * @param title Dialog title
+     * @param message Dialog message
+     * @param type Alert type (ERROR, WARNING, INFORMATION)
+     */
     private void showAlert(String title, String message, Alert.AlertType type) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
@@ -1577,6 +1750,12 @@ public class BarcodeGeneratorViewController implements Initializable {
         alert.showAndWait();
     }
 
+    /**
+     * Shows auto-closing success notification.
+     * Dialog automatically closes after 2 seconds.
+     *
+     * @param message Success message to display
+     */
     private void showSuccess(String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Success");
@@ -1591,7 +1770,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         timeline.play();
     }
 
-    // Method to refresh organization data from database
+    /**
+     * Refreshes organization data from database.
+     * Reloads current organization and updates recipient fields.
+     */
     private void refreshOrganizationData() {
         try {
             if (organizationDAO != null) {
@@ -1616,7 +1798,12 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
-    // Method to get organization display info (for debugging/info purposes)
+    /**
+     * Returns formatted organization information string.
+     * Used for debugging and information display.
+     *
+     * @return Formatted organization details
+     */
     public String getOrganizationInfo() {
         if (currentOrganization != null) {
             return String.format("Organization: %s | IBAN: %s | Address: %s",
@@ -1627,17 +1814,28 @@ public class BarcodeGeneratorViewController implements Initializable {
         return "No organization loaded";
     }
 
-    // NEW: Public method to refresh payment attachment templates
+    /**
+     * Refreshes payment attachment templates from database.
+     * Public method for external calls to reload templates.
+     */
     public void refreshPaymentTemplates() {
         initializePaymentAttachments();
     }
 
-    // NEW: Public method to get current selected template
+    /**
+     * Returns currently selected payment attachment template.
+     *
+     * @return Current PaymentAttachment template
+     */
     public PaymentAttachment getCurrentTemplate() {
         return selectedTemplate;
     }
 
-    // NEW: Public method to set template (for external calls)
+    /**
+     * Sets the active payment attachment template.
+     *
+     * @param template PaymentAttachment template to set as active
+     */
     public void setTemplate(PaymentAttachment template) {
         if (template != null) {
             this.selectedTemplate = template;
@@ -1645,6 +1843,12 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Loads and encodes Croatian uplatnica background image to Base64.
+     * Loads image from resources and converts for HTML embedding.
+     *
+     * @return Base64 encoded background image string
+     */
     private String getUplatnicaBackgroundBase64() {
         try {
             // Load the image from resources
@@ -1674,11 +1878,14 @@ public class BarcodeGeneratorViewController implements Initializable {
         }
     }
 
+    /**
+     * Displays HTML content in WebView component.
+     * Creates and configures WebView for template display.
+     *
+     * @param htmlContent HTML content to display
+     */
     private void showFullTemplateInWebView(String htmlContent) {
-        // Option 1: If you have a WebView in your FXML
-        // webView.getEngine().loadContent(htmlContent);
 
-        // Option 2: Create WebView programmatically and replace the ImageView
         javafx.scene.web.WebView webView = new javafx.scene.web.WebView();
         webView.setPrefSize(950, 400);
         webView.getEngine().loadContent(htmlContent);
@@ -1688,7 +1895,10 @@ public class BarcodeGeneratorViewController implements Initializable {
         paymentSlipContainer.getChildren().add(webView);
     }
 
-    // Fallback method (your original display)
+    /**
+     * Fallback method to display barcode in simple ImageView format.
+     * Used when WebView template display fails.
+     */
     private void showOriginalBarcodeDisplay() {
         // Hide placeholder
         placeholderContent.setVisible(false);
