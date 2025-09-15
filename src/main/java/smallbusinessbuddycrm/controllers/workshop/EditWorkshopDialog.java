@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+<<<<<<< HEAD
 /**
  * Modal dialog class for editing existing workshops with comprehensive internationalization support.
  *
@@ -72,11 +73,16 @@ import java.util.List;
 public class EditWorkshopDialog {
 
     // Dialog Management
+=======
+public class EditWorkshopDialog {
+
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private Stage dialogStage;
     private Workshop workshop;
     private boolean okClicked = false;
     private LanguageManager languageManager;
 
+<<<<<<< HEAD
     // Form Controls
     private TextField nameField;
     private DatePicker fromDatePicker;
@@ -84,11 +90,24 @@ public class EditWorkshopDialog {
     private ComboBox<Teacher> teacherComboBox;
 
     // Validation Error Labels
+=======
+    // Workshop form fields - matching your current Workshop model
+    private TextField nameField;
+    private DatePicker fromDatePicker;
+    private DatePicker toDatePicker;
+    private ComboBox<Teacher> teacherComboBox; // NEW: Teacher selection
+
+    // Error labels for validation
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private Label nameErrorLabel;
     private Label fromDateErrorLabel;
     private Label toDateErrorLabel;
 
+<<<<<<< HEAD
     // UI Labels for Internationalization
+=======
+    // UI Labels that need to be updated on language change
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private Label titleLabel;
     private Label sectionTitleLabel;
     private Label nameLabel;
@@ -99,6 +118,7 @@ public class EditWorkshopDialog {
     private Button cancelButton;
     private Button updateButton;
 
+<<<<<<< HEAD
     // Database Access Objects
     private TeacherDAO teacherDAO = new TeacherDAO();
 
@@ -110,6 +130,11 @@ public class EditWorkshopDialog {
      * @param parentStage The parent stage that owns this dialog
      * @param workshop The Workshop object to edit
      */
+=======
+    // DAOs
+    private TeacherDAO teacherDAO = new TeacherDAO();
+
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     public EditWorkshopDialog(Stage parentStage, Workshop workshop) {
         this.workshop = workshop;
         this.languageManager = LanguageManager.getInstance();
@@ -119,11 +144,16 @@ public class EditWorkshopDialog {
         loadTeachers();
         populateFields();
 
+<<<<<<< HEAD
         // Set up internationalization support
+=======
+        // Add language change listener
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         languageManager.addLanguageChangeListener(this::updateTexts);
         updateTexts();
     }
 
+<<<<<<< HEAD
     /**
      * Updates all UI text elements based on the current language settings.
      * Called when language changes to refresh dialog title, labels, buttons,
@@ -132,6 +162,10 @@ public class EditWorkshopDialog {
      */
     private void updateTexts() {
         // Update dialog window title
+=======
+    private void updateTexts() {
+        // Update dialog title
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (dialogStage != null) {
             dialogStage.setTitle(languageManager.getText("workshop.edit.dialog.title"));
         }
@@ -146,42 +180,66 @@ public class EditWorkshopDialog {
             sectionTitleLabel.setText(languageManager.getText("workshop.edit.section.title"));
         }
 
+<<<<<<< HEAD
         // Update field labels with localized text
+=======
+        // Update field labels
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (nameLabel != null) nameLabel.setText(languageManager.getText("workshop.field.name"));
         if (fromDateLabel != null) fromDateLabel.setText(languageManager.getText("workshop.field.from.date"));
         if (toDateLabel != null) toDateLabel.setText(languageManager.getText("workshop.field.to.date"));
         if (teacherLabel != null) teacherLabel.setText(languageManager.getText("workshop.field.teacher"));
 
+<<<<<<< HEAD
         // Update field placeholder text
         if (nameField != null) nameField.setPromptText(languageManager.getText("workshop.prompt.name"));
         if (teacherComboBox != null) teacherComboBox.setPromptText(languageManager.getText("workshop.prompt.teacher"));
 
         // Update teacher assignment note
+=======
+        // Update field prompts
+        if (nameField != null) nameField.setPromptText(languageManager.getText("workshop.prompt.name"));
+        if (teacherComboBox != null) teacherComboBox.setPromptText(languageManager.getText("workshop.prompt.teacher"));
+
+        // Update teacher note
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (teacherNoteLabel != null) {
             teacherNoteLabel.setText(languageManager.getText("workshop.teacher.note"));
         }
 
+<<<<<<< HEAD
         // Update action buttons
         if (cancelButton != null) cancelButton.setText(languageManager.getText("workshop.button.cancel"));
         if (updateButton != null) updateButton.setText(languageManager.getText("workshop.button.update"));
 
         // Update teacher combo box converter for localized display
+=======
+        // Update buttons
+        if (cancelButton != null) cancelButton.setText(languageManager.getText("workshop.button.cancel"));
+        if (updateButton != null) updateButton.setText(languageManager.getText("workshop.button.update"));
+
+        // Update teacher combobox display
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (teacherComboBox != null) {
             updateTeacherComboBoxConverter();
         }
     }
 
+<<<<<<< HEAD
     /**
      * Creates and configures the main dialog stage with internationalized content.
      * Sets up the modal dialog window, creates the layout structure with
      * title, form section, and buttons. Configures stage properties and scene.
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void createDialogStage() {
         dialogStage = new Stage();
         dialogStage.setTitle(languageManager.getText("workshop.edit.dialog.title"));
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.setResizable(false);
 
+<<<<<<< HEAD
         // Create the main layout structure
         VBox mainLayout = new VBox(20);
         mainLayout.setPadding(new Insets(20));
@@ -194,10 +252,25 @@ public class EditWorkshopDialog {
         VBox workshopSection = createWorkshopSection();
 
         // Action buttons
+=======
+        // Create the main layout
+        VBox mainLayout = new VBox(20);
+        mainLayout.setPadding(new Insets(20));
+
+        // Title
+        titleLabel = new Label(languageManager.getText("workshop.edit.dialog.title"));
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #0099cc;");
+
+        // Workshop form
+        VBox workshopSection = createWorkshopSection();
+
+        // Buttons
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         HBox buttonBox = createButtonBox();
 
         mainLayout.getChildren().addAll(titleLabel, workshopSection, buttonBox);
 
+<<<<<<< HEAD
         Scene scene = new Scene(mainLayout, 500, 500);
         dialogStage.setScene(scene);
     }
@@ -209,6 +282,12 @@ public class EditWorkshopDialog {
      *
      * @return VBox containing the complete workshop form section
      */
+=======
+        Scene scene = new Scene(mainLayout, 500, 500); // Made bigger for teacher field
+        dialogStage.setScene(scene);
+    }
+
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private VBox createWorkshopSection() {
         VBox section = new VBox(15);
 
@@ -221,7 +300,11 @@ public class EditWorkshopDialog {
 
         int row = 0;
 
+<<<<<<< HEAD
         // Workshop Name Field
+=======
+        // Workshop Name
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         nameLabel = new Label(languageManager.getText("workshop.field.name"));
         grid.add(nameLabel, 0, row);
         nameField = new TextField();
@@ -229,56 +312,92 @@ public class EditWorkshopDialog {
         nameField.setPromptText(languageManager.getText("workshop.prompt.name"));
         grid.add(nameField, 1, row++);
 
+<<<<<<< HEAD
         // Name validation error label
+=======
+        // Name error label
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         nameErrorLabel = new Label();
         nameErrorLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 10px;");
         nameErrorLabel.setVisible(false);
         grid.add(nameErrorLabel, 1, row++);
 
+<<<<<<< HEAD
         // From Date Field
+=======
+        // From Date
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         fromDateLabel = new Label(languageManager.getText("workshop.field.from.date"));
         grid.add(fromDateLabel, 0, row);
         fromDatePicker = new DatePicker();
         fromDatePicker.setPrefWidth(130);
         grid.add(fromDatePicker, 1, row++);
 
+<<<<<<< HEAD
         // From date validation error label
+=======
+        // From date error label
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         fromDateErrorLabel = new Label();
         fromDateErrorLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 10px;");
         fromDateErrorLabel.setVisible(false);
         grid.add(fromDateErrorLabel, 1, row++);
 
+<<<<<<< HEAD
         // To Date Field
+=======
+        // To Date
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         toDateLabel = new Label(languageManager.getText("workshop.field.to.date"));
         grid.add(toDateLabel, 0, row);
         toDatePicker = new DatePicker();
         toDatePicker.setPrefWidth(130);
         grid.add(toDatePicker, 1, row++);
 
+<<<<<<< HEAD
         // To date validation error label
+=======
+        // To date error label
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         toDateErrorLabel = new Label();
         toDateErrorLabel.setStyle("-fx-text-fill: #dc3545; -fx-font-size: 10px;");
         toDateErrorLabel.setVisible(false);
         grid.add(toDateErrorLabel, 1, row++);
 
+<<<<<<< HEAD
         // Teacher Selection Field
+=======
+        // NEW: Teacher Selection
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         teacherLabel = new Label(languageManager.getText("workshop.field.teacher"));
         grid.add(teacherLabel, 0, row);
         teacherComboBox = new ComboBox<>();
         teacherComboBox.setPrefWidth(280);
         teacherComboBox.setPromptText(languageManager.getText("workshop.prompt.teacher"));
 
+<<<<<<< HEAD
         // Set up teacher combo box converter (will be updated by updateTexts())
+=======
+        // Custom string converter for teacher display - will be updated by updateTexts()
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         updateTeacherComboBoxConverter();
 
         grid.add(teacherComboBox, 1, row++);
 
+<<<<<<< HEAD
         // Teacher assignment note
+=======
+        // Add a note about teacher assignment
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         teacherNoteLabel = new Label(languageManager.getText("workshop.teacher.note"));
         teacherNoteLabel.setStyle("-fx-text-fill: #6c757d; -fx-font-size: 10px;");
         grid.add(teacherNoteLabel, 1, row++);
 
+<<<<<<< HEAD
         // Set up real-time validation listeners
+=======
+        // Add date validation listeners
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         fromDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null && toDatePicker.getValue() != null && newVal.isAfter(toDatePicker.getValue())) {
                 toDatePicker.setValue(newVal);
@@ -287,17 +406,25 @@ public class EditWorkshopDialog {
         });
 
         toDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> validateForm());
+<<<<<<< HEAD
+=======
+
+        // Real-time validation for name
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         nameField.textProperty().addListener((obs, oldVal, newVal) -> validateForm());
 
         section.getChildren().addAll(sectionTitleLabel, grid);
         return section;
     }
 
+<<<<<<< HEAD
     /**
      * Updates the teacher combo box string converter with localized text.
      * Refreshes the display converter to show proper teacher names and
      * localized "No Teacher" option based on current language settings.
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void updateTeacherComboBoxConverter() {
         if (teacherComboBox != null) {
             teacherComboBox.setConverter(new javafx.util.StringConverter<Teacher>() {
@@ -320,17 +447,25 @@ public class EditWorkshopDialog {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Loads all available teachers from database for teacher selection.
      * Fetches teachers via TeacherDAO, adds localized "No Teacher" option,
      * and populates the teacher combo box. Handles loading errors gracefully
      * with fallback to "No Teacher" option only.
      */
+=======
+    // NEW: Load teachers for selection
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void loadTeachers() {
         try {
             List<Teacher> teachers = teacherDAO.getAllTeachers();
 
+<<<<<<< HEAD
             // Create localized "No Teacher" option
+=======
+            // Add "No Teacher" option
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
             Teacher noTeacher = new Teacher();
             noTeacher.setId(-1);
             noTeacher.setFirstName(languageManager.getText("workshop.teacher.none.first"));
@@ -354,19 +489,26 @@ public class EditWorkshopDialog {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Populates form fields with data from the workshop being edited.
      * Sets name, date range, and current teacher assignment in form fields.
      * Handles teacher assignment by finding and selecting the current teacher
      * or defaulting to "No Teacher" if none assigned or teacher not found.
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void populateFields() {
         if (workshop != null) {
             nameField.setText(workshop.getName() != null ? workshop.getName() : "");
             fromDatePicker.setValue(workshop.getFromDate());
             toDatePicker.setValue(workshop.getToDate());
 
+<<<<<<< HEAD
             // Set current teacher selection
+=======
+            // NEW: Set current teacher selection
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
             if (workshop.hasTeacher()) {
                 try {
                     Teacher currentTeacher = teacherDAO.getTeacherById(workshop.getTeacherId());
@@ -380,7 +522,11 @@ public class EditWorkshopDialog {
                         }
                     } else {
                         // Teacher not found, select "No Teacher"
+<<<<<<< HEAD
                         teacherComboBox.setValue(teacherComboBox.getItems().get(0));
+=======
+                        teacherComboBox.setValue(teacherComboBox.getItems().get(0)); // "No Teacher" is first
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
                     }
                 } catch (Exception e) {
                     System.err.println("Error loading current teacher: " + e.getMessage());
@@ -388,11 +534,16 @@ public class EditWorkshopDialog {
                 }
             } else {
                 // No teacher assigned, select "No Teacher"
+<<<<<<< HEAD
                 teacherComboBox.setValue(teacherComboBox.getItems().get(0));
+=======
+                teacherComboBox.setValue(teacherComboBox.getItems().get(0)); // "No Teacher" is first
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
             }
         }
     }
 
+<<<<<<< HEAD
     /**
      * Creates the button box containing Cancel and Update action buttons.
      * Configures localized button text, styling, event handlers, and layout
@@ -400,6 +551,8 @@ public class EditWorkshopDialog {
      *
      * @return HBox containing the Cancel and Update buttons
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private HBox createButtonBox() {
         HBox buttonBox = new HBox(10);
         buttonBox.setStyle("-fx-alignment: center-right;");
@@ -417,6 +570,7 @@ public class EditWorkshopDialog {
         return buttonBox;
     }
 
+<<<<<<< HEAD
     /**
      * Validates the entire form and updates UI feedback accordingly.
      * Checks required fields, date range validity using localized error messages.
@@ -424,6 +578,8 @@ public class EditWorkshopDialog {
      *
      * @return true if all form fields are valid, false otherwise
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private boolean validateForm() {
         boolean isValid = true;
 
@@ -432,14 +588,22 @@ public class EditWorkshopDialog {
         fromDateErrorLabel.setVisible(false);
         toDateErrorLabel.setVisible(false);
 
+<<<<<<< HEAD
         // Validate workshop name
+=======
+        // Validate name
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (nameField.getText().trim().isEmpty()) {
             nameErrorLabel.setText(languageManager.getText("workshop.validation.name.required"));
             nameErrorLabel.setVisible(true);
             isValid = false;
         }
 
+<<<<<<< HEAD
         // Validate date fields
+=======
+        // Validate dates
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         LocalDate fromDate = fromDatePicker.getValue();
         LocalDate toDate = toDatePicker.getValue();
 
@@ -464,6 +628,7 @@ public class EditWorkshopDialog {
         return isValid;
     }
 
+<<<<<<< HEAD
     /**
      * Handles the Update button click event and workshop update process.
      * Validates input, updates workshop object, saves to database via DAO,
@@ -474,6 +639,12 @@ public class EditWorkshopDialog {
         if (validateInput()) {
             try {
                 // Store original teacher for change tracking
+=======
+    private void handleUpdate() {
+        if (validateInput()) {
+            try {
+                // Store original teacher for comparison
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
                 Integer originalTeacherId = workshop.getTeacherId();
 
                 updateWorkshopFromInput();
@@ -485,7 +656,11 @@ public class EditWorkshopDialog {
                     okClicked = true;
                     dialogStage.close();
 
+<<<<<<< HEAD
                     // Create success message with teacher change information
+=======
+                    // Show success message with teacher change info
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
                     String successMessage = languageManager.getText("workshop.success.updated")
                             .replace("{0}", workshop.getName());
 
@@ -526,6 +701,7 @@ public class EditWorkshopDialog {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Performs comprehensive input validation before saving with localized messages.
      * Validates required fields and business rules, collects all validation
@@ -533,6 +709,8 @@ public class EditWorkshopDialog {
      *
      * @return true if all input is valid and ready for saving, false otherwise
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private boolean validateInput() {
         StringBuilder errors = new StringBuilder();
 
@@ -567,19 +745,26 @@ public class EditWorkshopDialog {
         return true;
     }
 
+<<<<<<< HEAD
     /**
      * Updates the workshop object with current form input values.
      * Extracts data from all form fields, handles teacher assignment changes,
      * sets update timestamp, and prepares the workshop for database persistence.
      * Logs teacher assignment changes for debugging purposes.
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void updateWorkshopFromInput() {
         // Update the existing workshop object with form data
         workshop.setName(nameField.getText().trim());
         workshop.setFromDate(fromDatePicker.getValue());
         workshop.setToDate(toDatePicker.getValue());
 
+<<<<<<< HEAD
         // Handle teacher assignment changes
+=======
+        // NEW: Update teacher assignment
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         Teacher selectedTeacher = teacherComboBox.getValue();
         if (selectedTeacher != null && selectedTeacher.getId() != -1) {
             workshop.setTeacherId(selectedTeacher.getId());
@@ -589,6 +774,7 @@ public class EditWorkshopDialog {
             System.out.println("Teacher assignment removed");
         }
 
+<<<<<<< HEAD
         // Update the modification timestamp
         workshop.setUpdatedAt(LocalDateTime.now().toString());
     }
@@ -600,6 +786,12 @@ public class EditWorkshopDialog {
      *
      * @param message The error message to display to the user
      */
+=======
+        // Update the timestamp
+        workshop.setUpdatedAt(LocalDateTime.now().toString());
+    }
+
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void showErrorAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(languageManager.getText("workshop.alert.error.title"));
@@ -608,6 +800,7 @@ public class EditWorkshopDialog {
         alert.showAndWait();
     }
 
+<<<<<<< HEAD
     /**
      * Shows the dialog and waits for user interaction.
      * Displays the modal dialog window and blocks until the user
@@ -615,6 +808,8 @@ public class EditWorkshopDialog {
      *
      * @return true if user clicked Update and workshop was saved, false if cancelled
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     public boolean showAndWait() {
         dialogStage.showAndWait();
         return okClicked;

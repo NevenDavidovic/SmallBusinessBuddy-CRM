@@ -27,6 +27,7 @@ import javafx.scene.Scene;
 import javafx.stage.Modality;
 import smallbusinessbuddycrm.utilities.LanguageManager;
 
+<<<<<<< HEAD
 /**
  * Controller class for comprehensive workshop management with advanced table interface.
  *
@@ -98,6 +99,10 @@ import smallbusinessbuddycrm.utilities.LanguageManager;
 public class WorkshopsViewController implements Initializable {
 
     // Table View and Columns
+=======
+public class WorkshopsViewController implements Initializable {
+
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     @FXML private TableView<Workshop> workshopsTable;
     @FXML private TableColumn<Workshop, Boolean> selectColumn;
     @FXML private TableColumn<Workshop, Void> editColumn;
@@ -106,10 +111,17 @@ public class WorkshopsViewController implements Initializable {
     @FXML private TableColumn<Workshop, String> toDateColumn;
     @FXML private TableColumn<Workshop, String> durationColumn;
     @FXML private TableColumn<Workshop, String> statusColumn;
+<<<<<<< HEAD
     @FXML private TableColumn<Workshop, String> teacherColumn;
     @FXML private TableColumn<Workshop, String> participantCountColumn;
     @FXML private TableColumn<Workshop, Void> manageParticipantsColumn;
     @FXML private TableColumn<Workshop, Void> manageTeacherColumn;
+=======
+    @FXML private TableColumn<Workshop, String> teacherColumn; // NEW: Teacher column
+    @FXML private TableColumn<Workshop, String> participantCountColumn;
+    @FXML private TableColumn<Workshop, Void> manageParticipantsColumn;
+    @FXML private TableColumn<Workshop, Void> manageTeacherColumn; // NEW: Manage teacher column
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     @FXML private TableColumn<Workshop, String> createdAtColumn;
 
     // UI Controls
@@ -124,6 +136,7 @@ public class WorkshopsViewController implements Initializable {
     @FXML private Label recordCountLabel;
     @FXML private Label workshopsPageTitle;
 
+<<<<<<< HEAD
     // Data Collections
     private ObservableList<Workshop> allWorkshopsList = FXCollections.observableArrayList();
     private FilteredList<Workshop> filteredWorkshopsList;
@@ -146,6 +159,23 @@ public class WorkshopsViewController implements Initializable {
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+=======
+    // Data lists
+    private ObservableList<Workshop> allWorkshopsList = FXCollections.observableArrayList();
+    private FilteredList<Workshop> filteredWorkshopsList;
+
+    // DAOs
+    private WorkshopDAO workshopDAO = new WorkshopDAO();
+    private WorkshopParticipantDAO participantDAO = new WorkshopParticipantDAO();
+    private TeacherDAO teacherDAO = new TeacherDAO(); // NEW: Teacher DAO
+
+    // Cache for teacher names
+    private Map<Integer, String> teacherNamesCache;
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         loadTeacherCache();
         setupTable();
         setupSearchAndFilters();
@@ -153,6 +183,7 @@ public class WorkshopsViewController implements Initializable {
         setupEventHandlers();
         LanguageManager.getInstance().addLanguageChangeListener(this::updateTexts);
         updateTexts();
+<<<<<<< HEAD
     }
 
     /**
@@ -165,11 +196,24 @@ public class WorkshopsViewController implements Initializable {
         LanguageManager languageManager = LanguageManager.getInstance();
 
         // Update page title
+=======
+
+    }
+
+    private void updateTexts() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+
+        // Page title
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (workshopsPageTitle != null) {
             workshopsPageTitle.setText(languageManager.getText("workshops.page.title"));
         }
 
+<<<<<<< HEAD
         // Update action buttons
+=======
+        // Buttons
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (deleteSelectedButton != null) {
             deleteSelectedButton.setText(languageManager.getText("workshops.delete.selected"));
         }
@@ -180,7 +224,11 @@ public class WorkshopsViewController implements Initializable {
             refreshButton.setText(languageManager.getText("workshops.refresh"));
         }
 
+<<<<<<< HEAD
         // Update filter buttons
+=======
+        // Filter buttons
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (allWorkshopsButton != null) {
             allWorkshopsButton.setText(languageManager.getText("workshops.all.workshops"));
         }
@@ -194,12 +242,20 @@ public class WorkshopsViewController implements Initializable {
             pastWorkshopsButton.setText(languageManager.getText("workshops.past"));
         }
 
+<<<<<<< HEAD
         // Update search field placeholder
+=======
+        // Search field
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (searchField != null) {
             searchField.setPromptText(languageManager.getText("workshops.search.placeholder"));
         }
 
+<<<<<<< HEAD
         // Update table column headers
+=======
+        // Table columns
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (editColumn != null) {
             editColumn.setText(languageManager.getText("workshops.column.edit"));
         }
@@ -234,27 +290,44 @@ public class WorkshopsViewController implements Initializable {
             createdAtColumn.setText(languageManager.getText("workshops.column.created"));
         }
 
+<<<<<<< HEAD
         // Update table placeholder
+=======
+        // Update table placeholder if exists
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (workshopsTable != null) {
             workshopsTable.setPlaceholder(new Label(languageManager.getText("workshops.no.workshops.found")));
         }
 
+<<<<<<< HEAD
         // Refresh table to update localized cell values
+=======
+        // Refresh table to update cell values with new language
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         if (workshopsTable != null) {
             workshopsTable.refresh();
         }
 
+<<<<<<< HEAD
         // Update record count display
+=======
+        // Update record count
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         updateRecordCount();
 
         System.out.println("Workshops view texts updated");
     }
 
+<<<<<<< HEAD
     /**
      * Loads all teachers into a cache for quick name lookup during table display.
      * Creates a map of teacher IDs to full names for efficient teacher name resolution
      * in workshop table cells. Handles loading errors with empty map fallback.
      */
+=======
+
+    // NEW: Load teacher names into cache for quick lookup
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void loadTeacherCache() {
         try {
             List<Teacher> teachers = teacherDAO.getAllTeachers();
@@ -270,6 +343,7 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Configures all table columns with appropriate cell factories and value factories.
      * Sets up checkbox selection, action buttons (edit, manage participants, manage teacher),
@@ -278,6 +352,10 @@ public class WorkshopsViewController implements Initializable {
      */
     private void setupTable() {
         // Configure checkbox selection column
+=======
+    private void setupTable() {
+        // FIXED: Set up checkbox column properly
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         selectColumn.setCellFactory(tc -> {
             CheckBox checkBox = new CheckBox();
             TableCell<Workshop, Boolean> cell = new TableCell<Workshop, Boolean>() {
@@ -302,7 +380,11 @@ public class WorkshopsViewController implements Initializable {
             return cell;
         });
 
+<<<<<<< HEAD
         // Configure edit button column
+=======
+        // Set up edit button column
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         editColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
             private final Button editButton = new Button();
 
@@ -330,8 +412,12 @@ public class WorkshopsViewController implements Initializable {
                 }
             }
         });
+<<<<<<< HEAD
 
         // Configure manage participants column
+=======
+        // Set up manage participants column
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         manageParticipantsColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
             private final Button manageButton = new Button();
 
@@ -359,8 +445,12 @@ public class WorkshopsViewController implements Initializable {
                 }
             }
         });
+<<<<<<< HEAD
 
         // Configure manage teacher column
+=======
+        // NEW: Set up manage teacher column
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         manageTeacherColumn.setCellFactory(tc -> new TableCell<Workshop, Void>() {
             private final Button manageButton = new Button();
 
@@ -389,7 +479,11 @@ public class WorkshopsViewController implements Initializable {
             }
         });
 
+<<<<<<< HEAD
         // Configure data column bindings
+=======
+        // Set up column bindings
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
 
         fromDateColumn.setCellValueFactory(cellData -> {
@@ -432,7 +526,11 @@ public class WorkshopsViewController implements Initializable {
             return new SimpleStringProperty(status);
         });
 
+<<<<<<< HEAD
         // Configure teacher column with cache lookup
+=======
+        // NEW: Set up teacher column
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         teacherColumn.setCellValueFactory(cellData -> {
             Workshop workshop = cellData.getValue();
             LanguageManager languageManager = LanguageManager.getInstance();
@@ -460,11 +558,14 @@ public class WorkshopsViewController implements Initializable {
         workshopsTable.setEditable(true);
     }
 
+<<<<<<< HEAD
     /**
      * Initializes search functionality and filtering system.
      * Creates filtered list wrapper around workshop data and sets up real-time
      * search listener that triggers filter updates on text changes.
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void setupSearchAndFilters() {
         // Create filtered list wrapping the original list
         filteredWorkshopsList = new FilteredList<>(allWorkshopsList, p -> true);
@@ -472,17 +573,24 @@ public class WorkshopsViewController implements Initializable {
         // Set the table to use the filtered list
         workshopsTable.setItems(filteredWorkshopsList);
 
+<<<<<<< HEAD
         // Set up real-time search functionality
+=======
+        // Set up search functionality
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             updateFilters();
         });
     }
 
+<<<<<<< HEAD
     /**
      * Updates the filtered list based on current search text and active filter.
      * Applies search criteria across workshop names and teacher names, combined
      * with current filter state (all/active/upcoming/past workshops).
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void updateFilters() {
         String searchText = searchField.getText().toLowerCase().trim();
 
@@ -505,6 +613,7 @@ public class WorkshopsViewController implements Initializable {
         updateRecordCount();
     }
 
+<<<<<<< HEAD
     /**
      * Determines if a workshop matches the currently active filter button.
      * Checks which filter button is active based on styling and returns whether
@@ -515,6 +624,10 @@ public class WorkshopsViewController implements Initializable {
      */
     private boolean matchesCurrentFilter(Workshop workshop) {
         // Check which filter button is active based on their styling
+=======
+    private boolean matchesCurrentFilter(Workshop workshop) {
+        // Check which filter button is active based on their style
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         String allStyle = allWorkshopsButton.getStyle();
         String activeStyle = activeWorkshopsButton.getStyle();
         String upcomingStyle = upcomingWorkshopsButton.getStyle();
@@ -530,6 +643,7 @@ public class WorkshopsViewController implements Initializable {
             return workshop.isPast();
         }
 
+<<<<<<< HEAD
         return true; // Default: show all workshops
     }
 
@@ -538,6 +652,11 @@ public class WorkshopsViewController implements Initializable {
      * Fetches workshops via WorkshopDAO, updates the observable list,
      * and refreshes record count display. Handles loading errors gracefully.
      */
+=======
+        return true; // Default: show all
+    }
+
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void loadWorkshops() {
         try {
             List<Workshop> workshops = workshopDAO.getAllWorkshops();
@@ -552,16 +671,23 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Updates the record count label with current filtered workshop count.
      * Displays localized count text with appropriate singular/plural forms
      * and language-specific pluralization rules (Croatian vs English).
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void updateRecordCount() {
         int count = filteredWorkshopsList.size();
         LanguageManager languageManager = LanguageManager.getInstance();
 
+<<<<<<< HEAD
         // Handle language-specific pluralization
+=======
+        // Handle plural form for Croatian
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         String recordText;
         if (languageManager.isCroatian()) {
             String pluralSuffix = (count == 1) ? "" : "a";
@@ -578,6 +704,7 @@ public class WorkshopsViewController implements Initializable {
         recordCountLabel.setText(recordText);
     }
 
+<<<<<<< HEAD
     /**
      * Configures event handlers for all interactive UI components.
      * Sets up button click handlers for create, delete, refresh, and filter
@@ -587,11 +714,20 @@ public class WorkshopsViewController implements Initializable {
         System.out.println("Setting up event handlers...");
 
         // Main action button handlers
+=======
+    private void setupEventHandlers() {
+        System.out.println("Setting up event handlers...");
+
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         createWorkshopButton.setOnAction(e -> handleCreateWorkshop());
         deleteSelectedButton.setOnAction(e -> handleDeleteSelected());
         refreshButton.setOnAction(e -> handleRefresh());
 
+<<<<<<< HEAD
         // Filter button handlers
+=======
+        // Filter buttons
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         allWorkshopsButton.setOnAction(e -> handleFilterButton(allWorkshopsButton));
         activeWorkshopsButton.setOnAction(e -> handleFilterButton(activeWorkshopsButton));
         upcomingWorkshopsButton.setOnAction(e -> handleFilterButton(upcomingWorkshopsButton));
@@ -600,6 +736,7 @@ public class WorkshopsViewController implements Initializable {
         System.out.println("Event handlers setup completed");
     }
 
+<<<<<<< HEAD
     /**
      * Handles filter button clicks and updates active filter state.
      * Resets all filter button styles to inactive, sets clicked button to active,
@@ -609,6 +746,10 @@ public class WorkshopsViewController implements Initializable {
      */
     private void handleFilterButton(Button clickedButton) {
         // Reset all button styles to inactive state
+=======
+    private void handleFilterButton(Button clickedButton) {
+        // Reset all button styles to inactive
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         allWorkshopsButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
         activeWorkshopsButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
         upcomingWorkshopsButton.setStyle("-fx-background-color: white; -fx-border-color: #dfe3eb;");
@@ -617,6 +758,7 @@ public class WorkshopsViewController implements Initializable {
         // Set clicked button to active style
         clickedButton.setStyle("-fx-background-color: #f5f8fa; -fx-border-color: #dfe3eb;");
 
+<<<<<<< HEAD
         // Update the filter to reflect new selection
         updateFilters();
     }
@@ -626,6 +768,12 @@ public class WorkshopsViewController implements Initializable {
      * Opens create workshop dialog, processes the result if successful,
      * adds new workshop to the list, updates displays, and refreshes teacher cache.
      */
+=======
+        // Update the filter
+        updateFilters();
+    }
+
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void handleCreateWorkshop() {
         try {
             Stage currentStage = (Stage) createWorkshopButton.getScene().getWindow();
@@ -657,6 +805,7 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Handles editing an existing workshop via dialog.
      * Opens edit workshop dialog with current workshop data, processes updates,
@@ -664,6 +813,8 @@ public class WorkshopsViewController implements Initializable {
      *
      * @param workshop The Workshop to edit
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void handleEditWorkshop(Workshop workshop) {
         try {
             Stage currentStage = (Stage) createWorkshopButton.getScene().getWindow();
@@ -689,6 +840,7 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Handles teacher assignment management for a workshop.
      * Shows teacher selection dialog, processes assignment changes, updates database
@@ -697,6 +849,9 @@ public class WorkshopsViewController implements Initializable {
      *
      * @param workshop The Workshop to manage teacher assignment for
      */
+=======
+    // NEW: Handle teacher management for a workshop
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void handleManageTeacher(Workshop workshop) {
         try {
             LanguageManager languageManager = LanguageManager.getInstance();
@@ -791,6 +946,7 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Handles deletion of selected workshops with confirmation.
      * Identifies selected workshops, shows confirmation dialog, performs batch
@@ -801,6 +957,13 @@ public class WorkshopsViewController implements Initializable {
         System.out.println("Delete button clicked");
 
         // Debug: Print workshop selection status
+=======
+    private void handleDeleteSelected() {
+        LanguageManager languageManager = LanguageManager.getInstance();
+        System.out.println("Delete button clicked"); // Debug
+
+        // Debug: Print all workshops and their selection status
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         System.out.println("=== Current Workshop Selection Status ===");
         for (Workshop workshop : filteredWorkshopsList) {
             System.out.println("Workshop: " + workshop.getName() + ", Selected: " + workshop.isSelected());
@@ -811,7 +974,11 @@ public class WorkshopsViewController implements Initializable {
                 .filter(Workshop::isSelected)
                 .collect(Collectors.toList());
 
+<<<<<<< HEAD
         System.out.println("Selected workshops count: " + selectedWorkshops.size());
+=======
+        System.out.println("Selected workshops count: " + selectedWorkshops.size()); // Debug
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
 
         if (selectedWorkshops.isEmpty()) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -822,7 +989,11 @@ public class WorkshopsViewController implements Initializable {
             return;
         }
 
+<<<<<<< HEAD
         // Show confirmation dialog
+=======
+        // Confirm deletion
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
         confirmAlert.setTitle(languageManager.getText("workshops.delete.confirm.title"));
         confirmAlert.setHeaderText(languageManager.getText("workshops.delete.confirm.header"));
@@ -842,7 +1013,11 @@ public class WorkshopsViewController implements Initializable {
                         .map(Workshop::getId)
                         .collect(Collectors.toList());
 
+<<<<<<< HEAD
                 System.out.println("Attempting to delete workshop IDs: " + workshopIds);
+=======
+                System.out.println("Attempting to delete workshop IDs: " + workshopIds); // Debug
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
 
                 boolean success = workshopDAO.deleteWorkshops(workshopIds);
 
@@ -885,6 +1060,7 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Handles opening the workshop participants management window.
      * Loads participant management view in modal window, sets workshop context,
@@ -893,6 +1069,8 @@ public class WorkshopsViewController implements Initializable {
      *
      * @param workshop The Workshop to manage participants for
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void handleManageParticipants(Workshop workshop) {
         try {
             // Load the workshop participants view
@@ -912,15 +1090,27 @@ public class WorkshopsViewController implements Initializable {
             participantsStage.initModality(Modality.APPLICATION_MODAL);
             participantsStage.initOwner(createWorkshopButton.getScene().getWindow());
 
+<<<<<<< HEAD
             // Set window properties
+=======
+            // Set minimum size and make it resizable
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
             participantsStage.setMinWidth(1000);
             participantsStage.setMinHeight(700);
             participantsStage.setMaximized(false);
 
+<<<<<<< HEAD
             // Show the stage and wait for it to close
             participantsStage.showAndWait();
 
             // Refresh workshops table to update participant counts
+=======
+            // Show the stage
+            participantsStage.showAndWait();
+
+            // After closing the participants window, refresh the workshops table
+            // to update participant counts in case they changed
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
             workshopsTable.refresh();
 
         } catch (Exception e) {
@@ -936,11 +1126,14 @@ public class WorkshopsViewController implements Initializable {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Handles refreshing all workshop data from database.
      * Reloads workshops and teacher cache, updates displays, and shows
      * success confirmation to user with localized messaging.
      */
+=======
+>>>>>>> 18e08b724d9be7d8fa06c79fdb7757fb09d32170
     private void handleRefresh() {
         loadWorkshops();
         loadTeacherCache(); // Also refresh teacher cache
