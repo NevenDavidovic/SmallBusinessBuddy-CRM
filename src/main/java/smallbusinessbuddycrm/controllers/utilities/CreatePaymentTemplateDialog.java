@@ -84,7 +84,7 @@ public class CreatePaymentTemplateDialog {
 
         mainLayout.getChildren().addAll(titleLabel, formGrid, buttonBox);
 
-        Scene scene = new Scene(mainLayout, 500, 800);
+        Scene scene = new Scene(mainLayout, 500, 500);
         dialog.setScene(scene);
 
         // Focus on name field

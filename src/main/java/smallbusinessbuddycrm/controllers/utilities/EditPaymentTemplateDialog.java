@@ -116,7 +116,7 @@ public class EditPaymentTemplateDialog {
 
         mainLayout.getChildren().addAll(titleLabel, infoBox, formGrid, buttonBox);
 
-        Scene scene = new Scene(mainLayout, 500, 900);
+        Scene scene = new Scene(mainLayout, 500, 500);
         dialog.setScene(scene);
 
         // Focus on name field
