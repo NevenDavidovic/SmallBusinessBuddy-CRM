@@ -3,6 +3,7 @@ package smallbusinessbuddycrm.controllers.contact;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -24,6 +25,38 @@ public class CreateContactDialog {
     private Stage dialogStage;
     private Contact result = null;
     private boolean okClicked = false;
+
+    // Style constants
+    private static final String FIELD_STYLE =
+            "-fx-border-color: #dfe3eb; -fx-border-radius: 4; -fx-background-radius: 4;" +
+                    "-fx-padding: 6 10; -fx-font-size: 12px;";
+
+    private static final String SECTION_TITLE_STYLE =
+            "-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;";
+
+    private static final String LABEL_STYLE =
+            "-fx-font-size: 12px; -fx-text-fill: #555555;";
+
+    private static final String SECTION_STYLE =
+            "-fx-border-color: #dfe3eb; -fx-border-radius: 6; -fx-border-width: 1;" +
+                    "-fx-background-color: #ffffff; -fx-background-radius: 6; -fx-padding: 15;";
+
+    private static final String BTN_PRIMARY =
+            "-fx-background-color: #ff7a59; -fx-text-fill: white; -fx-border-radius: 4;" +
+                    "-fx-background-radius: 4; -fx-font-size: 12px; -fx-padding: 7 18;";
+
+    private static final String BTN_SECONDARY =
+            "-fx-background-color: #ffffff; -fx-text-fill: #555555; -fx-border-radius: 4;" +
+                    "-fx-background-radius: 4; -fx-font-size: 12px; -fx-padding: 7 18;" +
+                    "-fx-border-color: #dfe3eb; -fx-border-width: 1;";
+
+    private static final String BTN_SUCCESS =
+            "-fx-background-color: #28a745; -fx-text-fill: white; -fx-border-radius: 4;" +
+                    "-fx-background-radius: 4; -fx-font-size: 12px; -fx-padding: 7 18;";
+
+    private static final String BTN_DANGER =
+            "-fx-background-color: #dc3545; -fx-text-fill: white; -fx-border-radius: 4;" +
+                    "-fx-background-radius: 4; -fx-font-size: 11px; -fx-padding: 4 10;";
 
     // Contact form fields
     private TextField firstNameField;
@@ -56,14 +89,13 @@ public class CreateContactDialog {
     private DatePicker childMemberUntilPicker;
     private TextArea childNoteTextArea;
 
-    // UI Labels for translation
+    // UI Labels
     private Label titleLabel;
     private Label contactInfoLabel;
     private Label underagedSectionLabel;
     private Label optionalLabel;
     private Label childFormTitleLabel;
 
-    // Form labels
     private Label firstNameLabel;
     private Label lastNameLabel;
     private Label birthdayLabel;
@@ -78,7 +110,6 @@ public class CreateContactDialog {
     private Label memberSinceLabel;
     private Label memberUntilLabel;
 
-    // Child form labels
     private Label childFirstNameLabel;
     private Label childLastNameLabel;
     private Label childBirthDateLabel;
@@ -89,181 +120,165 @@ public class CreateContactDialog {
     private Label childMemberUntilLabel;
     private Label childNoteLabel;
 
-    // Buttons
     private Button addChildButton;
     private Button clearFormButton;
     private Button cancelButton;
     private Button saveButton;
 
-    /**
-     * Creates a new CreateContactDialog for adding contacts and their underaged members.
-     * Initializes the dialog stage, sets up UI components, and applies initial translations.
-     *
-     * @param parentStage The parent stage that owns this modal dialog
-     */
     public CreateContactDialog(Stage parentStage) {
         createDialogStage();
         dialogStage.initOwner(parentStage);
-        updateTexts(); // Initial translation
+        updateTexts();
     }
 
-    /**
-     * Creates and configures the main dialog stage with all UI components.
-     * Sets up modal behavior, scroll pane, layout sections, and scene configuration.
-     * Initializes a resizable dialog with 700x850 dimensions.
-     */
     private void createDialogStage() {
         dialogStage = new Stage();
         dialogStage.initModality(Modality.WINDOW_MODAL);
         dialogStage.setResizable(true);
 
-        // Create the main scroll pane for better handling of large content
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setStyle("-fx-background-color: #f5f8fa;");
 
-        // Create the layout
-        VBox mainLayout = new VBox(15);
-        mainLayout.setPadding(new Insets(20));
+        VBox mainLayout = new VBox(14);
+        mainLayout.setPadding(new Insets(22));
+        mainLayout.setStyle("-fx-background-color: #f5f8fa;");
 
-        // Title
+        // Page title
         titleLabel = new Label();
-        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #0099cc;");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2c3e50;");
 
-        // Contact form
+        Separator sep = new Separator();
+        sep.setStyle("-fx-background-color: #dfe3eb;");
+
         VBox contactSection = createContactSection();
-
-        // Underaged members section
         VBox underagedSection = createUnderagedMembersSection();
-
-        // Buttons
         HBox buttonBox = createButtonBox();
 
-        mainLayout.getChildren().addAll(titleLabel, contactSection, underagedSection, buttonBox);
+        mainLayout.getChildren().addAll(titleLabel, sep, contactSection, underagedSection, buttonBox);
         scrollPane.setContent(mainLayout);
 
-        Scene scene = new Scene(scrollPane, 700, 850);
+        Scene scene = new Scene(scrollPane, 600, 500);
         dialogStage.setScene(scene);
+        dialogStage.setMinWidth(560);
+        dialogStage.setMinHeight(500);
     }
 
-    /**
-     * Creates the contact information section containing personal and address fields.
-     * Includes contact form grid with all required and optional contact fields.
-     *
-     * @return VBox containing the complete contact information section
-     */
     private VBox createContactSection() {
         VBox section = new VBox(10);
+        section.setStyle(SECTION_STYLE);
 
-        // Section title
         contactInfoLabel = new Label();
-        contactInfoLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        contactInfoLabel.setStyle(SECTION_TITLE_STYLE);
 
-        // Form grid
         GridPane formGrid = createContactFormGrid();
 
         section.getChildren().addAll(contactInfoLabel, formGrid);
         return section;
     }
 
-    /**
-     * Creates the main contact form grid with all input fields and labels.
-     * Sets up form fields for personal info, address, and membership details.
-     * Configures field bindings and member checkbox behavior for date pickers.
-     *
-     * @return GridPane containing all contact form fields with proper layout
-     */
     private GridPane createContactFormGrid() {
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(15);
+        grid.setHgap(12);
+        grid.setVgap(10);
 
         int row = 0;
 
-        // First Name
         firstNameLabel = new Label();
+        firstNameLabel.setStyle(LABEL_STYLE);
         grid.add(firstNameLabel, 0, row);
         firstNameField = new TextField();
-        firstNameField.setPrefWidth(250);
+        firstNameField.setPrefWidth(240);
+        firstNameField.setStyle(FIELD_STYLE);
         grid.add(firstNameField, 1, row++);
 
-        // Last Name
         lastNameLabel = new Label();
+        lastNameLabel.setStyle(LABEL_STYLE);
         grid.add(lastNameLabel, 0, row);
         lastNameField = new TextField();
+        lastNameField.setStyle(FIELD_STYLE);
         grid.add(lastNameField, 1, row++);
 
-        // Birthday
         birthdayLabel = new Label();
+        birthdayLabel.setStyle(LABEL_STYLE);
         grid.add(birthdayLabel, 0, row);
         birthdayPicker = new DatePicker();
-        birthdayPicker.setPrefWidth(250);
+        birthdayPicker.setPrefWidth(240);
+        birthdayPicker.setStyle(FIELD_STYLE);
         grid.add(birthdayPicker, 1, row++);
 
-        // PIN
         pinLabel = new Label();
+        pinLabel.setStyle(LABEL_STYLE);
         grid.add(pinLabel, 0, row);
         pinField = new TextField();
-        pinField.setPrefWidth(250);
+        pinField.setStyle(FIELD_STYLE);
         grid.add(pinField, 1, row++);
 
-        // Email
         emailLabel = new Label();
+        emailLabel.setStyle(LABEL_STYLE);
         grid.add(emailLabel, 0, row);
         emailField = new TextField();
+        emailField.setStyle(FIELD_STYLE);
         grid.add(emailField, 1, row++);
 
-        // Phone
         phoneLabel = new Label();
+        phoneLabel.setStyle(LABEL_STYLE);
         grid.add(phoneLabel, 0, row);
         phoneField = new TextField();
+        phoneField.setStyle(FIELD_STYLE);
         grid.add(phoneField, 1, row++);
 
-        // Street Name
         streetNameLabel = new Label();
+        streetNameLabel.setStyle(LABEL_STYLE);
         grid.add(streetNameLabel, 0, row);
         streetNameField = new TextField();
+        streetNameField.setStyle(FIELD_STYLE);
         grid.add(streetNameField, 1, row++);
 
-        // Street Number
         streetNumLabel = new Label();
+        streetNumLabel.setStyle(LABEL_STYLE);
         grid.add(streetNumLabel, 0, row);
         streetNumField = new TextField();
+        streetNumField.setStyle(FIELD_STYLE);
         grid.add(streetNumField, 1, row++);
 
-        // Postal Code
         postalCodeLabel = new Label();
+        postalCodeLabel.setStyle(LABEL_STYLE);
         grid.add(postalCodeLabel, 0, row);
         postalCodeField = new TextField();
+        postalCodeField.setStyle(FIELD_STYLE);
         grid.add(postalCodeField, 1, row++);
 
-        // City
         cityLabel = new Label();
+        cityLabel.setStyle(LABEL_STYLE);
         grid.add(cityLabel, 0, row);
         cityField = new TextField();
+        cityField.setStyle(FIELD_STYLE);
         grid.add(cityField, 1, row++);
 
-        // Member Status
         memberLabel = new Label();
+        memberLabel.setStyle(LABEL_STYLE);
         grid.add(memberLabel, 0, row);
         memberCheckBox = new CheckBox();
         grid.add(memberCheckBox, 1, row++);
 
-        // Member Since
         memberSinceLabel = new Label();
+        memberSinceLabel.setStyle(LABEL_STYLE);
         grid.add(memberSinceLabel, 0, row);
         memberSincePicker = new DatePicker();
         memberSincePicker.setDisable(true);
+        memberSincePicker.setStyle(FIELD_STYLE);
         grid.add(memberSincePicker, 1, row++);
 
-        // Member Until
         memberUntilLabel = new Label();
+        memberUntilLabel.setStyle(LABEL_STYLE);
         grid.add(memberUntilLabel, 0, row);
         memberUntilPicker = new DatePicker();
         memberUntilPicker.setDisable(true);
+        memberUntilPicker.setStyle(FIELD_STYLE);
         grid.add(memberUntilPicker, 1, row++);
 
-        // Enable/disable date pickers based on member checkbox
         memberCheckBox.setOnAction(e -> {
             boolean isMember = memberCheckBox.isSelected();
             memberSincePicker.setDisable(!isMember);
@@ -277,216 +292,194 @@ public class CreateContactDialog {
         return grid;
     }
 
-    /**
-     * Creates the underaged members section with table and add form.
-     * Includes section title, data table for existing children, and form for adding new ones.
-     *
-     * @return VBox containing the complete underaged members management section
-     */
     private VBox createUnderagedMembersSection() {
         VBox section = new VBox(10);
+        section.setStyle(SECTION_STYLE);
 
-        // Section title
-        HBox titleBox = new HBox(10);
+        HBox titleBox = new HBox(8);
+        titleBox.setAlignment(Pos.CENTER_LEFT);
         underagedSectionLabel = new Label();
-        underagedSectionLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333;");
+        underagedSectionLabel.setStyle(SECTION_TITLE_STYLE);
         optionalLabel = new Label();
-        optionalLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: #666; -fx-font-style: italic;");
+        optionalLabel.setStyle("-fx-font-size: 11px; -fx-text-fill: #adb5bd; -fx-font-style: italic;");
         titleBox.getChildren().addAll(underagedSectionLabel, optionalLabel);
 
-        // Create table for underaged members
         underagedTableView = createUnderagedMembersTable();
-
-        // Create form for adding underaged members
         VBox addChildForm = createAddChildForm();
 
         section.getChildren().addAll(titleBox, underagedTableView, addChildForm);
         return section;
     }
 
-    /**
-     * Creates and configures the table for displaying underaged members.
-     * Sets up columns for name, age, PIN, gender, member status, and actions.
-     * Includes delete functionality and language-aware member status display.
-     *
-     * @return TableView configured for displaying and managing underaged members
-     */
     private TableView<UnderagedMember> createUnderagedMembersTable() {
         TableView<UnderagedMember> table = new TableView<>();
-        table.setPrefHeight(150);
+        table.setPrefHeight(140);
+        table.setStyle(
+                "-fx-border-color: #dfe3eb; -fx-border-radius: 4;" +
+                        "-fx-background-color: white; -fx-font-size: 12px;");
         table.setItems(underagedMembersList);
 
-        // First Name column
         TableColumn<UnderagedMember, String> firstNameCol = new TableColumn<>();
         firstNameCol.setCellValueFactory(new PropertyValueFactory<>("firstName"));
-        firstNameCol.setPrefWidth(100);
+        firstNameCol.setPrefWidth(95);
 
-        // Last Name column
         TableColumn<UnderagedMember, String> lastNameCol = new TableColumn<>();
         lastNameCol.setCellValueFactory(new PropertyValueFactory<>("lastName"));
-        lastNameCol.setPrefWidth(100);
+        lastNameCol.setPrefWidth(95);
 
-        // Age column
         TableColumn<UnderagedMember, Integer> ageCol = new TableColumn<>();
         ageCol.setCellValueFactory(new PropertyValueFactory<>("age"));
-        ageCol.setPrefWidth(50);
+        ageCol.setPrefWidth(45);
 
-        // PIN column
         TableColumn<UnderagedMember, String> pinCol = new TableColumn<>();
         pinCol.setCellValueFactory(new PropertyValueFactory<>("pin"));
         pinCol.setPrefWidth(80);
 
-        // Gender column
         TableColumn<UnderagedMember, String> genderCol = new TableColumn<>();
         genderCol.setCellValueFactory(new PropertyValueFactory<>("gender"));
-        genderCol.setPrefWidth(70);
+        genderCol.setPrefWidth(65);
 
-        // Member column
         TableColumn<UnderagedMember, String> memberCol = new TableColumn<>();
         memberCol.setCellValueFactory(cellData -> {
             boolean isMember = cellData.getValue().isMember();
             LanguageManager lm = LanguageManager.getInstance();
-            String memberText = isMember ? lm.getText("underaged.table.member.yes") : lm.getText("underaged.table.member.no");
+            String memberText = isMember
+                    ? lm.getText("underaged.table.member.yes")
+                    : lm.getText("underaged.table.member.no");
             return new javafx.beans.property.SimpleStringProperty(memberText);
         });
-        memberCol.setPrefWidth(70);
+        memberCol.setPrefWidth(65);
 
-        // Actions column
         TableColumn<UnderagedMember, Void> actionsCol = new TableColumn<>();
         actionsCol.setCellFactory(param -> new TableCell<UnderagedMember, Void>() {
             private final Button deleteBtn = new Button();
-
             {
+                deleteBtn.setStyle(BTN_DANGER);
                 deleteBtn.setOnAction(event -> {
                     UnderagedMember member = getTableView().getItems().get(getIndex());
                     underagedMembersList.remove(member);
                 });
-                deleteBtn.setStyle("-fx-background-color: #ff6b6b; -fx-text-fill: white; -fx-font-size: 10px;");
-
-                // Update button text when language changes
-                LanguageManager.getInstance().addLanguageChangeListener(() -> {
-                    deleteBtn.setText(LanguageManager.getInstance().getText("underaged.table.remove"));
-                });
+                LanguageManager.getInstance().addLanguageChangeListener(() ->
+                        deleteBtn.setText(LanguageManager.getInstance().getText("underaged.table.remove")));
                 deleteBtn.setText(LanguageManager.getInstance().getText("underaged.table.remove"));
             }
 
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    setGraphic(deleteBtn);
-                }
+                setGraphic(empty ? null : deleteBtn);
             }
         });
-        actionsCol.setPrefWidth(80);
+        actionsCol.setPrefWidth(75);
 
         table.getColumns().addAll(firstNameCol, lastNameCol, ageCol, pinCol, genderCol, memberCol, actionsCol);
         return table;
     }
 
-    /**
-     * Creates the form for adding new underaged members.
-     * Includes input fields for personal info, membership details, and notes.
-     * Sets up auto-calculation of age and member date picker behavior.
-     *
-     * @return VBox containing the complete child addition form with action buttons
-     */
     private VBox createAddChildForm() {
         VBox formSection = new VBox(10);
+        formSection.setStyle(
+                "-fx-border-color: #f0f2f5; -fx-border-radius: 4; -fx-border-width: 1;" +
+                        "-fx-background-color: #f8f9fa; -fx-background-radius: 4; -fx-padding: 12;");
 
         childFormTitleLabel = new Label();
-        childFormTitleLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold;");
+        childFormTitleLabel.setStyle(SECTION_TITLE_STYLE);
 
         GridPane childGrid = new GridPane();
         childGrid.setHgap(10);
-        childGrid.setVgap(10);
+        childGrid.setVgap(8);
 
         int row = 0;
 
-        // Child First Name
         childFirstNameLabel = new Label();
+        childFirstNameLabel.setStyle(LABEL_STYLE);
         childGrid.add(childFirstNameLabel, 0, row);
         childFirstNameField = new TextField();
-        childFirstNameField.setPrefWidth(150);
+        childFirstNameField.setPrefWidth(140);
+        childFirstNameField.setStyle(FIELD_STYLE);
         childGrid.add(childFirstNameField, 1, row);
 
-        // Child Last Name
         childLastNameLabel = new Label();
+        childLastNameLabel.setStyle(LABEL_STYLE);
         childGrid.add(childLastNameLabel, 2, row);
         childLastNameField = new TextField();
-        childLastNameField.setPrefWidth(150);
+        childLastNameField.setPrefWidth(140);
+        childLastNameField.setStyle(FIELD_STYLE);
         childGrid.add(childLastNameField, 3, row++);
 
-        // Birth Date and Age
         childBirthDateLabel = new Label();
+        childBirthDateLabel.setStyle(LABEL_STYLE);
         childGrid.add(childBirthDateLabel, 0, row);
         childBirthDatePicker = new DatePicker();
-        childBirthDatePicker.setPrefWidth(150);
+        childBirthDatePicker.setPrefWidth(140);
+        childBirthDatePicker.setStyle(FIELD_STYLE);
         childGrid.add(childBirthDatePicker, 1, row);
 
         childAgeLabel = new Label();
+        childAgeLabel.setStyle(LABEL_STYLE);
         childGrid.add(childAgeLabel, 2, row);
         childAgeField = new TextField();
         childAgeField.setPrefWidth(50);
-        childAgeField.setDisable(true); // Auto-calculated
+        childAgeField.setDisable(true);
+        childAgeField.setStyle(FIELD_STYLE);
         childGrid.add(childAgeField, 3, row++);
 
-        // PIN
         childPinLabel = new Label();
+        childPinLabel.setStyle(LABEL_STYLE);
         childGrid.add(childPinLabel, 0, row);
         childPinField = new TextField();
-        childPinField.setPrefWidth(150);
+        childPinField.setPrefWidth(140);
+        childPinField.setStyle(FIELD_STYLE);
         childGrid.add(childPinField, 1, row);
 
-        // Gender
         childGenderLabel = new Label();
+        childGenderLabel.setStyle(LABEL_STYLE);
         childGrid.add(childGenderLabel, 2, row);
         childGenderComboBox = new ComboBox<>();
-        childGenderComboBox.setPrefWidth(150);
+        childGenderComboBox.setPrefWidth(140);
+        childGenderComboBox.setStyle(FIELD_STYLE);
         childGrid.add(childGenderComboBox, 3, row++);
 
-        // Member checkbox
         childMemberCheckBox = new CheckBox();
+        childMemberCheckBox.setStyle("-fx-font-size: 12px;");
         childGrid.add(childMemberCheckBox, 0, row, 2, 1);
         row++;
 
-        // Member dates
         childMemberSinceLabel = new Label();
+        childMemberSinceLabel.setStyle(LABEL_STYLE);
         childGrid.add(childMemberSinceLabel, 0, row);
         childMemberSincePicker = new DatePicker();
-        childMemberSincePicker.setPrefWidth(150);
+        childMemberSincePicker.setPrefWidth(140);
         childMemberSincePicker.setDisable(true);
+        childMemberSincePicker.setStyle(FIELD_STYLE);
         childGrid.add(childMemberSincePicker, 1, row);
 
         childMemberUntilLabel = new Label();
+        childMemberUntilLabel.setStyle(LABEL_STYLE);
         childGrid.add(childMemberUntilLabel, 2, row);
         childMemberUntilPicker = new DatePicker();
-        childMemberUntilPicker.setPrefWidth(150);
+        childMemberUntilPicker.setPrefWidth(140);
         childMemberUntilPicker.setDisable(true);
+        childMemberUntilPicker.setStyle(FIELD_STYLE);
         childGrid.add(childMemberUntilPicker, 3, row++);
 
-        // Note
         childNoteLabel = new Label();
+        childNoteLabel.setStyle(LABEL_STYLE);
         childGrid.add(childNoteLabel, 0, row);
         childNoteTextArea = new TextArea();
         childNoteTextArea.setPrefRowCount(2);
-        childNoteTextArea.setPrefWidth(320);
+        childNoteTextArea.setPrefWidth(300);
+        childNoteTextArea.setStyle(FIELD_STYLE);
         childGrid.add(childNoteTextArea, 1, row, 3, 1);
 
-        // Auto-calculate age when birth date changes
         childBirthDatePicker.valueProperty().addListener((obs, oldDate, newDate) -> {
             if (newDate != null) {
                 int age = LocalDate.now().getYear() - newDate.getYear();
-                if (LocalDate.now().getDayOfYear() < newDate.getDayOfYear()) {
-                    age--;
-                }
+                if (LocalDate.now().getDayOfYear() < newDate.getDayOfYear()) age--;
                 childAgeField.setText(String.valueOf(age));
             }
         });
 
-        // Enable/disable member date pickers
         childMemberCheckBox.setOnAction(e -> {
             boolean isMember = childMemberCheckBox.isSelected();
             childMemberSincePicker.setDisable(!isMember);
@@ -497,64 +490,49 @@ public class CreateContactDialog {
             }
         });
 
-        // Add button
-        HBox buttonBox = new HBox(10);
+        HBox buttonBox = new HBox(8);
+        buttonBox.setAlignment(Pos.CENTER_LEFT);
         addChildButton = new Button();
-        addChildButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+        addChildButton.setStyle(BTN_SUCCESS);
         addChildButton.setOnAction(e -> handleAddChild());
 
         clearFormButton = new Button();
+        clearFormButton.setStyle(BTN_SECONDARY);
         clearFormButton.setOnAction(e -> clearChildForm());
 
         buttonBox.getChildren().addAll(addChildButton, clearFormButton);
-
         formSection.getChildren().addAll(childFormTitleLabel, childGrid, buttonBox);
         return formSection;
     }
 
-    /**
-     * Creates the dialog button box with Cancel and Save actions.
-     * Configures button styling, sizing, and event handlers for dialog actions.
-     *
-     * @return HBox containing Cancel and Save buttons with proper styling
-     */
     private HBox createButtonBox() {
         HBox buttonBox = new HBox(10);
-        buttonBox.setStyle("-fx-alignment: center-right;");
+        buttonBox.setAlignment(Pos.CENTER_RIGHT);
+        buttonBox.setPadding(new Insets(4, 0, 0, 0));
 
         cancelButton = new Button();
-        cancelButton.setPrefWidth(80);
+        cancelButton.setStyle(BTN_SECONDARY);
+        cancelButton.setPrefWidth(90);
         cancelButton.setOnAction(e -> dialogStage.close());
 
         saveButton = new Button();
-        saveButton.setPrefWidth(80);
-        saveButton.setStyle("-fx-background-color: #ff7a59; -fx-text-fill: white;");
+        saveButton.setStyle(BTN_PRIMARY);
+        saveButton.setPrefWidth(90);
         saveButton.setOnAction(e -> handleSave());
 
         buttonBox.getChildren().addAll(cancelButton, saveButton);
         return buttonBox;
     }
 
-    /**
-     * Updates all UI text elements based on current language settings.
-     * Refreshes dialog title, labels, placeholders, table headers, button text,
-     * and combo box options when language changes between English and Croatian.
-     */
     private void updateTexts() {
         LanguageManager lm = LanguageManager.getInstance();
 
-        // Update dialog title
-        if (dialogStage != null) {
-            dialogStage.setTitle(lm.getText("contact.dialog.title"));
-        }
-
-        // Update main labels
+        if (dialogStage != null) dialogStage.setTitle(lm.getText("contact.dialog.title"));
         if (titleLabel != null) titleLabel.setText(lm.getText("contact.dialog.title"));
         if (contactInfoLabel != null) contactInfoLabel.setText(lm.getText("contact.dialog.contact.info"));
         if (underagedSectionLabel != null) underagedSectionLabel.setText(lm.getText("contact.dialog.underaged.section"));
         if (optionalLabel != null) optionalLabel.setText(lm.getText("contact.dialog.optional"));
 
-        // Update form labels
         if (firstNameLabel != null) firstNameLabel.setText(lm.getText("contact.form.first.name"));
         if (lastNameLabel != null) lastNameLabel.setText(lm.getText("contact.form.last.name"));
         if (birthdayLabel != null) birthdayLabel.setText(lm.getText("contact.form.birthday"));
@@ -569,11 +547,9 @@ public class CreateContactDialog {
         if (memberSinceLabel != null) memberSinceLabel.setText(lm.getText("contact.form.member.since"));
         if (memberUntilLabel != null) memberUntilLabel.setText(lm.getText("contact.form.member.until"));
 
-        // Update placeholders
         if (pinField != null) pinField.setPromptText(lm.getText("contact.form.pin.placeholder"));
         if (memberCheckBox != null) memberCheckBox.setText(lm.getText("contact.form.is.member"));
 
-        // Update table column headers
         if (underagedTableView != null && underagedTableView.getColumns().size() >= 7) {
             underagedTableView.getColumns().get(0).setText(lm.getText("underaged.table.first.name"));
             underagedTableView.getColumns().get(1).setText(lm.getText("underaged.table.last.name"));
@@ -584,7 +560,6 @@ public class CreateContactDialog {
             underagedTableView.getColumns().get(6).setText(lm.getText("underaged.table.actions"));
         }
 
-        // Update child form labels
         if (childFormTitleLabel != null) childFormTitleLabel.setText(lm.getText("child.form.title"));
         if (childFirstNameLabel != null) childFirstNameLabel.setText(lm.getText("child.form.first.name"));
         if (childLastNameLabel != null) childLastNameLabel.setText(lm.getText("child.form.last.name"));
@@ -596,11 +571,9 @@ public class CreateContactDialog {
         if (childMemberUntilLabel != null) childMemberUntilLabel.setText(lm.getText("child.form.member.until"));
         if (childNoteLabel != null) childNoteLabel.setText(lm.getText("child.form.note"));
 
-        // Update child form fields
         if (childPinField != null) childPinField.setPromptText(lm.getText("child.form.pin.placeholder"));
         if (childMemberCheckBox != null) childMemberCheckBox.setText(lm.getText("child.form.is.member"));
 
-        // Update gender combo box
         if (childGenderComboBox != null) {
             String selectedValue = childGenderComboBox.getValue();
             ObservableList<String> genderOptions = FXCollections.observableArrayList(
@@ -609,37 +582,23 @@ public class CreateContactDialog {
                     lm.getText("gender.other")
             );
             childGenderComboBox.setItems(genderOptions);
-
-            // Try to maintain selection
-            if (selectedValue != null) {
-                childGenderComboBox.getSelectionModel().select(selectedValue);
-            }
+            if (selectedValue != null) childGenderComboBox.getSelectionModel().select(selectedValue);
         }
 
-        // Update buttons
         if (addChildButton != null) addChildButton.setText(lm.getText("child.form.add.button"));
         if (clearFormButton != null) clearFormButton.setText(lm.getText("child.form.clear.button"));
         if (cancelButton != null) cancelButton.setText(lm.getText("button.cancel"));
         if (saveButton != null) saveButton.setText(lm.getText("button.save"));
 
-        // Refresh table to update member status column
-        if (underagedTableView != null) {
-            underagedTableView.refresh();
-        }
+        if (underagedTableView != null) underagedTableView.refresh();
     }
 
-    /**
-     * Handles adding a new underaged member to the contact.
-     * Validates child input, creates UnderagedMember object, adds to table,
-     * clears form, and shows success confirmation dialog.
-     */
     private void handleAddChild() {
         if (validateChildInput()) {
             UnderagedMember child = createUnderagedMemberFromInput();
             underagedMembersList.add(child);
             clearChildForm();
 
-            // Show success message
             LanguageManager lm = LanguageManager.getInstance();
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle(lm.getText("dialog.success"));
@@ -649,28 +608,16 @@ public class CreateContactDialog {
         }
     }
 
-    /**
-     * Validates child form input before adding to underaged members list.
-     * Checks required fields (first name, last name, birth date) and shows
-     * validation error dialog with specific field requirements if validation fails.
-     *
-     * @return true if all required child fields are valid, false otherwise
-     */
     private boolean validateChildInput() {
         StringBuilder errors = new StringBuilder();
         LanguageManager lm = LanguageManager.getInstance();
 
-        if (childFirstNameField.getText().trim().isEmpty()) {
+        if (childFirstNameField.getText().trim().isEmpty())
             errors.append(lm.getText("validation.child.first.name.required")).append("\n");
-        }
-
-        if (childLastNameField.getText().trim().isEmpty()) {
+        if (childLastNameField.getText().trim().isEmpty())
             errors.append(lm.getText("validation.child.last.name.required")).append("\n");
-        }
-
-        if (childBirthDatePicker.getValue() == null) {
+        if (childBirthDatePicker.getValue() == null)
             errors.append(lm.getText("validation.child.birth.date.required")).append("\n");
-        }
 
         if (errors.length() > 0) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -680,52 +627,31 @@ public class CreateContactDialog {
             alert.showAndWait();
             return false;
         }
-
         return true;
     }
 
-    /**
-     * Creates UnderagedMember object from current child form input fields.
-     * Populates all fields including calculated age, membership details, and timestamps.
-     * Handles number parsing errors gracefully by defaulting age to 0.
-     *
-     * @return UnderagedMember object populated with current form data
-     */
     private UnderagedMember createUnderagedMemberFromInput() {
         UnderagedMember child = new UnderagedMember();
-
         child.setFirstName(childFirstNameField.getText().trim());
         child.setLastName(childLastNameField.getText().trim());
         child.setBirthDate(childBirthDatePicker.getValue());
         child.setPin(childPinField.getText().trim());
-
         try {
             child.setAge(Integer.parseInt(childAgeField.getText().trim()));
         } catch (NumberFormatException e) {
             child.setAge(0);
         }
-
         child.setGender(childGenderComboBox.getValue());
         child.setMember(childMemberCheckBox.isSelected());
         child.setMemberSince(childMemberSincePicker.getValue());
         child.setMemberUntil(childMemberUntilPicker.getValue());
         child.setNote(childNoteTextArea.getText().trim());
-
         String now = java.time.LocalDateTime.now().toString();
         child.setCreatedAt(now);
         child.setUpdatedAt(now);
-
         return child;
     }
 
-
-    /**
-     * Creates Contact object from current main form input fields.
-     * Populates all contact fields including address, membership details, and timestamps.
-     * Sets membership dates only when member checkbox is selected.
-     *
-     * @return Contact object populated with current form data
-     */
     private void clearChildForm() {
         childFirstNameField.clear();
         childLastNameField.clear();
@@ -737,47 +663,34 @@ public class CreateContactDialog {
         childMemberSincePicker.setValue(null);
         childMemberUntilPicker.setValue(null);
         childNoteTextArea.clear();
-
-        // Disable member date pickers
         childMemberSincePicker.setDisable(true);
         childMemberUntilPicker.setDisable(true);
     }
 
-    /**
-     * Handles saving the complete contact with all underaged members.
-     * Validates input, creates contact in database, saves associated children,
-     * and closes dialog on success or shows error message on failure.
-     */
     private void handleSave() {
         if (validateInput()) {
             try {
                 Contact newContact = createContactFromInput();
                 ContactDAO contactDAO = new ContactDAO();
-
                 boolean success = contactDAO.createContact(newContact);
 
                 if (success) {
-                    // Save underaged members if any
                     if (!underagedMembersList.isEmpty()) {
                         UnderagedDAO underagedDAO = new UnderagedDAO();
-
                         for (UnderagedMember child : underagedMembersList) {
-                            child.setContactId(newContact.getId()); // Set the parent contact ID
+                            child.setContactId(newContact.getId());
                             boolean childSuccess = underagedDAO.createUnderagedMember(child);
-
                             if (!childSuccess) {
                                 System.err.println("Failed to save child: " + child.getFullName());
                             }
                         }
                     }
-
                     result = newContact;
                     okClicked = true;
                     dialogStage.close();
                 } else {
                     showErrorAlert("Failed to save contact to database.");
                 }
-
             } catch (Exception e) {
                 showErrorAlert("Error saving contact: " + e.getMessage());
                 e.printStackTrace();
@@ -785,30 +698,18 @@ public class CreateContactDialog {
         }
     }
 
-    /**
-     * Validates main contact form input before saving to database.
-     * Checks required fields (first name, last name, email) and email format.
-     * Shows validation error dialog with specific field requirements if validation fails.
-     *
-     * @return true if all required contact fields are valid, false otherwise
-     */
     private boolean validateInput() {
         StringBuilder errors = new StringBuilder();
         LanguageManager lm = LanguageManager.getInstance();
 
-        if (firstNameField.getText().trim().isEmpty()) {
+        if (firstNameField.getText().trim().isEmpty())
             errors.append(lm.getText("validation.first.name.required")).append("\n");
-        }
-
-        if (lastNameField.getText().trim().isEmpty()) {
+        if (lastNameField.getText().trim().isEmpty())
             errors.append(lm.getText("validation.last.name.required")).append("\n");
-        }
-
-        if (emailField.getText().trim().isEmpty()) {
+        if (emailField.getText().trim().isEmpty())
             errors.append(lm.getText("validation.email.required")).append("\n");
-        } else if (!isValidEmail(emailField.getText().trim())) {
+        else if (!isValidEmail(emailField.getText().trim()))
             errors.append(lm.getText("validation.email.invalid")).append("\n");
-        }
 
         if (errors.length() > 0) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -818,31 +719,15 @@ public class CreateContactDialog {
             alert.showAndWait();
             return false;
         }
-
         return true;
     }
 
-    /**
-     * Performs basic email validation using simple pattern matching.
-     * Checks for presence of @ symbol and at least one dot for domain validation.
-     *
-     * @param email The email address to validate
-     * @return true if email contains @ and . characters, false otherwise
-     */
     private boolean isValidEmail(String email) {
         return email.contains("@") && email.contains(".");
     }
 
-    /**
-     * Creates Contact object from current main form input fields.
-     * Populates all contact fields including address, membership details, and timestamps.
-     * Sets membership dates only when member checkbox is selected.
-     *
-     * @return Contact object populated with current form data
-     */
     private Contact createContactFromInput() {
         Contact contact = new Contact();
-
         contact.setFirstName(firstNameField.getText().trim());
         contact.setLastName(lastNameField.getText().trim());
         contact.setBirthday(birthdayPicker.getValue());
@@ -854,57 +739,35 @@ public class CreateContactDialog {
         contact.setPostalCode(postalCodeField.getText().trim());
         contact.setCity(cityField.getText().trim());
         contact.setMember(memberCheckBox.isSelected());
-
         if (memberCheckBox.isSelected()) {
             contact.setMemberSince(memberSincePicker.getValue());
             contact.setMemberUntil(memberUntilPicker.getValue());
         }
-
-        // Set timestamps
         String now = java.time.LocalDateTime.now().toString();
         contact.setCreatedAt(now);
         contact.setUpdatedAt(now);
-
         return contact;
     }
 
-    /**
-     * Displays error alert dialog with specified message.
-     * Shows modal error dialog with standard title and header for operation failures.
-     *
-     * @param message The error message to display to the user
-     */
     private void showErrorAlert(String message) {
+        LanguageManager lm = LanguageManager.getInstance();
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("Operation Failed");
+        alert.setTitle(lm.getText("dialog.error.title"));
+        alert.setHeaderText(lm.getText("dialog.error.header"));
         alert.setContentText(message);
         alert.showAndWait();
     }
 
-    /**
-     * Shows the dialog and waits for user interaction.
-     * Updates translations before display and returns whether user clicked OK/Save.
-     *
-     * @return true if user saved the contact, false if cancelled
-     */
     public boolean showAndWait() {
-        updateTexts(); // Update translations before showing
+        updateTexts();
         dialogStage.showAndWait();
         return okClicked;
     }
 
-    /**
-     * Gets the created contact result after successful dialog completion.
-     * Returns the Contact object that was created and saved to database.
-     *
-     * @return The created Contact object, or null if dialog was cancelled
-     */
     public Contact getResult() {
         return result;
     }
 
-    // Method to get the created underaged members (if needed for further processing)
     public ObservableList<UnderagedMember> getUnderagedMembers() {
         return underagedMembersList;
     }
