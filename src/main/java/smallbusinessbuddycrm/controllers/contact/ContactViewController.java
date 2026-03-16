@@ -25,6 +25,7 @@ import smallbusinessbuddycrm.utilities.LanguageManager;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -357,9 +358,6 @@ public class ContactViewController {
      */
     @FXML
     private void handleGenerateBarcode() {
-        System.out.println("🔧 Generate Barcode button clicked");
-
-        // Get all selected contacts from the filtered list
         List<Contact> selectedContacts = filteredContactsList.stream()
                 .filter(Contact::isSelected)
                 .collect(Collectors.toList());
@@ -368,74 +366,72 @@ public class ContactViewController {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("No Selection");
             alert.setHeaderText("No contacts selected");
-            alert.setContentText("Please select one or more contacts to generate barcodes for using the checkboxes.");
+            alert.setContentText("Please select one or more contacts using the checkboxes.");
             alert.showAndWait();
             return;
         }
 
         LoadingManager.getInstance().showLoading("Loading payment templates...");
 
+        // Step 1: Load templates in background (DB work only)
         CompletableFuture.supplyAsync(() -> {
-            System.out.println("🔧 First selecting payment template...");
-            return showPaymentTemplateSelectionDialog();
-        }).thenAccept(selectedTemplate -> {
-            Platform.runLater(() -> {
-                if (selectedTemplate == null) {
-                    LoadingManager.getInstance().hideLoading();
-                    System.out.println("🔧 No payment template selected, cancelling barcode generation");
-                    return; // User cancelled template selection
-                }
+            try {
+                PaymentTemplateDAO dao = new PaymentTemplateDAO();
+                return dao.getActivePaymentTemplates();
+            } catch (SQLException e) {
+                throw new RuntimeException("Failed to load payment templates", e);
+            }
 
-                System.out.println("🔧 Selected payment template: " + selectedTemplate.getName());
-
-                // Update loading message for next step
-                LoadingManager.getInstance().showLoading("Opening barcode generator...");
-
-                CompletableFuture.runAsync(() -> {
-                    // Brief delay for UI responsiveness
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                }).thenRun(() -> {
-                    Platform.runLater(() -> {
-                        LoadingManager.getInstance().hideLoading();
-
-                        try {
-                            System.out.println("🔧 Opening MultipleGenerationBarcodeDialog with " + selectedContacts.size() + " selected contacts");
-
-                            // Step 2: Open the main barcode generation dialog with template and contacts
-                            Stage currentStage = (Stage) generateBarcodeButton.getScene().getWindow();
-                            MultipleGenerationBarcodeDialog dialog = new MultipleGenerationBarcodeDialog(currentStage, selectedContacts, selectedTemplate);
-                            dialog.showAndWait();
-
-                            System.out.println("🔧 MultipleGenerationBarcodeDialog closed");
-
-                        } catch (Exception e) {
-                            System.err.println("Error opening barcode generation dialog: " + e.getMessage());
-                            e.printStackTrace();
-
-                            Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                            errorAlert.setTitle("Error");
-                            errorAlert.setHeaderText("Barcode Generation Failed");
-                            errorAlert.setContentText("An error occurred while opening the barcode generator: " + e.getMessage());
-                            errorAlert.showAndWait();
-                        }
-                    });
-                });
-            });
-        }).exceptionally(throwable -> {
+        }).thenAccept(templates -> {
+            // Step 2: Back on FX thread — show the dialog
             Platform.runLater(() -> {
                 LoadingManager.getInstance().hideLoading();
 
-                System.err.println("Error in barcode generation process: " + throwable.getMessage());
-                throwable.printStackTrace();
+                if (templates.isEmpty()) {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("No Payment Templates");
+                    alert.setHeaderText("No active payment templates found");
+                    alert.setContentText("Please create at least one active payment template before generating barcodes.");
+                    alert.showAndWait();
+                    return;
+                }
 
+                // Show choice dialog — safe here, we're on FX thread
+                PaymentTemplateSelectionDialog templateDialog =
+                        new PaymentTemplateSelectionDialog(
+                                (Stage) generateBarcodeButton.getScene().getWindow(),
+                                templates
+                        );
+
+                Optional<PaymentTemplate> result = templateDialog.showAndWait();
+                if (result.isEmpty()) return;
+
+                PaymentTemplate selectedTemplate = result.get();
+
+                // Step 3: Open barcode dialog — still on FX thread, no async needed
+                try {
+                    Stage currentStage = (Stage) generateBarcodeButton.getScene().getWindow();
+                    MultipleGenerationBarcodeDialog barcodeDialog =
+                            new MultipleGenerationBarcodeDialog(currentStage, selectedContacts, selectedTemplate);
+                    barcodeDialog.showAndWait();
+                } catch (Exception e) {
+                    Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("Error");
+                    errorAlert.setHeaderText("Barcode Generation Failed");
+                    errorAlert.setContentText("An error occurred: " + e.getMessage());
+                    errorAlert.showAndWait();
+                }
+            });
+
+        }).exceptionally(throwable -> {
+            Platform.runLater(() -> {
+                LoadingManager.getInstance().hideLoading();
                 Alert errorAlert = new Alert(Alert.AlertType.ERROR);
                 errorAlert.setTitle("Error");
-                errorAlert.setHeaderText("Barcode Generation Failed");
-                errorAlert.setContentText("An error occurred during barcode generation: " + throwable.getMessage());
+                errorAlert.setHeaderText("Failed to load templates");
+                errorAlert.setContentText(throwable.getCause() != null
+                        ? throwable.getCause().getMessage()
+                        : throwable.getMessage());
                 errorAlert.showAndWait();
             });
             return null;
