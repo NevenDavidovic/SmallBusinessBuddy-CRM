@@ -1,3 +1,13 @@
+<img width="1915" height="1093" alt="image" src="https://github.com/user-attachments/assets/fb501937-cab1-4455-b382-335742f4959f" />
+
+<img width="1915" height="1127" alt="image" src="https://github.com/user-attachments/assets/a2e10de1-96f2-465c-9aeb-b1b9007705a1" />
+
+<img width="1916" height="1078" alt="image" src="https://github.com/user-attachments/assets/9bf2d558-9f50-44ba-844e-b925964c1bc3" />
+
+
+
+
+
 # 1. UVOD
 
 ## 1.2. Cilj rada
